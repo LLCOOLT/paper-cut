@@ -93,6 +93,10 @@ constexpr Toggle kWishes[] = {
                              "coins and drops (never bosses, scripted fights, the Pit, Master Quest, challenges or "
                              "online).",
      "auto_win_weak", "auto win weak enemy skip battle level bump attack"},
+    {"Spring Jump from standing only", "With the Ultra Boots, the Spring Jump starts only while Mario stands "
+                                       "still: holding A and turning the stick as he comes down from a jump no "
+                                       "longer springs him up the moment he lands.",
+     "spring_jump_standing", "quick spring jump landing ultra boots super jump ultra jump hold a stand still"},
 };
 
 // what the battle screen shows and how it moves (nothing that changes play)

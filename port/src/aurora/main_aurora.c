@@ -1,6 +1,7 @@
 /* Entry point for the Aurora backend: initialize Aurora (window, WebGPU,
  * input, disc image), open the first frame, then run the game's main(). */
 #include <aurora/aurora.h>
+#include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_video.h>
@@ -14,6 +15,9 @@
 #include <dolphin/pad.h>
 #include <dolphin/gx/GXAurora.h>
 #include "port/handheld.h"
+#include "port/mem_guard.h"
+#include "port/flight.h"
+#include "port/safe_graphics.h"
 #include "port/replay.h"
 #include "port/tr.h"
 #include "port/widescreen.h"
@@ -25,12 +29,14 @@
 #include "port/platform.h"
 #include "port/mods.h"
 #include "port/luigi.h"
+#include "port/pm64.h"
 #include "port/costume.h"
 #include "port/update_install.h"
 #include "port/restart.h"
 #include "port/art_recipe.h"
 #include "port/build_id.h"
 #include "port/offscreen.h"
+#include "port/gpu_start.h"
 
 void portOnlineInviteArgs(int* argc, char** argv); /* invite.cpp */
 void portControllersInit(const char* userPath); /* port/settings/features/controllers.cpp */
@@ -55,13 +61,20 @@ int ttyd_main(void); /* src/main.c, compiled with -Dmain=ttyd_main */
 
 static void logCallback(AuroraLogLevel level, const char* module, const char* message, unsigned int len) {
     static const char* const sNames[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
-    FILE* out = level >= LOG_ERROR ? stderr : stdout;
+    /* (every line to stdout, the port's own stream: one buffered stream and an unbuffered second one in the same
+       captured log split lines mid-line where stdout's buffer went out, and the tests' patterns missed them,
+       ws_room_*_219_off's "[wide] cam" line; an error's line is flushed at once) */
+    FILE* out = stdout;
     fprintf(out, "[%s: %s] %.*s\n", sNames[level], module, (int)len, message);
+    if (level >= LOG_ERROR) {
+        fflush(out);
+    }
     {
         /* the crash report's last lines, and its graphics adapter (crash_pc.c) */
         char line[240];
         snprintf(line, sizeof(line), "[%s: %s] %.*s", sNames[level], module, (int)len, message);
         portCrashLogLine(line);
+        portFlightLog((int)level, message, len); /* its warnings, the adapter and driver (flight.h) */
         if (len > 16 && strncmp(message, "Graphics adapter", 16) == 0) {
             char full[600], gpu[160];
             const char* device;
@@ -94,9 +107,20 @@ static void* sSdlLogData;
 static void sdlLog(void* data, int category, SDL_LogPriority priority, const char* message) {
     (void)data;
     portCrashLogLine(message);
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(__EMSCRIPTEN__)
     if (sSdlLog != NULL) {
-        sSdlLog(sSdlLogData, category, priority, message);
+        sSdlLog(sSdlLogData, category, priority, message); /* (logcat, the device's console, the browser's) */
     }
+#else
+    /* (stdout, as every port line: SDL's own writer is stderr, which split stdout's buffered lines mid-line in a
+       captured log: sharp_text's SDL_Log inside a "[wide] cam" line, ws_room_*_219_off) */
+    (void)category;
+    printf("%s: %s\n", priority >= SDL_LOG_PRIORITY_ERROR ? "ERROR" : priority >= SDL_LOG_PRIORITY_WARN ? "WARN" : "INFO",
+           message);
+    if (priority >= SDL_LOG_PRIORITY_ERROR) {
+        fflush(stdout);
+    }
+#endif
 }
 
 /* $TTYD_OFFSCREEN=1 (port/include/port/offscreen.h); off on phones, whose app is always on screen */
@@ -139,6 +163,13 @@ int aurora_main(int argc, char* argv[]) {
             printf("Paper Cut %s\n", portBuildVersion());
             return 0;
         }
+        /* --settings-layout-check: every setting has its place on the settings page (the build's own check
+         * after linking, CMakeLists.txt; port/settings/settings_layout.cpp); fails naming those without */
+        if (strcmp(argv[i], "--settings-layout-check") == 0) {
+            const int missing = portSettingsLayoutCheck();
+            printf("settings layout: %d setting(s) without a place\n", missing);
+            return missing == 0 ? 0 : 1;
+        }
     }
     /* an invite link among the arguments (papercut://join/<CODE>): taken out, for
      * the launcher's Online tab; on Windows, those links pointed at this exe
@@ -164,13 +195,26 @@ int aurora_main(int argc, char* argv[]) {
      * with captures); rendering and captures go on as usual. */
     /* $TTYD_CACHE_DIR: Aurora's pipeline/shader caches elsewhere than the
      * user's app data (map_sweep gives each run its own). */
-    if (getenv("TTYD_CACHE_DIR") != NULL) {
+    if (getenv("TTYD_CACHE_DIR") != NULL && getenv("TTYD_CACHE_DIR")[0] != '\0') {
         config.cachePath = getenv("TTYD_CACHE_DIR");
+        /* made if it isn't there: Aurora opens its databases in it and doesn't make it, and without the pipeline
+           cache open the bundled seed (merged into it) went unused, every pipeline built on demand */
+        SDL_CreateDirectory(config.cachePath);
     }
     /* $TTYD_USER_DIR: memory card images and settings elsewhere (map_sweep:
      * parallel runs sharing one card image can block each other). */
     if (getenv("TTYD_USER_DIR") != NULL) {
         config.userPath = getenv("TTYD_USER_DIR");
+        if (config.cachePath == NULL) {
+            /* the caches with it (its "cache" folder), never the player's own app data: a run with a folder of its
+               own used and pruned the player's pipeline cache */
+            static char sCache[1024];
+            const char* u = config.userPath;
+            const size_t n = strlen(u);
+            snprintf(sCache, sizeof(sCache), "%s%scache", u, n > 0 && (u[n - 1] == '/' || u[n - 1] == '\\') ? "" : "/");
+            SDL_CreateDirectory(sCache);
+            config.cachePath = sCache;
+        }
     }
     /* $TTYD_PAUSE_UNFOCUSED: also pause while another window has the focus
      * (minimized or hidden always pauses, port/src/common/pause_pc.c). */
@@ -217,6 +261,8 @@ int aurora_main(int argc, char* argv[]) {
         const char* msaa = getenv("TTYD_MSAA");
         config.msaa = (msaa != NULL ? atoi(msaa) : portSettingsPeek(config.userPath, "msaa", 0)) ? 4 : 1;
     }
+    /* Safe graphics and the graphics API chosen (port/include/port/safe_graphics.h) */
+    portSafeGraphicsConfig(&config);
     /* a Linux handheld (port/include/port/handheld.h): OpenGL ES, smaller graphics buffers, full screen */
     portHandheldConfig(&config);
     /* Aurora holds a frame at most a second for pipelines it waits on (no pop-in), then builds the rest in the
@@ -252,6 +298,8 @@ int aurora_main(int argc, char* argv[]) {
      * the last run's report kept for the recovery screen (settings_aurora.c) */
     portCrashReportEarly(config.userPath);
     portCrashInit();
+    /* the flight recorder: on storage as the run goes, the last run's kept (port/include/port/flight.h) */
+    portFlightStart(config.userPath);
 #if defined(__APPLE__) && TARGET_OS_OSX
     /* No window restoration: after a crash or a killed run, macOS would ask
      * "reopen windows?" in a modal alert before the game starts (blocking
@@ -288,7 +336,16 @@ int aurora_main(int argc, char* argv[]) {
         }
     }
 #endif
+    /* a graphics API that ended the last start while it started: passed over (port/include/port/gpu_start.h) */
+    portGpuStartConfig(&config);
     info = aurora_initialize(argc, argv, &config);
+    portFlightMark("phase: graphics up");
+    {
+        extern uintptr_t OSBaseAddress; /* Aurora's MEM1 (dolphin/os.h) */
+        if (OSBaseAddress != 0) {
+            portCheckHostAddress((const void*)OSBaseAddress, "the game's memory (MEM1)");
+        }
+    }
     /* SIGTERM, SIGINT, SIGHUP (Steam's Exit game, a logout, Ctrl+C): the normal quit, never a
      * crash report (crash_pc.c); after SDL's own handlers, which it chains to */
     portCrashQuitSignalsInit();
@@ -300,6 +357,9 @@ int aurora_main(int argc, char* argv[]) {
     SDL_SetLogOutputFunction(sdlLog, NULL);
 #ifdef __ANDROID__
     portAndroidInit(); /* crash reports to logcat, background pause */
+#endif
+#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
+    portIosLifecycleInit(); /* online play through the background (ios_app.m) */
 #endif
     portRelInit(argv[0]);
     /* the port's name and logo on the window (Aurora's appName "ttyd" names
@@ -340,6 +400,10 @@ int aurora_main(int argc, char* argv[]) {
 
     portSettingsLoad(info.userPath); /* settings.txt (port/include/port/settings.h); the launcher shows them */
     portHandheldPreset(); /* a handheld's first start: the Handheld preset (handheld_aurora.c) */
+    portSafeGraphicsStart(); /* Safe graphics' settings for the run (port/include/port/safe_graphics.h) */
+    /* phones and tablets: the graphics capped by the device's memory, the memory watched, and the note when
+     * the system closed the last run (port/include/port/mem_guard.h) */
+    portMemGuardStart(info.userPath);
     portWindowRestore(pos != NULL); /* inside a screen, maximized as it was (window.cpp) */
     /* The user's own disc image (disc_aurora.c): the argument, or the launcher. */
     if (!portAuroraOpenDisc(argc, argv, info.userPath)) {
@@ -347,15 +411,19 @@ int aurora_main(int argc, char* argv[]) {
         return 1;
     }
 
+    portFlightMark("phase: disc opened");
     portLuigiModelInit(); /* Luigi's model with our animations, from the disc (docs/LUIGI_ANIMS.md) */
+    portPm64ModelsInit(); /* the PM64 partners' own TTYD models, from the disc (pm64_models_pc.c) */
     portSkinsInit(info.userPath); /* partner skins from the user folder's skins/ (docs/COSTUMES.md) */
     portArtPrepare(info.userPath); /* "Preparing graphics": the art recipes run on the disc (art/RECIPES.md) */
     portLuigiFacesInit(); /* Play as Luigi's faces the recipes made; before the mods apply */
     portPeachParasolInit(); /* Peach's parasol the recipe made, on her models (docs/PLAY_AS.md) */
     portReplayEarly(); /* a playback's randomizer settings, before the mods apply the randomizer (replay.cpp) */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
+    portFlightMark("phase: preparing graphics");
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
     portReplayStartup();   /* a replay's recording or playback, asked for by the restart (replay.cpp) */
+    portFlightMark("phase: the game starts");
     portAuroraBeginFrame();
     return ttyd_main();
 }

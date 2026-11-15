@@ -48,8 +48,8 @@ Non mentre è attiva un'altra modalità.
 Remix: enemies
 Remix: nemici
 
-The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
-Lo scontro di ogni nemico sul campo è estratto fra tutti gli scontri della sua zona (non quelli dei boss), uguale per una stanza e un seme. Dalla stanza successiva.
+Each field enemy leads to a random fight from its area (never a boss), the same every time for a room and seed. From the next room.
+Ogni nemico sul campo porta a uno scontro a caso della sua zona (mai un boss), sempre lo stesso per una stanza e un seme. Dalla stanza successiva.
 
 Remix: badge draft
 Remix: scelta di tessere
@@ -60,8 +60,8 @@ Alla schermata del titolo di ogni capitolo, tre tessere fra cui sceglierne una: 
 Remix seed
 Seme del remix
 
-Same seed, same remix: share it with a challenge code.
-Stesso seme, stesso remix: condividi un codice sfida.
+Same seed, same remix: share it with a challenge code. From the next room.
+Stesso seme, stesso remix: condividi un codice sfida. Dalla stanza successiva.
 
 Hardcore
 Hardcore

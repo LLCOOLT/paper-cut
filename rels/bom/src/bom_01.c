@@ -4,6 +4,7 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/open_world.h"
+#include "port/platform.h"
 #endif
 #include "wide_x.h"
 #include "eff/eff_starstone.h"
@@ -387,6 +388,11 @@ static void disp_sight(CameraId camera, void* param) {
     f32 x;
     f32 y;
 
+#ifdef TARGET_PC
+    /* the sight's spin, the sound meter and the arrow counters step in each draw: as they were after a frame drawn
+     * between the game's (Frame rate above 60) or stereo 3D's first eye */
+    portInterpKeep(sight_wp, sizeof(*sight_wp));
+#endif
     drawBG(0, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
     drawBG(0, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
     drawBG(0, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f);

@@ -1,0 +1,76 @@
+{
+ "desc": "the host removes the guest in a relay room (TTYD_SYNC_REMOVE_AT, the Players page's remove): the host also has the relay take that game out of the guest's place ('drop guest': closed, its ticket refused), so the place is free at once (the told guest's game usually leaves first, the drop then finding nobody there): a third game joining later gets the guest's place, not player 3's, and plays",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 3700"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_REMOVE_AT": "1500:2"
+    },
+    "log_must": [
+     "co-op: the host removes player 2",
+     "net: player 2 removed from the room",
+     "net: the relay asked to take player 2's place's game out \\(removed\\)$"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 3700"
+    ],
+    "env": {
+     "TTYD_SYNC_END_PICK": "title"
+    },
+    "log_must": [
+     "co-op: the host removed this player"
+    ],
+    "log_must_not": [
+     "(?s)the host removed this player.*net: in the relay's room"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 3700"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 2300
+    },
+    "log_must": [
+     "net: in the relay's room 2TST as the guest",
+     "net: session with player 1"
+    ],
+    "log_must_not": [
+     "this game asks for player 3 or 4's place"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "progress": false,
+   "drift": false,
+   "names": false
+  }
+ },
+ "file_must": {
+  "relay.txt": [
+   "2TST guest (dropped by the host|drop asked: nobody there \\(its last ticket refused\\))$"
+  ]
+ },
+ "timeout": 400
+}

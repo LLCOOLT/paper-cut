@@ -1,0 +1,36 @@
+{
+ "desc": "GitHub #39's Safe graphics ($TTYD_SAFE_GRAPHICS=1, port/safe_graphics.h) through the room the AYN Thor lost itself in: the boat's arrival at Rogueport's harbour (gor_00, story 2) and up the pier. From the start: no MSAA, the smaller graphics buffers, an older GPU's texture limits, per-draw values in a uniform binding; for the run the picture at 480 lines and every costly option off. It draws (draws counted each 60 frames), the guard never trips, and the flight record says safe graphics",
+ "groups": ["bugs", "gfx"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_SAFE_GRAPHICS": 1,
+  "TTYD_GFX_STATS": 60
+ },
+ "input": [
+  "press_until_control a 3000",
+  "shot safe_arrived",
+  "walk_to -220 200 300",
+  "walk_to -220 40 300",
+  "wait 600",
+  "where",
+  "shot safe_pier",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[gfx\\] safe graphics: no anti-aliasing",
+  "^\\[gfx\\] safe graphics for the run: ",
+  "AURORA_LOW_LIMITS: texture limits lowered",
+  "Immediate data: no \\(\\$AURORA_NO_IMMEDIATES\\)",
+  "^\\[gfxstats\\] frame \\d+: draws [1-9]\\d* ",
+  "where: map 'gor_00'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] guard",
+  "^\\[gfx\\] watchdog"
+ ],
+ "new": true
+}

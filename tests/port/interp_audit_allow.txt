@@ -1,0 +1,97 @@
+# tools/port/interp_audit_check.py: what a frame drawn between the game's own may leave changed (the audit's "net"
+# sites, port/src/aurora/interp_audit.c). One key a line ("writer FUNCTION (file.c)" or "global NAME"), "*" for any
+# run of characters. Each is a cache or draw state the game's next frame computes again before anything reads it.
+# Anything else is a draw that changes the game: fix it (docs/FRAME_INTERPOLATION.md), don't list it here.
+
+# --- heap: caches the next draw computes again
+writer shadowCharShadowDisp_Collision (shadowdrv.c)   # each shadow's matrix from its floor raycast
+writer btlUnitPartsDisp (battle_disp.c)               # a part's drawColor, from dispColor and the blended move colour
+writer disp_texture (fadedrv.c)                       # a fade entry's alpha, from its progress
+writer imgDisp (imgdrv.c)                             # the "nothing captured" flag and the pose's loop count, set each draw
+writer windowDispGX*(windowdrv.c)                     # the window texture's GXTexObj (loaded state)
+writer _windowDispGX_Message (windowdrv.c)            # the same
+writer smartTexObj (memory.c)                         # a material's texture object, initialised for the draw
+writer winHelpDisp (itemdrv.c)                         # the got item's help text, looked up each draw
+writer animSetMaterial_ChangeTexture (animdrv.c)      # a material's GXTexObj loaded for the draw
+writer extDraw (extdrv.c)                              # the same, ext sprites
+writer puniDraw (punidrv.c)                            # the same, the Punies
+writer puniLoadTexture (punidrv.c)                     # the Punies' texture preload regions, set each draw
+writer demo_img (dmo_00.c)                             # the storybook's 3D viewport, from the page's projection
+writer msgWindow_Disp (msgdrv.c)                       # a speech window's place, from its speaker's (blended) position
+writer disp_3D (sac_genki.c)                           # Sweet Treat's recovery numbers placed over the units
+writer effFireDisp3 (eff_fire.c)                       # the fire's screen box, measured in its draw
+writer BattleAudienceDispAudience (battle_audience.c)  # each audience member's scale and wrapped angle, from its state
+writer dispProc (animdrv.c)                            # a pose's exported world positions; the game's own draw of the same list writes them before its logic reads them
+writer screen_capture (*)                              # the arena screens' copies (battle_stage.c, the Glitz Pit's big monitor tou_03.c) and their "ready" flags: each draw copies again
+writer gans_tex (tou.c)                                # the Glitz Pit's backstage monitor: Grubba drawn into its texture and its "ready" flag, each draw
+writer monitor_tev (tou.c)                             # that monitor's GXTexObj, loaded for the draw
+writer effSnowfallDisp (eff_snowfall_n64.c)            # the snow texture's small mip level, copied from the same source in every draw
+writer effSplashGetCol (eff_splash.c)                  # the splash's colour, from the map
+writer btl_camera_set_mode (*)                         # target select sets the battle camera's mode in its draw, the same in every draw
+writer camDispOff (camdrv.c)                           # the pause menu's backdrop turns the 3D camera off (winRootBgCaptureDisp), as its own frame does
+writer winRootBgCaptureDisp (win_root.c)               # the same backdrop's "captured" flag
+writer BattleAudience_GetItemOn (battle_audience.c)    # the item holder's place for the X attack, found again by the game's own draw before its logic
+writer offscreenDisp (offscreendrv.c)                  # the offscreen copies' frame-temporary buffers and "captured" flags, made again each draw
+writer offscreenAddBoundingBox (offscreendrv.c)        # their screen boxes, measured in the draw
+writer `anonymous namespace'::init_texobj_common (*)   # Aurora's GXTexObj init for those copies
+writer effFlameDisp (eff_flame_n64.c)                  # the flame's vertices, transformed in its draw
+writer effPokopiThunderDisp (eff_pokopi_thunder_n64.c) # the bolt's points, from its table and frame
+writer select_disp3* (winmgr.c)                        # an item or partner list's help text, looked up each draw
+writer menuDisp (title_menu_aurora.c)                  # the port's title menu's resolution label
+writer animPoseMain (animdrv.c)                       # the shared float scratch (useFloatScratch); each pose draw fills it
+# --- heap: the in-between frame's own work (interp_aurora.c puts the list back as the game left it)
+writer dispEntry (dispdrv.c)                          # the letterbox entries past the list's end (portCamLetterBoxInBetween)
+writer qqsort (system.c)                              # the draw list's sort work
+writer portInterpDraw (interp_aurora.c)
+
+# --- globals: the draw's own state (set by every draw before use)
+global currentWorkPtr        # the display entry being drawn
+global current_mp            # the map object being drawn
+global g_modeling_mtx*       # the modelling matrix stack
+global fontColor
+global fontAlpha
+global fontScale
+global winTexTpl
+global char_shadow_work      # the shadow pass's scratch
+global shadowConfig
+global tmp0                  # system.c's sort scratch
+global tmp1
+global tmp2
+global disableMapDraw        # the pause backdrop's map off (N_mapDispOff), as its own frame does
+global projTexObj            # mapdrv.c's projection texture object, loaded for the draw
+global winZenkakuStrPad_buf  # a text pad buffer filled for the draw
+# (data named after the symbol nearest the changed bytes: draw-time tables and port statics without the s prefix)
+global col_normal
+global col_poison
+global a
+global buttons
+global canvas
+global edge
+global face
+global mtx
+global pixels
+global shadow
+global sqlite3Prng
+global kpa_stage_clear
+global vcd
+global every
+global depth_shadow_work     # the shadow pass's scratch
+global rampTex16             # shadowdrv.c's ramp GXTexObj
+global kiss_col              # eff_kiss.c's colours, alpha set each draw
+global partysDt              # the HUD's partner icons, chosen each draw
+global funemizu_color0_tbl     # eff_funemizu.c's colours, set from the map each draw
+global gor_fune_color0_tbl
+global text                  # the port's text buffers (static char text[...]), filled each draw
+global idxBuf                # Aurora's index scratch
+# --- globals: the port's and Aurora's own (statics: "s" and a capital, by the port's naming)
+global s[A-Z]*
+global `anonymous namespace'::*
+global aurora::*
+global _Init_global_epoch
+global sqlite3Stat
+global time
+global warned
+global comp
+global cache                 # pause_settings_aurora.c rowSlotsFor's measured-width cache (the port's settings page)
+global next                  # that cache's next slot; the port's menus' key-repeat clocks (bindings.cpp: real time)
+global work                  # animdrv.c's AnimationWork: the draw's float scratch switch and buffers (the name is shared: a heap writer is named by function)

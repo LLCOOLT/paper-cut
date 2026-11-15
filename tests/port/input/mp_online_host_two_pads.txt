@@ -1,0 +1,17 @@
+# Online, the host's game (mp_online_two_pads3): the full run's segment 3 from its checkpoint (Frankly's house,
+# gor_02), standing in the field while two guests join and the first guest's second controller takes seat 4, goes
+# away and back, lets it go (guest 2's second controller waits for it, then takes it and lets it go), takes it
+# again, and comes back to it after its game leaves the room and joins again. Everyone settled at each look.
+wait_seq 2 3000
+press_until_control a 3000
+wait_peer coop2 6000
+wait 900                        # guest 1's second controller in seat 4, walked
+where coop 300
+wait 2400                       # away and back; let go (guest 2's takes it, lets it go); seat 4 again
+where coop 300
+wait 300                        # (guest 1 has left the room by now: about 2830 frames after its look at the room)
+wait_peer coop2 9000            # guest 1 joined again, following the host
+wait 900                        # its second controller back in seat 4
+where coop 300
+wait 600
+end

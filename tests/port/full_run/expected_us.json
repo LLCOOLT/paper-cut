@@ -966,6 +966,45 @@
   "map": "eki_00",
   "story": 312
  },
+ "77_station": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "968ed0d2b04744c2",
+  "frames": 19415,
+  "map": "hom_00",
+  "story": 325
+ },
+ "77a_smorg": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "6119ad379b1d6ee9",
+  "frames": 15785,
+  "map": "rsh_05_a",
+  "story": 331
+ },
+ "77b_poshley": {
+  "env": {
+   "TTYD_AUTO_BATTLE": "1",
+   "TTYD_AUTO_TEXT": "1",
+   "TTYD_GOD": "1",
+   "TTYD_GOD_POWER": "2",
+   "TTYD_STORY_WATCH": "120"
+  },
+  "fingerprint": "d36f78af1f040b3e",
+  "frames": 33331,
+  "map": "aji_16",
+  "story": 340
+ },
  "78_fahr_outpost": {
   "env": {
    "TTYD_AUTO_BATTLE": "1",

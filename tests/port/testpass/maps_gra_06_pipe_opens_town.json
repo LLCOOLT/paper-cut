@@ -1,0 +1,54 @@
+{
+ "groups": [
+  "world",
+  "maps_remake"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "remake_warp_pipes": 1,
+  "remake_shortcut_pipes": 1,
+  "remake_express_skip": 1,
+  "remake_chapter_shortcuts": 1,
+  "remake_keelhaul": 1,
+  "remake_steeple_stairs": 1,
+  "remake_twilight": 1,
+  "remake_blocks": 1,
+  "remake_ambushes": 0,
+  "remake_merchants": 1
+ },
+ "timeout": 240,
+ "desc": "gra_06 with every remake map switch on: Mario stands on the Trail's end's pipe (its top 30 above the floor), goes down it to Twilight Town, and the town's pipe is there from then",
+ "env": {
+  "TTYD_MAP": "gra_06",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait 60",
+  "goto -220 45 160",
+  "wait 60",
+  "where",
+  "shot on_pipe",
+  "hold down 60",
+  "wait 240",
+  "where gsw 2031",
+  "goto 240 10 150",
+  "wait 60",
+  "shot town",
+  "end"
+ ],
+ "expect_shots": [
+  "on_pipe",
+  "town"
+ ],
+ "log_must": [
+  "\\[input\\] where: map 'gra_06', Mario at -220 30 160,",
+  "\\[map edits\\] gra_06: pipe",
+  "\\[input\\] where: map 'usu_01'",
+  "\\[map edits\\] usu_01: pipe"
+ ]
+}

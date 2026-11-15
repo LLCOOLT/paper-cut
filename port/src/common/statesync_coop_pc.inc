@@ -29,6 +29,7 @@
    brings three at once, a late message two; the older ones' buttons go on with it, padDropOldest) */
 #define COOP_PAD_BEHIND 1
 #define COOP_PAD_STALE_MS 1500
+#define PAD_SAME_MS 250 /* a room's: an unchanged controller sent again this often (the host's stale is 1500) */
 
 /* a controller's frame, as it crosses (PADStatus's fields, fixed width) */
 typedef struct PadRec {
@@ -42,14 +43,19 @@ typedef struct PadRec {
 typedef struct PadMsg {
     uint32_t frame; /* rec[0]'s frame (the guest's count); rec[i] is frame - i */
     uint8_t n;
-    uint8_t pad[3];
+    uint8_t sub; /* 0 the guest's own controller; 1 its second controller (a second player at that computer) */
+    uint8_t pad[2];
     PadRec rec[COOP_PAD_HISTORY];
 } PadMsg;
 
 /* (after C_RESYNC, the room's people, statesync_coop_pc.inc's end: C_BYE the host leaves for good, C_KICK
    the host removes this player, C_INFO a guest's computer, C_ROSTER every player's computer and link; C_USE
-   the guest playing Mario's Start menu: an item's HP, FP and SP or a partner switch, done in the host's game) */
-enum { C_SEATS = 1, C_ASK, C_ASK_TO, C_ANSWER, C_PICK, C_BONUS, C_RESYNC, C_BYE, C_KICK, C_INFO, C_ROSTER, C_USE, C_WORN };
+   the guest playing Mario's Start menu: an item's HP, FP and SP or a partner switch, done in the host's game;
+   C_AWAY a player stepped away or is back: v[0] 1 away, 0 back, v[1] the seconds they may be, v[2] who, the
+   host passing a guest's on to the others) */
+/* (C_SUB, a guest to the host: v[0] 1 its second controller asks for a seat, 0 it lets its seat go) */
+enum { C_SEATS = 1, C_ASK, C_ASK_TO, C_ANSWER, C_PICK, C_BONUS, C_RESYNC, C_BYE, C_KICK, C_INFO, C_ROSTER, C_USE, C_WORN,
+       C_SUB, C_AWAY };
 enum { USE_ITEM = 1, USE_PARTNER };
 
 typedef struct CoopMsg {
@@ -71,13 +77,16 @@ static struct {
         int any;
         PadRec cur;
         unsigned long long at;
-    } in[SS_PLAYERS + 1];
+    } in[2 * (SS_PLAYERS + 1)]; /* by player; SUB_IN(p): that guest's second controller's */
     /* a guest: its own last frames */
     PadRec hist[COOP_PAD_HISTORY];
     uint32_t padFrame;
     /* seats: seat s's player (1..4; 0 nobody); the host decides, every game knows */
     int seat[5];
-    int pendSeat[5]; /* the host: agreed, waiting for a calm moment (pendOn) */
+    /* seat s is its player's second controller's: a guest with two controllers plays two seats (seatOf is its
+       first controller's, subSeatOf the second's). Never seat 1: Mario is a game's own controller's */
+    int sub[5];
+    int pendSeat[5], pendSub[5]; /* the host: agreed, waiting for a calm moment (pendOn) */
     int pendOn;
     int askFrom, askSeat; /* this player: a request waiting for its answer */
     /* the host's pick */
@@ -93,6 +102,8 @@ static struct {
     unsigned bonus;
     int was;        /* this game played as a co-op guest in this session (leaving: back to the title) */
     int took;       /* the host's whole progress taken (this session) */
+    int reenter;    /* the room entered again once settled: the host's progress made the file another kind (an
+                       open-world file's items were written into this room's area as the room was entered) */
     int areaPending; /* the host's area flags, for when this game gets to that area */
     char area[4];
     uint32_t lswf[0x10];
@@ -135,7 +146,41 @@ static struct {
     unsigned long long lostAt;     /* a guest: since when the host is gone (0 here) */
     unsigned long long kickAt[SS_PLAYERS + 1]; /* the host: removed, their connection closed a moment after */
     int rulesNoted;
+    /* each player who said they stepped away (their phone's app in the background), until when (ssNetMs), 0
+       not: their place, link and seat kept meanwhile, a shared battle plays their units (C_AWAY) */
+    unsigned long long awayUntil[SS_PLAYERS + 1];
+    int lostAway;    /* a guest: the host had stepped away when (or while) its game went (the longer wait) */
+    int awaySelf;    /* this game told the others it stepped away (portStateSyncBackground) */
+    int subWant[SS_PLAYERS + 1]; /* the host: that guest's second controller wants a seat (C_SUB) */
+    int subLast[SS_PLAYERS + 1]; /* the host: its seat when its player's link went (its again on coming back) */
+    int subFull[SS_PLAYERS + 1]; /* the host: "no free seat" said for it */
 } K = {-1};
+
+static void coopAwayGot(int from, const CoopMsg* m);
+
+/* A co-op guest's second controller (two players at one computer online): its Start asks the host for a seat
+   (C_SUB), the lowest free one, up to the four seats; its frames go to the host as that seat's controller (a
+   PadMsg with sub 1), as the guest's own go for its seat. The host's game plays it as any seat's controller
+   (second_player_pc.c), so every game draws the same; this guest's game draws that character from the host's
+   word, as the other players'. Unplugged, its seat is kept a minute (the host keeps the seat while its link
+   is there and nothing comes: the character waits at Mario's side); back in time, or another controller's
+   Start here meanwhile, and it plays on; else the seat frees. Start held on it lets the seat go. Kept across a
+   Leave (as K): a rejoin brings it back to the seat it had. */
+static struct {
+    int port;       /* its controller port here (1-3), 0 none */
+    int want;       /* it asked for a seat and hasn't let it go */
+    int seat;       /* its seat, as the host's seats say (2-4), 0 none (yet) */
+    unsigned awayAt; /* G.frame it went (unplugged), 0 here */
+    unsigned askedAt, resentAt;
+    int startHeld;  /* frames its Start is held (SUB_LEAVE_FRAMES: its seat let go) */
+    int full;       /* "no free seat" said */
+    uint16_t last[4]; /* each port's buttons last frame (a Start's press) */
+    PadRec hist[COOP_PAD_HISTORY];
+    uint32_t frame;
+} SP;
+#define SUB_LEAVE_FRAMES 90 /* Start held this long on the second controller: its seat let go */
+#define SUB_FULL_FRAMES 180 /* no seat this long after asking: "no free seat" */
+#define SUB_RESEND_FRAMES 120 /* no seat: asked again this often */
 
 static void coopHideOwn(int hidden);
 static void coopRemember(void);
@@ -145,13 +190,15 @@ static void ndHostArrived(int from, uint32_t f, const PadRec* r);
 static void ndHostApplied(int p, int seat, uint32_t f, int queued);
 static void ndGuestRead(void);
 static void ndHostSent(void);
-static void sendPad(void);
+static void sendPad(int sub, uint32_t frame, const PadRec* hist);
+static void ownReset(int s, const char* why);
 /* a guest's own character (below, "each guest's own character") */
 static struct {
     int seat;       /* this guest walks seat's character now (portStateSyncCoopLocalSeat), 0 not */
     uint32_t epoch; /* the host's epoch for this guest's seat, as last taken */
     int known;
     unsigned swapAt;
+    unsigned partnerAt; /* (players 3 and 4: the host's partner last put out here) */
     int drawn; /* its own drawn here (taken by its player), not the host's word of it */
 } OG;
 /* the guest's field actions (below, "the guest's field actions") */
@@ -185,9 +232,12 @@ static int coopOwnFile(void);
 #define PICK_TOGETHER 1 /* the host's pick: the adventure (sent once the host is in a file; $TTYD_SYNC_PICK in tests) */
 
 /* a pick that is the adventure together: none yet (a room is the host's adventure by default) or the
-   adventure's pick (1). A party game's (10-16) is not; nor -1 (tests: the layers alone, each player free) */
+   adventure's pick (1). A party game's (10-15) is not; nor -1 (tests: the layers alone, each player free).
+   The dungeon master's (16) is: its player commands the enemies of the host's boss rush, so every guest's
+   game goes along with the host's (its battles shared, the dungeon master's controller in them); each in
+   their own game, a guest stayed in the room the rush left and its dungeon master was never in a battle */
 static int pickTogether(int pick) {
-    return pick == 0 || pick == PICK_TOGETHER;
+    return pick == 0 || pick == PICK_TOGETHER || pick == PORT_PICK_DM;
 }
 
 /* playing together: the room's default (no pick, or the adventure's) and no party mode runs. A party game
@@ -206,8 +256,16 @@ int portStateSyncMe(void) {
     return G.on ? ssNetMe() : 0;
 }
 
+/* a guest of a room playing together, linked to the host this moment or not: what a whole progress from the host
+   asks (taken whole, never merged). Just back after the host's blip, a new session's first messages arrive before
+   its hello marks the link up, so a guest that asked portStateSyncCoopGuest() merged the host's progress into its
+   own, as each their own game's would (fuzz round 31: and then left the room for a file of "another kind") */
+static int coopGuestRole(void) {
+    return G.on && !G.watch && !ssNetIsHost() && ssNetMe() >= 2 && !coopModeHeld();
+}
+
 int portStateSyncCoopGuest(void) {
-    return G.on && !G.watch && ssNetConnected() && !ssNetIsHost() && ssNetMe() >= 2 && !coopModeHeld();
+    return coopGuestRole() && ssNetConnected();
 }
 
 int portStateSyncCoopOn(void) {
@@ -245,6 +303,34 @@ static int holder(int s) {
     return s >= 2 && s <= 4 ? C.seat[s] : 0;
 }
 
+#define SUB_IN(p) ((p) + SS_PLAYERS + 1)
+
+/* seat s is its player's second controller's */
+static int seatSub(int s) {
+    return s >= 2 && s <= 4 && C.seat[s] != 0 && C.sub[s];
+}
+
+/* the host: seat s's controller frames (C.in: its player's, or that player's second controller's) */
+static int seatIn(int s) {
+    const int p = holder(s);
+    return seatSub(s) ? SUB_IN(p) : p;
+}
+
+/* a guest's second controller's seat (2-4), 0 none */
+static int subSeatOf(int p) {
+    int s;
+    for (s = 2; p >= 2 && s <= 4; s++) {
+        if (C.seat[s] == p && C.sub[s]) {
+            return s;
+        }
+    }
+    return 0;
+}
+
+int portStateSyncSeatSub(int seat) {
+    return G.on && seatSub(seat);
+}
+
 /* the host's game: seat s's controller is here now (a guest's, fresh; or the host's own when the host sits
    in a seat other than Mario's) */
 int portStateSyncCoopPadHere(int seat) {
@@ -262,7 +348,8 @@ int portStateSyncCoopPadHere(int seat) {
     if (p == 1) {
         return seat >= 2; /* (the host's own controller, moved to that seat) */
     }
-    return p >= 2 && coopPlayer(p) && C.in[p].any && ssNetMs() - C.in[p].at < COOP_PAD_STALE_MS;
+    return p >= 2 && coopPlayer(p) && C.in[seatIn(seat)].any &&
+           ssNetMs() - C.in[seatIn(seat)].at < COOP_PAD_STALE_MS;
 }
 
 int portStateSyncCoopSeatTaken(int seat) {
@@ -287,10 +374,11 @@ int portStateSyncSeatPlayer(int seat) {
     return seat >= 2 && seat <= 4 && G.on ? C.seat[seat] : 0;
 }
 
+/* a player's seat: its own controller's (a second controller's, subSeatOf) */
 static int seatOf(int p) {
     int s;
     for (s = 1; s <= 4; s++) {
-        if (holder(s) == p) {
+        if (holder(s) == p && !seatSub(s)) {
             return s;
         }
     }
@@ -367,7 +455,7 @@ static void sendSeats(int to) {
     memset(&m, 0, sizeof(m));
     m.kind = C_SEATS;
     for (s = 1; s <= 4; s++) {
-        m.v[s - 1] = holder(s);
+        m.v[s - 1] = holder(s) | (seatSub(s) ? 0x100 : 0); /* (0x100: its player's second controller's) */
     }
     /* (seats 2-4's characters and looks, a byte each, + 1: Brothers mode's Luigi is -1) */
     for (s = 2; s <= 4; s++) {
@@ -424,7 +512,8 @@ static void sendPick(int to) {
 }
 
 /* the host: a new session with that player (statesync_pc.c ssOnSession): the seats and the pick */
-static void coopSession(int player) {
+static void coopSession(int player, int fresh) {
+    int s;
     if (ssNetIsHost()) {
         sendSeats(player);
         if (C.wornSent) {
@@ -435,8 +524,34 @@ static void coopSession(int player) {
         }
         C.in[player].count = 0;
         C.in[player].any = 0;
+        C.in[SUB_IN(player)].count = 0;
+        C.in[SUB_IN(player)].any = 0;
+        if (fresh) {
+            /* (a new game in that player's place: no second controller of its until it asks; the seat its last
+               one had stays its first choice, as K.lastSeat for its own) */
+            K.subWant[player] = K.subFull[player] = 0;
+        }
+        for (s = 2; s <= 4; s++) {
+            if (C.seat[s] == player) {
+                ownReset(s, "its player's new session"); /* (maybe another clock: its reports start over) */
+            }
+        }
     } else {
-        C.took = 0; /* (the host's whole progress again: its snapshot) */
+        if (fresh) {
+            /* (the host's whole progress again: its snapshot, which the host sends a new session alone. A resumed
+               one keeps what it took: its reliable messages go on, no snapshot comes, and a guest whose link
+               dropped and resumed before its join's progress step was through stayed "joining the room (step 4)"
+               for good, the join's "taking long" window up) */
+            C.took = 0;
+        }
+        if (player == 1 && SP.want) {
+            CoopMsg m;
+            memset(&m, 0, sizeof(m));
+            m.kind = C_SUB;
+            m.v[0] = 1;
+            coopSend(1, &m); /* (its second controller's seat again: the host's session with it is new) */
+            ssLog("co-op: this game's second controller asks for its seat again (a new session with the host)");
+        }
     }
 }
 
@@ -501,19 +616,46 @@ void ssCoopBonus(void) {
 /* the host: seat s to player p (swapping with its holder), now or at the next calm moment. Seat 1 is Mario's:
    a guest there plays Mario in the host's game (its controller as controller 1), the host then the seat the
    guest had */
-static void seatMove(int s, int p) {
-    int from = 0, k, was;
-    if (s < 1 || s > 4 || p < 1 || p > SS_PLAYERS) {
-        return;
-    }
+static void pendBegin(void) {
+    int k;
     if (!C.pendOn) {
         for (k = 1; k <= 4; k++) {
             C.pendSeat[k] = holder(k);
+            C.pendSub[k] = seatSub(k);
         }
     }
+}
+
+/* the host: seats a and b's players swapped, each with its controller (a second controller's seat moves as
+   its seat), at the next calm moment. Mario's seat is never a second controller's, nor nobody's */
+static int seatSwapPend(int a, int b, const char** why) {
+    int t;
+    if (a < 1 || a > 4 || b < 1 || b > 4 || a == b) {
+        *why = "Choose two seats to swap.";
+        return 0;
+    }
+    pendBegin();
+    if ((a == 1 && (C.pendSub[b] || C.pendSeat[b] == 0)) || (b == 1 && (C.pendSub[a] || C.pendSeat[a] == 0))) {
+        *why = "That seat has no controller.";
+        ssLog("co-op: seats %d and %d not swapped: Mario's seat would be a second controller's or nobody's", a, b);
+        return 0;
+    }
+    t = C.pendSeat[a], C.pendSeat[a] = C.pendSeat[b], C.pendSeat[b] = t;
+    t = C.pendSub[a], C.pendSub[a] = C.pendSub[b], C.pendSub[b] = t;
+    C.pendOn = 1;
+    return 1;
+}
+
+static void seatMove(int s, int p) {
+    int from = 0, k, was;
+    const char* why = NULL;
+    if (s < 1 || s > 4 || p < 1 || p > SS_PLAYERS) {
+        return;
+    }
+    pendBegin();
     for (k = 1; k <= 4; k++) {
-        if (C.pendSeat[k] == p) {
-            from = k;
+        if (C.pendSeat[k] == p && !C.pendSub[k]) {
+            from = k; /* (its own controller's seat: a second controller's stays where it is) */
         }
     }
     if (from == s) {
@@ -521,12 +663,16 @@ static void seatMove(int s, int p) {
     }
     was = C.pendSeat[s];
     if (from != 0) {
-        C.pendSeat[from] = was;
-    } else if (was == 1) {
+        if (!seatSwapPend(s, from, &why)) {
+            return;
+        }
+    } else if (was == 1 && !C.pendSub[s]) {
         return; /* (the host never leaves the seats: it takes the one it gives up) */
+    } else {
+        C.pendSeat[s] = p; /* (a player with no seat: the one there, a second controller too, has none now) */
+        C.pendSub[s] = 0;
+        C.pendOn = 1;
     }
-    C.pendSeat[s] = p;
-    C.pendOn = 1;
     ssLog("co-op: player %d to seat %d (seat %d's player %d to seat %d), at the next calm moment", p, s, s, was,
           from);
 }
@@ -535,6 +681,20 @@ void portStateSyncSeatSet(int seat, int player) {
     if (G.on && ssNetIsHost()) {
         seatMove(seat, player);
     }
+}
+
+int portStateSyncSeatSwap(int a, int b, const char** why) {
+    *why = NULL;
+    if (!G.on || !ssNetIsHost()) {
+        *why = "Choose two seats to swap.";
+        return 0;
+    }
+    if (!seatSwapPend(a, b, why)) {
+        return 0;
+    }
+    ssLog("co-op: seats %d and %d swap (players %d and %d), at the next calm moment", a, b, C.pendSeat[b],
+          C.pendSeat[a]);
+    return 1;
 }
 
 int portStateSyncSeatPending(void) {
@@ -632,13 +792,31 @@ static void coopRel(int from, const uint8_t* p, size_t n) {
             if (from == 1 && !ssNetIsHost()) {
                 const int before = seatOf(ssNetMe());
                 for (s = 1; s <= 4; s++) {
-                    C.seat[s] = m.v[s - 1] >= 1 && m.v[s - 1] <= SS_PLAYERS ? m.v[s - 1] : 0;
+                    const int who = m.v[s - 1] & 0xFF;
+                    C.seat[s] = who >= 1 && who <= SS_PLAYERS ? who : 0;
+                    C.sub[s] = s >= 2 && C.seat[s] != 0 && (m.v[s - 1] & 0x100) != 0;
                 }
                 if (seatOf(ssNetMe()) != before) {
                     C.noticeAt = 0; /* (a new seat: said again) */
                 }
-                ssLog("co-op: seats now 1:%d 2:%d 3:%d 4:%d (this game player %d)", holder(1), C.seat[2], C.seat[3],
-                      C.seat[4], ssNetMe());
+                ssLog("co-op: seats now 1:%d 2:%d%s 3:%d%s 4:%d%s (this game player %d)", holder(1), C.seat[2],
+                      C.sub[2] ? "b" : "", C.seat[3], C.sub[3] ? "b" : "", C.seat[4], C.sub[4] ? "b" : "", ssNetMe());
+                {
+                    /* this game's second controller's seat, as the host has it */
+                    static const char* const kPlays[3] = {
+                        "Your second controller plays 2P (hold {PADSTART} on it to stop).",
+                        "Your second controller plays 3P (hold {PADSTART} on it to stop).",
+                        "Your second controller plays 4P (hold {PADSTART} on it to stop)."};
+                    const int sub = subSeatOf(ssNetMe());
+                    if (sub != SP.seat) {
+                        ssLog("co-op: this game's second controller: seat %d (was %d)", sub, SP.seat);
+                        if (sub >= 2 && SP.want) {
+                            portCoopNotice(kPlays[sub - 2]);
+                        }
+                        SP.seat = sub;
+                        SP.full = 0;
+                    }
+                }
                 if (m.v[4] & (1 << 24)) {
                     int changedChr = !C.chrKnown;
                     for (s = 2; s <= 4; s++) {
@@ -713,6 +891,18 @@ static void coopRel(int from, const uint8_t* p, size_t n) {
                 askSeat(from, m.v[0]);
             }
             break;
+        case C_SUB:
+            if (ssNetIsHost() && from >= 2 && from <= SS_PLAYERS && K.subWant[from] != (m.v[0] != 0)) {
+                /* (an ask again while it waits, or a let-go said twice: nothing new) */
+                K.subWant[from] = m.v[0] != 0;
+                K.subFull[from] = 0;
+                if (!K.subWant[from]) {
+                    K.subLast[from] = 0;
+                }
+                ssLog("co-op: player %d's second controller %s", from,
+                      K.subWant[from] ? "asks for a seat" : "lets its seat go");
+            }
+            break;
         case C_RESYNC:
             if (ssNetIsHost() && from >= 2 && G.baseline) {
                 ssLog("co-op: player %d's progress differs from this game's: the whole of it sent again", from);
@@ -771,6 +961,9 @@ static void coopRel(int from, const uint8_t* p, size_t n) {
                 C.wornKnown = 1;
             }
             break;
+        case C_AWAY:
+            coopAwayGot(from, &m);
+            break;
         default:
             break;
     }
@@ -787,6 +980,18 @@ static int localSeat(int s) {
     (void)s;
     return 0;
 #endif
+}
+
+/* the host: seat s kept for another player than p, who stepped away from it (their phone's app in the
+   background) and may come back to it: never given to a newcomer meanwhile */
+static int seatKeptFor(int s, int p) {
+    int q;
+    for (q = 2; q <= SS_PLAYERS; q++) {
+        if (q != p && K.lastSeat[q] == s && ssPlayerAway(q)) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /* the host, each frame: every co-op guest in a seat (the lowest free one, in the order they came), the
@@ -830,8 +1035,20 @@ static void coopSeatsFrame(void) {
         }
     }
     for (s = 1; s <= 4; s++) {
+        if (s == 1 || C.seat[s] == 0) {
+            C.sub[s] = 0; /* (a seat freed or given anywhere: whoever takes it next plays it with their own) */
+        }
+    }
+    for (s = 1; s <= 4; s++) {
         const int h = holder(s);
-        if (h >= 2 && !ssNetLinked(h)) {
+        if (h >= 2 && !ssNetLinked(h) && seatSub(s)) {
+            /* (its second controller's: the same seat again when its player comes back, if it's free) */
+            ssLog("co-op: seat %d's player %d (its second controller) is gone: the seat is free", s, h);
+            K.subLast[h] = s;
+            C.seat[s] = 0;
+            C.sub[s] = 0;
+            changed = 1;
+        } else if (h >= 2 && !ssNetLinked(h)) {
             ssLog("co-op: seat %d's player %d is gone: the seat is free", s, h);
             K.lastSeat[h] = s; /* (theirs again if they come back before another takes it) */
             if (s == 1) {
@@ -880,8 +1097,9 @@ static void coopSeatsFrame(void) {
                 }
             }
             for (s = 2; s <= 4; s++) {
-                if (holder(s) == 0 && !localSeat(s)) {
+                if (holder(s) == 0 && !localSeat(s) && !seatKeptFor(s, p)) {
                     C.seat[s] = p;
+                    C.sub[s] = 0;
                     changed = 1;
                     ssLog("co-op: player %d plays seat %d (%s)", p, s,
                           s == 2 ? (portBrothersOn() ? "Luigi" : "the partner") : "a companion");
@@ -890,11 +1108,51 @@ static void coopSeatsFrame(void) {
             }
         }
     }
+    for (p = 2; p <= SS_PLAYERS; p++) {
+        /* each guest's second controller: a seat while it wants one (after its own controller's: the lowest free
+           one, or the one it had), none once it lets go or its player has none */
+        const int sub = subSeatOf(p);
+        if (sub != 0 && (!K.subWant[p] || seatOf(p) == 0 || K.kickAt[p] != 0)) {
+            ssLog("co-op: seat %d (player %d's second controller) is free", sub, p);
+            C.seat[sub] = 0;
+            C.sub[sub] = 0;
+            for (s = 2; C.pendOn && s <= 4; s++) {
+                if (C.pendSeat[s] == p && C.pendSub[s]) {
+                    C.pendSeat[s] = C.pendSub[s] = 0; /* (nor back with a swap agreed meanwhile) */
+                }
+            }
+            changed = 1;
+        } else if (sub == 0 && K.subWant[p] && coopPlayer(p) && seatOf(p) != 0 && K.kickAt[p] == 0 && !C.pendOn) {
+            int to = K.subLast[p] >= 2 && K.subLast[p] <= 4 && C.seat[K.subLast[p]] == 0 && !localSeat(K.subLast[p])
+                         ? K.subLast[p]
+                         : 0;
+            for (s = 2; to == 0 && s <= 4; s++) {
+                if (holder(s) == 0 && !localSeat(s) && !seatKeptFor(s, p)) {
+                    to = s;
+                }
+            }
+            if (to != 0) {
+                C.seat[to] = p;
+                C.sub[to] = 1;
+                K.subLast[p] = 0;
+                K.subFull[p] = 0;
+                changed = 1;
+                ssLog("co-op: player %d's second controller plays seat %d (%s)", p, to,
+                      to == 2 ? (portBrothersOn() ? "Luigi" : "the partner") : "a companion");
+            } else if (!K.subFull[p]) {
+                K.subFull[p] = 1;
+                ssLog("co-op: player %d's second controller waits: no free seat (the four are taken)", p);
+            }
+        }
+    }
     if (C.pendOn && G.seq == SEQ_GAME && !seqCheckSeq() && !gp->inBattle && !ssBattleHeld()) {
         memcpy(C.seat, C.pendSeat, sizeof(C.seat));
+        memcpy(C.sub, C.pendSub, sizeof(C.sub));
+        C.sub[1] = 0;
         C.pendOn = 0;
         changed = 1;
-        ssLog("co-op: the seats changed: 1:%d 2:%d 3:%d 4:%d", holder(1), C.seat[2], C.seat[3], C.seat[4]);
+        ssLog("co-op: the seats changed: 1:%d 2:%d%s 3:%d%s 4:%d%s", holder(1), C.seat[2], C.sub[2] ? "b" : "",
+              C.seat[3], C.sub[3] ? "b" : "", C.seat[4], C.sub[4] ? "b" : "");
     }
     if (coopCharsChanged()) {
         changed = 1; /* (a companion lent or switched: every guest's player cards show it) */
@@ -938,12 +1196,12 @@ static void coopHostLog(void) {
     for (s = 1; s <= 4; s++) {
         if (portStateSyncCoopPadHere(s) || (s == 1 && holder(1) >= 2)) {
             const int h = holder(s);
-            const PadRec* r = &C.in[h].cur;
+            const PadRec* r = &C.in[seatIn(s)].cur;
             if (h == 1) {
                 ssLog("co-op: seat %d is this game's own controller (the host's)", s);
             } else {
-                ssLog("co-op: seat %d is player %d's controller (stick %d %d, buttons %04x, %d frames queued)", s, h,
-                      r->sx, r->sy, r->button, C.in[h].count);
+                ssLog("co-op: seat %d is player %d's %scontroller (stick %d %d, buttons %04x, %d frames queued)", s, h,
+                      seatSub(s) ? "second " : "", r->sx, r->sy, r->button, C.in[seatIn(s)].count);
             }
             if (s == 2 && party != NULL) {
                 ssLog("co-op: the partner at (%.1f, %.1f, %.1f), moved by player %d", party->position.x,
@@ -1059,7 +1317,12 @@ static void ownSeekTest(PADStatus* pad) {
         if (!(npc->flags & NPC_FLAG_USED) ||
             (sNpc ? (npc->talkEvt == NULL || (npc->flags & (NPC_FLAG_ENEMY | NPC_FLAG_HIDDEN)) ||
                      npc->deadEvent != NULL || fabsf(npc->position.y - party->position.y) >= 60.0f)
-                  : (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL))) {
+                  : (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL ||
+                     /* (one standing in the room, as enemyToSeatTest's: not a hidden, untouchable spare, e.g.
+                        the Pale Piranhas' "_s0" copies kept under win_00, which Luigi swung at from above) */
+                     !(npc->flags & NPC_FLAG_ACTIVE) ||
+                     (npc->flags & (NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE | NPC_FLAG_NO_DISPLAY)) ||
+                     npc->position.y <= -500.0f))) {
             /* (an NPC to talk to: a talk, on this floor, as B's finds it (second_player_pc.c's interactFind); not
                an enemy (a dead event). Townsfolk have a battle group too: the game's default) */
             continue;
@@ -1112,9 +1375,126 @@ static void ownSeekTest(PADStatus* pad) {
 
 /* the pad read (DEMOPad.c, before a shared battle's): a co-op guest keeps its controller to send; the
    host plays each seated guest's as that seat's controller */
+/* a controller in that port here (1-3): a device, the keyboard or touch a swap took there, a test's scripted one */
+int portInputUnplugged(int port); /* input_pc.c */
+int portInputHasAny(int port);    /* input_pc.c (port/platform.h) */
+static int subThere(const PADStatus* pads, int k) {
+    return k >= 1 && k < PAD_MAX_CONTROLLERS && pads[k].err == PAD_ERR_NONE && portInputHasAny(k) &&
+           !portInputUnplugged(k);
+}
+
+static void subLetGo(const char* why, const char* notice) {
+    CoopMsg m;
+    memset(&m, 0, sizeof(m));
+    m.kind = C_SUB;
+    m.v[0] = 0;
+    coopSend(1, &m);
+    ssLog("co-op: this game's second controller (port %d) lets its seat go (%s)", SP.port + 1, why);
+    if (notice != NULL) {
+        portCoopNotice(notice);
+    }
+    SP.want = 0;
+    SP.port = 0;
+    SP.awayAt = 0;
+    SP.startHeld = 0;
+}
+
+/* a co-op guest each frame (its controllers read): its second controller's Start, its seat kept while it's away,
+   its frames to the host (SP above) */
+static void subGuestFrame(PADStatus* pads) {
+    static int sHold = -1;
+    int k, pressed = 0;
+    if (sHold < 0) {
+        const char* test = getenv("TTYD_SEAT_HOLD_FRAMES"); /* (tests: a shorter wait, as on one computer) */
+        sHold = test != NULL && atoi(test) > 0 ? atoi(test) : 60 * 60;
+    }
+    for (k = 1; k < PAD_MAX_CONTROLLERS && k < 4; k++) {
+        const uint16_t now = subThere(pads, k) ? (uint16_t)pads[k].button : 0;
+        if ((now & PAD_BUTTON_START) && !(SP.last[k] & PAD_BUTTON_START) && k != SP.port && pressed == 0) {
+            pressed = k;
+        }
+        SP.last[k] = now;
+    }
+    if (!SP.want) {
+        if (pressed != 0) {
+            CoopMsg m;
+            memset(&m, 0, sizeof(m));
+            m.kind = C_SUB;
+            m.v[0] = 1;
+            coopSend(1, &m);
+            SP.want = 1;
+            SP.port = pressed;
+            SP.awayAt = 0;
+            SP.startHeld = 0;
+            SP.full = 0;
+            SP.askedAt = SP.resentAt = G.frame;
+            SP.seat = subSeatOf(ssNetMe());
+            ssLog("co-op: controller %d here pressed Start: this game's second controller asks the host for a seat",
+                  pressed + 1);
+        }
+        return;
+    }
+    if (!subThere(pads, SP.port) && pressed != 0) {
+        ssLog("co-op: controller %d here pressed Start: it plays the second controller's seat", pressed + 1);
+        SP.port = pressed; /* (its seat kept, and another controller here takes it, as on one computer) */
+    }
+    if (!subThere(pads, SP.port)) {
+        if (SP.awayAt == 0) {
+            SP.awayAt = G.frame | 1;
+            ssLog("co-op: this game's second controller disconnected: its seat is kept for %d frames", sHold);
+            portCoopNotice("Your second controller is away: its seat is kept.");
+        } else if (G.frame - SP.awayAt > (unsigned)sHold) {
+            subLetGo("its time ran out without it", "Your second controller left its seat.");
+        }
+        return;
+    }
+    if (SP.awayAt != 0) {
+        SP.awayAt = 0;
+        ssLog("co-op: this game's second controller is back: its seat again");
+        portCoopNotice("Your second controller is back.");
+    }
+    if (pads[SP.port].button & PAD_BUTTON_START) {
+        if (++SP.startHeld == SUB_LEAVE_FRAMES) {
+            subLetGo("its Start held", "Your second controller left its seat.");
+            return;
+        }
+    } else {
+        SP.startHeld = 0;
+    }
+    if (SP.seat == 0 && G.frame - SP.resentAt >= SUB_RESEND_FRAMES) {
+        /* (no seat yet: asked again now and then, so an ask the host had before its session with this game began
+           afresh, or one it dropped, never leaves the controller waiting for good) */
+        CoopMsg m;
+        memset(&m, 0, sizeof(m));
+        m.kind = C_SUB;
+        m.v[0] = 1;
+        coopSend(1, &m);
+        SP.resentAt = G.frame;
+    }
+    if (SP.seat == 0 && !SP.full && G.frame - SP.askedAt > SUB_FULL_FRAMES) {
+        SP.full = 1;
+        ssLog("co-op: this game's second controller has no seat yet (the host's four are taken)");
+        portCoopNotice("No free seat for your second controller.");
+    }
+    memmove(&SP.hist[1], &SP.hist[0], sizeof(SP.hist[0]) * (COOP_PAD_HISTORY - 1));
+    if (G.seq == SEQ_GAME && !gp->inBattle && !winCheck()) {
+        padTo(&SP.hist[0], &pads[SP.port]);
+        {
+            const uint16_t yaw = portCoopCameraYawWire(); /* (one screen: the same picture as its own controller's) */
+            SP.hist[0].yaw[0] = (uint8_t)(yaw & 0xFF);
+            SP.hist[0].yaw[1] = (uint8_t)(yaw >> 8);
+        }
+    } else {
+        memset(&SP.hist[0], 0, sizeof(SP.hist[0])); /* (a menu, a battle: nothing for the field) */
+    }
+    SP.frame++;
+    sendPad(1, SP.frame, SP.hist);
+}
+
 static void coopApplyPad(PADStatus* pads) {
     int s;
     if (portStateSyncCoopGuest()) {
+        subGuestFrame(pads);
         memmove(&C.hist[1], &C.hist[0], sizeof(C.hist[0]) * (COOP_PAD_HISTORY - 1));
         if (pads[0].err == PAD_ERR_NONE && G.seq == SEQ_GAME && !gp->inBattle && !winCheck()) {
             padTo(&C.hist[0], &pads[0]);
@@ -1131,7 +1511,13 @@ static void coopApplyPad(PADStatus* pads) {
         }
         C.padFrame++;
         actPressRead(&pads[0]); /* (after the count: this frame's pad read) */
-        sendPad(); /* (as it's read: on its way before the frame's update) */
+        sendPad(0, C.padFrame, C.hist); /* (as it's read: on its way before the frame's update) */
+        if (SP.want && SP.port >= 1 && SP.port < PAD_MAX_CONTROLLERS) {
+            /* (the second controller is the host's game's, for its seat: nothing of it played here) */
+            const s8 err = pads[SP.port].err;
+            memset(&pads[SP.port], 0, sizeof(pads[SP.port]));
+            pads[SP.port].err = err;
+        }
         if (OG.seat >= 2 && OG.seat <= 4 && pads[0].err == PAD_ERR_NONE) {
             /* this game walks its seat's character: its controller is that seat's here too (Mario's keys are off
                here; Start stays the player's own menu) */
@@ -1162,30 +1548,32 @@ static void coopApplyPad(PADStatus* pads) {
         }
     }
     for (s = 1; s <= 4; s++) {
-        const int p = holder(s);
+        const int p = holder(s), q = seatIn(s); /* (q: its controller's frames, a second controller's own) */
         if (p < 2 || !portStateSyncCoopPadHere(s)) {
             continue;
         }
-        while (C.in[p].count > COOP_PAD_BEHIND) {
-            padDropOldest(p); /* (behind: catch up) */
+        while (C.in[q].count > COOP_PAD_BEHIND) {
+            padDropOldest(q); /* (behind: catch up) */
         }
-        if (C.in[p].count > 0) {
-            const uint32_t f = C.in[p].last - (uint32_t)(C.in[p].count - 1); /* (the head's frame) */
-            C.in[p].cur = C.in[p].q[C.in[p].head];
-            C.in[p].head = (C.in[p].head + 1) % COOP_PAD_QUEUE;
-            C.in[p].count--;
-            ndHostApplied(p, s, f, C.in[p].count);
+        if (C.in[q].count > 0) {
+            const uint32_t f = C.in[q].last - (uint32_t)(C.in[q].count - 1); /* (the head's frame) */
+            C.in[q].cur = C.in[q].q[C.in[q].head];
+            C.in[q].head = (C.in[q].head + 1) % COOP_PAD_QUEUE;
+            C.in[q].count--;
+            if (q == p) {
+                ndHostApplied(p, s, f, C.in[q].count);
+            }
         }
-        padFrom(&pads[s - 1], &C.in[p].cur);
-        if ((C.in[p].cur.a & 0xE0) == 0xE0) {
-            C.in[p].cur.a = 0; /* (a mark is one frame's: not again while no newer frame has come) */
+        padFrom(&pads[s - 1], &C.in[q].cur);
+        if ((C.in[q].cur.a & 0xE0) == 0xE0) {
+            C.in[q].cur.a = 0; /* (a mark is one frame's: not again while no newer frame has come) */
         }
         if (s == 1 && G.pl[p].info.keysOff) {
             /* (the guest playing Mario is in their own pause menu: Mario stands still meanwhile) */
             pads[0].button = 0;
             pads[0].stickX = pads[0].stickY = pads[0].substickX = pads[0].substickY = 0;
         }
-        portCoopCameraSeatYaw(s, (uint16_t)(C.in[p].cur.yaw[0] | (C.in[p].cur.yaw[1] << 8)));
+        portCoopCameraSeatYaw(s, (uint16_t)(C.in[q].cur.yaw[0] | (C.in[q].cur.yaw[1] << 8)));
     }
 }
 
@@ -1215,7 +1603,8 @@ static void marioMenuRelease(const char* why) {
 /* the host each frame: the guest playing Mario has its Start menu up (its pages, 1-99): the world held */
 static void coopMarioMenuFrame(void) {
     const int p = portStateSyncCoopHost() ? holder(1) : 0;
-    const int want = p >= 2 && present(p) && G.pl[p].info.paused && G.pl[p].info.seq == SEQ_GAME && gp != NULL &&
+    /* (bit 1 alone: its own menu; bit 4 is a test's word that it sees the host's last pause, statesync_pc.c) */
+    const int want = p >= 2 && present(p) && (G.pl[p].info.paused & 1) && G.pl[p].info.seq == SEQ_GAME && gp != NULL &&
                      G.seq == SEQ_GAME && !seqCheckSeq() && !gp->inBattle && !ssBattleBusy() && !winCheck();
     if (sMarioMenuHold != 0 && (!want || sMarioMenuHold != p)) {
         marioMenuRelease(want ? "changed hands" : "closed");
@@ -1350,49 +1739,75 @@ static struct {
     } h[SS_PLAYERS + 1];
 } ND;
 
-static void sendPad(void) {
+/* a guest: its controller's last frames to the host (sub 1: its second controller's). A room on the relay
+   (each message part of its day): a frame the same as the last sent isn't sent again for PAD_SAME_MS (the host
+   plays the last it has until a newer comes: the same thing; a changed one goes at once, its frames before it
+   in its history). By address every frame goes, as before */
+static void sendPad(int sub, uint32_t frame, const PadRec* hist) {
+    static PadRec sLast[2];
+    static unsigned long long sLastMs[2];
+    static int sHave[2];
+    const int k = sub != 0;
     PadMsg m;
+    if (ssNetRoom() && sHave[k] && !memcmp(&hist[0], &sLast[k], sizeof(sLast[k])) &&
+        ssNetMs() - sLastMs[k] < PAD_SAME_MS && !(k == 0 && ND.on && ND.queuedMs == 0)) {
+        if (k == 0) {
+            ndGuestFrame(0);
+        }
+        return;
+    }
+    sLast[k] = hist[0];
+    sLastMs[k] = ssNetMs();
+    sHave[k] = 1;
     memset(&m, 0, sizeof(m));
-    m.frame = C.padFrame;
+    m.frame = frame;
     m.n = COOP_PAD_HISTORY;
-    memcpy(m.rec, C.hist, sizeof(m.rec));
-    if (ND.on && ND.queuedMs == 0 && (int32_t)(C.padFrame - ND.frame) >= 0) {
+    m.sub = (uint8_t)(sub != 0);
+    memcpy(m.rec, hist, sizeof(m.rec));
+    if (sub == 0 && ND.on && ND.queuedMs == 0 && (int32_t)(C.padFrame - ND.frame) >= 0) {
         ND.queuedMs = ssNetMs();
     }
     ssNetSendTo(1, SS_MSG_PAD, &m, sizeof(m));
-    ndGuestFrame(0);
+    if (sub == 0) {
+        ndGuestFrame(0);
+    }
 }
 
 static void gotPad(int from, const uint8_t* p, size_t n) {
     PadMsg m;
-    int i, k;
+    int i, k, q;
+    int32_t ahead;
     if (!ssNetIsHost() || from < 2 || from > SS_PLAYERS || n < sizeof(m)) {
         return;
     }
     memcpy(&m, p, sizeof(m));
+    q = m.sub ? SUB_IN(from) : from; /* (its second controller's frames: their own queue) */
     k = m.n > COOP_PAD_HISTORY ? COOP_PAD_HISTORY : m.n;
-    if (C.in[from].any && (int32_t)(m.frame - C.in[from].last) > 1000) {
-        C.in[from].any = 0; /* (its game began again) */
+    ahead = (int32_t)(m.frame - C.in[q].last);
+    if (C.in[q].any && (ahead > 1000 || ahead < -1000)) {
+        C.in[q].any = 0; /* (its game began again, or another game in its place: a count of its own) */
     }
-    if (!C.in[from].any) {
-        C.in[from].last = m.frame - 1;
-        C.in[from].count = 0;
-        C.in[from].any = 1;
+    if (!C.in[q].any) {
+        C.in[q].last = m.frame - 1;
+        C.in[q].count = 0;
+        C.in[q].any = 1;
         k = 1;
     }
     for (i = k - 1; i >= 0; i--) {
         const uint32_t f = m.frame - (uint32_t)i;
-        if ((int32_t)(f - C.in[from].last) > 0) {
-            if (C.in[from].count >= COOP_PAD_QUEUE) {
-                padDropOldest(from);
+        if ((int32_t)(f - C.in[q].last) > 0) {
+            if (C.in[q].count >= COOP_PAD_QUEUE) {
+                padDropOldest(q);
             }
-            C.in[from].q[(C.in[from].head + C.in[from].count) % COOP_PAD_QUEUE] = m.rec[i];
-            C.in[from].count++;
-            C.in[from].last = f;
-            ndHostArrived(from, f, &m.rec[i]);
+            C.in[q].q[(C.in[q].head + C.in[q].count) % COOP_PAD_QUEUE] = m.rec[i];
+            C.in[q].count++;
+            C.in[q].last = f;
+            if (q == from) {
+                ndHostArrived(from, f, &m.rec[i]);
+            }
         }
     }
-    C.in[from].at = ssNetMs();
+    C.in[q].at = ssNetMs();
 }
 
 /* ---- the guest: the host's progress, whole ---- */
@@ -1404,9 +1819,76 @@ static void takeSnapshot(const Progress* in) {
     PouchData* pd = pouchGetPtr();
     Progress mine;
     int i, l, id, items = 0;
+    uint8_t kindWas[64], kindNow[64];
     memcpy(&sTaken, in, sizeof(sTaken));
     progressCheck(&sTaken, "the host's snapshot"); /* (statesync_pc.c) */
     readProgress(&mine);
+    {
+        /* what differed, for the log (a DRIFT's cause): the first few story flags and words */
+        char diff[400];
+        int at = 0, shown = 0;
+        for (i = 0; i < 0x100 * 32 && shown < 8 && at < (int)sizeof(diff) - 24; i++) {
+            if (((mine.gswf[i >> 5] ^ r->gswf[i >> 5]) >> (i & 31)) & 1) {
+                at += snprintf(diff + at, sizeof(diff) - (size_t)at, " F%d=%u", i, (r->gswf[i >> 5] >> (i & 31)) & 1);
+                shown++;
+            }
+        }
+        for (i = 1; i < 0x800 && shown < 12 && at < (int)sizeof(diff) - 24; i++) {
+            if (!ownWord(i) && mine.gsw[i] != r->gsw[i]) {
+                at += snprintf(diff + at, sizeof(diff) - (size_t)at, " W%d=%d(%d)", i, r->gsw[i], mine.gsw[i]);
+                shown++;
+            }
+        }
+#define SS_DIFF_STAT(f)                                                                                          \
+    if (mine.stats.f != r->stats.f && at < (int)sizeof(diff) - 24) {                                            \
+        at += snprintf(diff + at, sizeof(diff) - (size_t)at, " %s=%d(%d)", #f, (int)r->stats.f, (int)mine.stats.f); \
+        shown++;                                                                                                 \
+    }
+        SS_DIFF_STAT(level)
+        SS_DIFF_STAT(baseMaxHP)
+        SS_DIFF_STAT(baseMaxFP)
+        SS_DIFF_STAT(maximumBP)
+        SS_DIFF_STAT(starPoints)
+        SS_DIFF_STAT(maximumSP)
+        SS_DIFF_STAT(rank)
+        SS_DIFF_STAT(starPowers)
+        SS_DIFF_STAT(jump)
+        SS_DIFF_STAT(hammer)
+#undef SS_DIFF_STAT
+        if (!memcmp(r->area, mine.area, 4)) {
+            for (i = 0; i < 0x10 * 32 && at < (int)sizeof(diff) - 24; i++) {
+                if (((mine.lswf[i >> 5] ^ r->lswf[i >> 5]) >> (i & 31)) & 1) {
+                    at += snprintf(diff + at, sizeof(diff) - (size_t)at, " LF%d=%u", i, (r->lswf[i >> 5] >> (i & 31)) & 1);
+                    shown++;
+                }
+            }
+            for (i = 0; i < 0x400 && at < (int)sizeof(diff) - 24; i++) {
+                if (mine.lsw[i] != r->lsw[i]) {
+                    at += snprintf(diff + at, sizeof(diff) - (size_t)at, " LW%d=%d(%d)", i, r->lsw[i], mine.lsw[i]);
+                    shown++;
+                }
+            }
+        }
+        for (l = 1; l < 8 && at < (int)sizeof(diff) - 64; l++) { /* (slot 0: no partner, readStats) */
+            if (mine.stats.partyFlags[l] != r->stats.partyFlags[l] ||
+                mine.stats.partyHPLevel[l] != r->stats.partyHPLevel[l] ||
+                mine.stats.partyAttack[l] != r->stats.partyAttack[l] ||
+                mine.stats.partyTech[l] != r->stats.partyTech[l]) {
+                /* (not its base max HP alone: the HP level's, as pouchRevisePartyParam sets it, and a partner never
+                   joined keeps pouchInit's 10 in one file where another's was revised: s51-001's party3..7) */
+                at += snprintf(diff + at, sizeof(diff) - (size_t)at, " party%d=%x/%d/%d/%d/%d(%x/%d/%d/%d/%d)", l,
+                               r->stats.partyFlags[l], r->stats.partyHPLevel[l], r->stats.partyAttack[l],
+                               r->stats.partyTech[l], r->stats.partyBaseMaxHP[l], mine.stats.partyFlags[l],
+                               mine.stats.partyHPLevel[l], mine.stats.partyAttack[l], mine.stats.partyTech[l],
+                               mine.stats.partyBaseMaxHP[l]);
+                shown++;
+            }
+        }
+        if (shown > 0) {
+            ssLog("co-op: the host's progress differs here in:%s", diff);
+        }
+    }
+    fileKind(gp->gsw, kindWas);
     memcpy(gp->gswf, r->gswf, sizeof(gp->gswf));
     for (i = 1; i < 0x800; i++) {
         if (!ownWord(i)) {
@@ -1414,6 +1896,14 @@ static void takeSnapshot(const Progress* in) {
         }
     }
     gp->gsw0 = r->gsw0;
+    fileKind(gp->gsw, kindNow);
+    if (memcmp(kindWas, kindNow, sizeof(kindWas)) != 0 && seqGetSeq() == SEQ_GAME) {
+        /* (this guest's own file another kind, an open-world one: its seed's items were written into this room's
+           area as it was entered, and stay until the area is entered again; the host's room has the host's items.
+           The room entered again, as the host's file has it: nm51f l51-024's "an item here is gone there" DRIFT) */
+        C.reenter = 1;
+        ssLog("co-op: the host's file is another kind than this one was: this room entered again as the host's");
+    }
     if (!memcmp(r->area, mine.area, 4)) {
         memcpy(gp->lswf, r->lswf, sizeof(gp->lswf));
         memcpy(gp->lsw, r->lsw, sizeof(gp->lsw));
@@ -1428,12 +1918,10 @@ static void takeSnapshot(const Progress* in) {
     for (l = 0; l < LISTS; l++) {
         for (id = 1; id < IDS; id++) {
             int k;
-            for (k = mine.count[l][id]; k < r->count[l][id]; k++) {
-                addItem(l, id);
+            for (k = mine.count[l][id]; k < r->count[l][id] && addItem(l, id); k++) {
                 items++;
             }
-            for (k = r->count[l][id]; k < mine.count[l][id]; k++) {
-                removeItem(l, id);
+            for (k = r->count[l][id]; k < mine.count[l][id] && removeItem(l, id); k++) {
                 items++;
             }
         }
@@ -1451,7 +1939,7 @@ static void takeSnapshot(const Progress* in) {
     pd->starPowersObtained = r->stats.starPowers;
     pd->jumpLevel = r->stats.jump;
     pd->hammerLevel = r->stats.hammer;
-    for (i = 0; i < 8; i++) {
+    for (i = 1; i < 8; i++) { /* (slot 0: no partner, readStats) */
         PouchPartyData* d = &pd->partyData[i];
         d->flags = r->stats.partyFlags[i];
         d->HPLevel = r->stats.partyHPLevel[i];
@@ -1461,6 +1949,12 @@ static void takeSnapshot(const Progress* in) {
     }
     pouchReviseMarioParam();
     pouchRevisePartyParam();
+    {
+        const int was = sRelFrom;
+        sRelFrom = 1; /* (the host's party as this game now has it: its leaves from here on, peerParty) */
+        (void)peerParty(&r->stats, 0);
+        sRelFrom = was;
+    }
     C.took = 1;
     if (!C.was) {
         K.ownSlot = coopOwnFile(); /* (before the host's world: the file to go back to) */
@@ -1472,25 +1966,90 @@ static void takeSnapshot(const Progress* in) {
           items, pd->coins, pd->level);
 }
 
-/* a guest, at each digest of the host's: its progress differs (a change of this game's own,
-   one lost on the way): the host's whole progress asked for again */
-static void coopDigest(int same) {
-    static int sDiffer;
-    static unsigned sAskedAt;
+/* a guest, at each digest of the host's (parts: what differs, by bit: 1 the story, 2 the pouch, 4 the stats, 8 the
+   area; 0 nothing; -1 not to compare: either game's progress held by a battle, a scene or a mode, or the host's
+   digest kept here for after this game's battle, from before its changes crossed): the same part differing at two
+   digests in a row (a change on its way comes within a round trip: an item picked up just as one digest went,
+   then another part just as the next, is two changes on their way, not a drift) is a drift (a change lost on the
+   way, or this game's own), healed at once: a
+   co-op guest asks for the host's whole progress again (the host's world is the world); a guest playing its
+   own game (a party game's pick) merges both ways again as a session's start does (its whole progress to the
+   host, the host's back), so the two end the same. what: what differs, for the log */
+#define FIGHT_SKIPPED_WAIT 3600 /* a fight left to the host (sFightSkipped): its fight begun within this */
+#define DIGEST_APART_FRAMES 120 /* two differing digests "in a row": this far apart at least (they go every 300) */
+static void coopDigest(int parts, const char* what) {
+    static int sDiffer, sParts;
+    static unsigned sAskedAt, sDifferAt;
+    const int same = parts == 0;
     CoopMsg m;
-    if (!portStateSyncCoopGuest() || ssBattleBusy() || gp == NULL || gp->inBattle || modeHold()) {
-        return; /* (this game's own progress held by a mode: nothing to compare) */
+    if (parts < 0 || G.watch || ssNetIsHost() || ssBattleBusy() || gp == NULL || gp->inBattle || modeHold()) {
+        sDiffer = 0; /* (this game's own progress held by a mode: nothing to compare) */
+        return;
     }
+    if (portStateSyncCoopGuest() &&
+        ((sStoryQuietUntil != 0 && G.frame < sStoryQuietUntil) || (ssPeerOf(1)->valid && ssPeerOf(1)->inBattle))) {
+        /* (a co-op guest whose script went past a fight the host is still fighting, ssProgressQuiet: its story a
+           step ahead until the host's win comes, not a drift. A guest back in the room after leaving the host's
+           battle was "healed" back to before the fight mid-battle, mp_online_goons_leave3) */
+        if (sFightSkipped == 1 && ssPeerOf(1)->valid && ssPeerOf(1)->inBattle) {
+            sFightSkipped = 2;
+        }
+        sDiffer = 0;
+        return;
+    }
+    if (portStateSyncCoopGuest() && sFightSkipped == 1 && G.frame - sFightSkippedAt < FIGHT_SKIPPED_WAIT) {
+        sDiffer = 0; /* (the host's fight not begun yet: it comes to it, its players with it) */
+        return;
+    }
+    if (portStateSyncCoopGuest() && sFightSkipped != 0) {
+        /* (the host's fight over: this game's story after it was its script's, as if won, its flags never sent
+           (ssProgressQuiet). The host's may be another: s51-001, the host lost the Iron Clefts match and the
+           guest kept their win's flags and the ranking's, a DRIFT at the next digests. The host's whole progress,
+           asked for now, as the outcome it is) */
+        sFightSkipped = 0;
+        sDiffer = 0;
+        if (!same) {
+            sAskedAt = G.frame;
+            memset(&m, 0, sizeof(m));
+            m.kind = C_RESYNC;
+            ssLog("co-op: this game's script went past a fight the host fought, and its story differs from the host's "
+                  "(%s): the host's whole progress asked for",
+                  what);
+            coopSend(1, &m);
+        }
+        return;
+    }
+    if (!same && sDiffer > 0 && G.frame - sDifferAt < DIGEST_APART_FRAMES) {
+        /* (digests that waited while the progress was held (a battle, a scene: flushDeferred) come together
+           once it's free: in a row means a digest's time apart, never two taken in the same moment, so a
+           change still on its way isn't called a drift) */
+        return;
+    }
+    if (!same && sDiffer > 0 && (parts & sParts) == 0) {
+        sDiffer = 0; /* (another part than the last digest's: each a change on its way, the count starts again) */
+    }
+    sParts = same ? 0 : sDiffer > 0 ? sParts & parts : parts;
     sDiffer = same ? 0 : sDiffer + 1;
-    if (sDiffer < 1 || (sAskedAt != 0 && G.frame - sAskedAt < 600)) {
+    sDifferAt = G.frame;
+    if (sDiffer < 2 || (sAskedAt != 0 && G.frame - sAskedAt < 600)) {
         return;
     }
     sAskedAt = G.frame;
     sDiffer = 0;
+    G.progressDrifts++;
     memset(&m, 0, sizeof(m));
     m.kind = C_RESYNC;
+    if (portStateSyncCoopGuest()) {
+        ssLog("DRIFT progress: %s differs from the host's at two digests in a row: the host's whole progress asked for "
+              "again",
+              what);
+    } else {
+        ssLog("DRIFT progress: %s differs from the host's at two digests in a row: merged again both ways (this "
+              "game's whole progress to the host, the host's back)",
+              what);
+        sendSnapshot(1);
+    }
     coopSend(1, &m);
-    ssLog("co-op: this game's progress differs from the host's: the host's asked for again");
 }
 
 /* ---- the guest: following the host's world ---- */
@@ -1601,14 +2160,30 @@ static void coopFollowFrame(void) {
         return;
     }
     if (strcmp(h->info.map, gp->currentMapName) != 0) {
-        if (strcmp(G.watchWarp, h->info.map) != 0) {
+        /* (once, then again every few seconds while this game is settled in another room: an entry script that
+           moved it on, a warp that didn't take) */
+        const int again = !strcmp(G.watchWarp, h->info.map) && G.frame - G.watchWarpAt >= FOLLOW_RETRY_FRAMES;
+        if ((strcmp(G.watchWarp, h->info.map) != 0 || again) && ssMapNameOk(h->info.map, sizeof(h->info.map)) &&
+            !followHeld("co-op", h->info.map)) {
             snprintf(G.watchWarp, sizeof(G.watchWarp), "%s", h->info.map);
-            ssLog("co-op: the host went to %s: along", h->info.map);
-            seqSetSeq(SEQ_MAP_CHANGE, h->info.map, NULL);
+            G.watchWarpAt = G.frame;
+            ssLog("co-op: the host went to %s: along%s", h->info.map, again ? " (again: this game is elsewhere)" : "");
+            seqSetSeq(SEQ_MAP_CHANGE, G.watchWarp, NULL); /* (this game's copy: seqSetSeq keeps the pointer) */
         }
         return;
     }
     G.watchWarp[0] = '\0';
+    if (C.reenter && h->info.seq == SEQ_GAME && seqGetSeq() == SEQ_GAME && !seqCheckSeq() &&
+        !followHeld("co-op", gp->currentMapName)) {
+        /* (takeSnapshot: the file became the host's kind; its area entered again, so its items are the host's) */
+        static char sAgain[16];
+        C.reenter = 0;
+        snprintf(sAgain, sizeof(sAgain), "%s", gp->currentMapName);
+        ssLog("co-op: %s entered again as the host's file has it", sAgain);
+        seqSetSeq(SEQ_MAP_CHANGE, sAgain, NULL); /* (seqSetSeq keeps the pointer) */
+        return;
+    }
+    screenNote("co-op");
     if (h->info.seq != SEQ_GAME) {
         return;
     }
@@ -1626,15 +2201,12 @@ static void coopFollowFrame(void) {
     }
 }
 
-/* a co-op guest: the character its seat plays is drawn from the host's newest word, not 100 ms behind as the
-   others' (its player's press shows as soon as the host's game has moved it) */
-static int ownNewestHelper(int p, int k) {
-    return p == 1 && portStateSyncCoopGuest() && seatOf(ssNetMe()) == 3 + k;
-}
-
+/* a co-op guest: the character its seat plays, while the host's game walks it, is drawn as the host's word has it,
+   interpolated with the host's Mario and the rest (once from the newest word alone: it stood still between the words
+   and jumped at each, walking in place, and ran ahead of the Mario it follows); while this game walks it, its own */
 static void coopOwnNewest(SsGhostPose* partner, int* hasPartner, SsGhostPose* luigi, int* hasLuigi) {
-    SsGhostPose me, np, nl;
-    int hp = 0, hl = 0;
+    (void)partner;
+    (void)luigi;
     if (!portStateSyncCoopGuest() || seatOf(ssNetMe()) != 2) {
         return;
     }
@@ -1645,19 +2217,7 @@ static void coopOwnNewest(SsGhostPose* partner, int* hasPartner, SsGhostPose* lu
         } else {
             *hasPartner = 0;
         }
-        return;
     }
-    sInterpNewest = 1;
-    if (interpolate(1, &me, &np, &hp, &nl, &hl)) {
-        if (portBrothersOn() && hl) {
-            *luigi = nl;
-            *hasLuigi = 1;
-        } else if (!portBrothersOn() && hp) {
-            *partner = np;
-            *hasPartner = 1;
-        }
-    }
-    sInterpNewest = 0;
 }
 
 /* the ghosts of the host's helpers (the follower, the companion), drawn as its partner's (which 3, 4) */
@@ -1666,9 +2226,8 @@ static void coopHelperGhosts(int p, int slot, int shown) {
     for (k = 0; k < 2; k++) {
         SsGhostPose pose;
         int got;
-        sInterpNewest = ownNewestHelper(p, k);
-        got = shown && !(sInterpNewest && OG.drawn && OG.seat == 3 + k) && helperPose(p, k, &pose); /* (this game's own) */
-        sInterpNewest = 0;
+        const int own = p == 1 && portStateSyncCoopGuest() && seatOf(ssNetMe()) == 3 + k;
+        got = shown && !(own && OG.drawn && OG.seat == 3 + k) && helperPose(p, k, &pose); /* (this game's own) */
         if (got) {
             /* (its Paper Mario 64 look, the host's word: drawn as the host's game and this game's own walk of it
                draw it, never Goombella held and Goombario walked) */
@@ -1782,9 +2341,7 @@ static int ndDrawnPos(float out[3]) {
     }
     if (s == 3 || s == 4) {
         int got;
-        sInterpNewest = ownNewestHelper(1, s - 3);
         got = helperPose(1, s - 3, &pose);
-        sInterpNewest = 0;
         if (got) {
             at = &pose;
         }
@@ -1925,7 +2482,7 @@ typedef struct OwnMsg {
     uint32_t epoch; /* the host's epoch for this seat, as this guest last saw it */
     uint8_t seat;
     uint8_t owned; /* its player has taken it (else it follows Mario: the host's game walks it) */
-    uint8_t pad[2];
+    int16_t face;  /* the way its paper faces there (its display direction in tenths + OWN_FACE), 0 not said */
     int32_t member; /* the character (its party member), to be sure it is the one the host has */
     float x, y, z, dir;
     char anim[32];
@@ -1936,6 +2493,10 @@ typedef struct OwnMsg {
 WIRE_SIZE(OwnMsg, 96);
 
 #define OWN_STALE_MS 300
+#define OWN_FACE 10000 /* (OwnMsg.face's bias: a display direction of -100 to 360 degrees, never 0) */
+#define OWN_HIST 16    /* the host's: each seat's last reports, its character played back smoothly from them */
+#define OWN_BEHIND_MAX 250 /* the most the host plays a seat's character back behind its reports (ms) */
+#define OWN_SAME_MS 100 /* a room's: an unchanged character sent again this often (coopOwnSend) */
 #define OWN_STEP 14.0f     /* a frame's walk at most (a boosted run is under 8) */
 #define OWN_TELEPORT 160.0f /* a jump this far, away from Mario, is refused */
 
@@ -1946,7 +2507,51 @@ static struct {
     int any, held, placed, logged;
     uint32_t epoch;
     uint32_t hitSeq; /* the guest's head hits taken */
+    int from;        /* the player whose reports rep is (any) */
+    int who;         /* the seat's holder as last seen (holder | 0x100 a second controller's): ownWhoFrame */
+    /* its reports lately, oldest first (ownAt plays them back), and how late they come by its clock: the most of
+       it lately (each report's lateness; the largest held, let go a little at each report) */
+    OwnMsg hist[OWN_HIST];
+    int histN;
+    float lateMax;
+    int lateKnown;
 } O[5];
+
+/* a backward step this big in a report's clock is another clock (its game began again, or another game in the
+   seat), not a reordered report */
+#define OWN_CLOCK_JUMP_MS 5000
+
+/* the host: seat s's reports forgotten (a new holder, a new session, a clock begun again): the next report, on
+   whatever clock its game has, is taken. Each report's ms is its sender's own clock, so one kept from an earlier
+   holder (or game) refused a new one's as "older" for as long as its clock was behind: the seat stayed held and
+   its guest's character never walked. A new epoch: the guest takes the host's place first */
+static void ownReset(int s, const char* why) {
+    uint32_t epoch;
+    int who;
+    if (s < 2 || s > 4) {
+        return;
+    }
+    epoch = O[s].epoch + 1;
+    who = O[s].who;
+    memset(&O[s], 0, sizeof(O[s]));
+    O[s].epoch = epoch;
+    O[s].who = who;
+    O[s].held = 1;
+    ssLog("co-op: seat %d's own-character reports forgotten (%s): epoch %u", s, why, epoch);
+}
+
+/* the host each frame: a seat whose holder changed (a swap, a guest gone, another come, a second controller) starts
+   its reports over */
+static void ownWhoFrame(void) {
+    int s;
+    for (s = 2; s <= 4; s++) {
+        const int who = holder(s) | (seatSub(s) ? 0x100 : 0);
+        if (who != O[s].who) {
+            O[s].who = who;
+            ownReset(s, "its holder changed");
+        }
+    }
+}
 
 /* the guest: its own Luigi's last head hit (every word carries it: a lost one costs nothing) */
 static struct {
@@ -2005,12 +2610,22 @@ static void gotOwn(int from, const uint8_t* p, size_t n) {
     }
     memcpy(&m, p, sizeof(m));
     s = m.seat;
-    if (s < 2 || s > 4 || holder(s) != from || !isfinite(m.x) || !isfinite(m.y) || !isfinite(m.z) ||
+    if (s < 2 || s > 4 || holder(s) != from || seatSub(s) || !isfinite(m.x) || !isfinite(m.y) || !isfinite(m.z) ||
         !isfinite(m.dir) || fabsf(m.x) > 1e5f || fabsf(m.y) > 1e5f || fabsf(m.z) > 1e5f) {
-        return; /* (not that player's seat, or numbers no map has) */
+        return; /* (not that player's seat, a second controller's (the host's game walks it), or numbers no map has) */
+    }
+    if (O[s].any && O[s].from != from) {
+        ownReset(s, "another player's reports"); /* (a seat changed hands before ownWhoFrame saw it) */
     }
     if (O[s].any && (int32_t)(m.ms - O[s].rep.ms) <= 0) {
-        return; /* (an older one) */
+        if ((int32_t)(m.ms - O[s].rep.ms) > -OWN_CLOCK_JUMP_MS) {
+            return; /* (an older one) */
+        }
+        ownReset(s, "its game's clock began again");
+    }
+    O[s].from = from;
+    if (m.face != 0 && (m.face < OWN_FACE - 1000 || m.face > OWN_FACE + 3600)) {
+        m.face = 0; /* (no display direction a game has: not said) */
     }
     m.anim[sizeof(m.anim) - 1] = '\0';
     m.hit[sizeof(m.hit) - 1] = '\0';
@@ -2023,6 +2638,65 @@ static void gotOwn(int from, const uint8_t* p, size_t n) {
     O[s].rep = m;
     O[s].at = ssNetMs();
     O[s].any = 1;
+    if (O[s].histN == OWN_HIST) {
+        memmove(&O[s].hist[0], &O[s].hist[1], sizeof(O[s].hist[0]) * (OWN_HIST - 1));
+        O[s].histN--;
+    }
+    O[s].hist[O[s].histN++] = m;
+    {
+        /* (its lateness by its own clock, as its places' are measured: the batch it rode, the link's wait; the most
+           of it lately is how far behind the host plays it back, so the next report is there in time) */
+        const float late = (float)((long long)(uint32_t)ssNetMs() - G.pl[from].offset - (long long)m.ms);
+        if (!O[s].lateKnown || late > O[s].lateMax) {
+            O[s].lateMax = late;
+            O[s].lateKnown = 1;
+        } else {
+            O[s].lateMax -= 0.5f; /* (a quieter link: less behind again, some 30 ms a second) */
+        }
+    }
+}
+
+/* the host: seat s's character as its guest's game had it a moment ago, its reports played back as they were made
+   (placed at the newest report alone, it stood still between the reports and jumped at each, walking in place) */
+static OwnMsg ownAt(int s) {
+    const float behindF = (O[s].lateMax > 0.0f ? O[s].lateMax : 0.0f) + 8.0f;
+    const long long behind = (long long)(behindF < (float)OWN_BEHIND_MAX ? behindF : (float)OWN_BEHIND_MAX);
+    const long long target = (long long)(uint32_t)ssNetMs() - G.pl[O[s].from].offset - behind;
+    const OwnMsg *a = NULL, *b = NULL;
+    OwnMsg out;
+    float t;
+    int i;
+    if (O[s].histN == 0) {
+        return O[s].rep;
+    }
+    for (i = 0; i < O[s].histN; i++) {
+        if (O[s].hist[i].epoch != O[s].rep.epoch || O[s].hist[i].owned != O[s].rep.owned) {
+            continue; /* (from before a hold of the host's, or before its player took it: not glided from) */
+        }
+        if ((long long)O[s].hist[i].ms <= target) {
+            a = &O[s].hist[i];
+        } else {
+            b = &O[s].hist[i];
+            break;
+        }
+    }
+    if (a == NULL) {
+        return b != NULL ? *b : O[s].rep; /* (every one newer: the oldest) */
+    }
+    if (b == NULL || b->ms == a->ms) {
+        return *a; /* (none newer yet: the newest, held) */
+    }
+    t = (float)(target - (long long)a->ms) / (float)(b->ms - a->ms);
+    t = t < 0.0f ? 0.0f : t > 1.0f ? 1.0f : t;
+    out = t < 0.5f ? *a : *b;
+    out.x = a->x + (b->x - a->x) * t;
+    out.y = a->y + (b->y - a->y) * t;
+    out.z = a->z + (b->z - a->z) * t;
+    out.dir = lerpAngle(a->dir, b->dir, t);
+    if (a->face != 0 && b->face != 0) {
+        out.face = (int16_t)lroundf((float)a->face + (float)(b->face - a->face) * t);
+    }
+    return out;
 }
 
 void portStateSyncCoopSeatMoved(int seat, const char* why) {
@@ -2037,13 +2711,16 @@ void portStateSyncCoopSeatMoved(int seat, const char* why) {
 
 /* $TTYD_SYNC_ENEMY_TO_SEAT=<frame>:<seat>:<dx>:<dz> (tests): then the host's nearest field enemy is put that far
    from that seat's character (on its floor), so a test can walk a guest's own character into it whatever the
-   map's layout */
+   map's layout; seat 1: from Mario (the host's own first strike: its hammer at it). ":still" after it: the enemy
+   notices nobody from then on (no find events: its chase or lunge never starts), so the test's own strike is
+   the first. A Pale Piranha put by a player sank (untouchable) and bit first whenever a character came near */
 static void enemyToSeatTest(void) {
-    static int sAt = -1, sSeat;
+    static int sAt = -1, sSeat, sStill;
     static float sDx = 70.0f, sDz;
     NpcWork* wp = npcGetWorkPtr();
     NpcEntry* best = NULL;
     PartyEntry* party;
+    const Vec* at;
     float bd = 1e30f;
     int i;
     if (sAt < 0) {
@@ -2052,25 +2729,38 @@ static void enemyToSeatTest(void) {
         sSeat = 2;
         if (v != NULL) {
             sscanf(v, "%*d:%d:%f:%f", &sSeat, &sDx, &sDz);
+            sStill = strstr(v, ":still") != NULL;
         }
     }
-    if (sAt <= 0 || G.frame < (unsigned)sAt || wp == NULL || (party = seatParty(sSeat)) == NULL || !hostFieldFree()) {
+    if (sAt <= 0 || G.frame < (unsigned)sAt || wp == NULL || !hostFieldFree()) {
+        return;
+    }
+    party = sSeat == 1 ? NULL : seatParty(sSeat);
+    at = sSeat == 1 ? (marioGetPtr() != NULL ? &marioGetPtr()->position : NULL) : party != NULL ? &party->position : NULL;
+    if (at == NULL) {
         return;
     }
     for (i = 0; i < wp->total; i++) {
         NpcEntry* npc = &wp->entries[i];
-        const float d = hypotf(npc->position.x - party->position.x, npc->position.z - party->position.z);
-        if ((npc->flags & NPC_FLAG_USED) && npc->battleInfo.groupSetup != NULL && npc->deadEvent != NULL && d < bd) {
+        const float d = hypotf(npc->position.x - at->x, npc->position.z - at->z);
+        /* (one standing in the room: not a hidden, untouchable spare, e.g. the Pale Piranhas' "_s0" copies
+           kept under the map) */
+        if ((npc->flags & (NPC_FLAG_USED | NPC_FLAG_ACTIVE)) == (NPC_FLAG_USED | NPC_FLAG_ACTIVE) &&
+            !(npc->flags & (NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE | NPC_FLAG_NO_DISPLAY)) && npc->position.y > -500.0f &&
+            npc->battleInfo.groupSetup != NULL && npc->deadEvent != NULL && d < bd) {
             bd = d, best = npc;
         }
     }
     if (best != NULL) {
         sAt = 0;
-        best->position.x = party->position.x + sDx;
-        best->position.y = party->position.y;
-        best->position.z = party->position.z + sDz;
-        ssLog("test: the enemy '%s' put by seat %d's character, at (%.0f, %.0f, %.0f)", best->description, sSeat,
-              best->position.x, best->position.y, best->position.z);
+        best->position.x = at->x + sDx;
+        best->position.y = at->y;
+        best->position.z = at->z + sDz;
+        if (sStill) {
+            best->flags |= NPC_FLAG_NO_FIND_EVENTS;
+        }
+        ssLog("test: the enemy '%s' put by seat %d's character, at (%.0f, %.0f, %.0f)%s", best->description, sSeat,
+              best->position.x, best->position.y, best->position.z, sStill ? ", noticing nobody" : "");
     }
 }
 
@@ -2081,11 +2771,14 @@ static void coopOwnHostFrame(void) {
     if (field) {
         enemyToSeatTest();
     }
+    ownWhoFrame();
     for (s = 2; s <= 4; s++) {
         const int p = holder(s);
         PartyEntry* party = seatParty(s);
         int held;
-        if (p < 2 || !coopPlayer(p)) {
+        if (p < 2 || !coopPlayer(p) || seatSub(s)) {
+            /* (nobody's, the host's own, or a guest's second controller's: the host's game walks it from that
+               controller, never from a report) */
             O[s].held = 1;
             O[s].placed = 0;
             continue;
@@ -2109,6 +2802,26 @@ static void coopOwnHostFrame(void) {
         } else if (!O[s].placed) {
             O[s].logged = 0;
         }
+        {
+            /* (free for its guest's game, no report of it placed yet: nothing walks it here meanwhile, and one left
+               in the air (a battle's end, its entry's hop) stayed mid-jump for good, the room never settled: mp
+               l51-008, l51-032: a companion's entry hop begun and never played, fixed in second_player_pc.c's
+               companionEntry). A last resort: a second in the air so, its height standing still, landed. One really
+               falling (its height changing: off a ledge, into the void under a map) is the game's own fall, which
+               lands it or, below -2000, puts it back by Mario (party_motion.c); taken here mid-fall it was put
+               back over the gap it fell through: online_companion_entry3 under load) */
+            static unsigned sAir[5];
+            static float sAirY[5];
+            const int limbo = !held && !O[s].placed && field && party != NULL &&
+                              (party->flags & (PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING)) &&
+                              fabsf(party->position.y - sAirY[s]) < 0.5f;
+            sAirY[s] = party != NULL ? party->position.y : 0.0f;
+            sAir[s] = limbo ? sAir[s] + 1 : 0;
+            if (sAir[s] > 60 && portCoopHelperLand(party)) {
+                sAir[s] = 0;
+                ssLog("co-op: seat %d's character was in the air with nothing to land it: on the floor", s);
+            }
+        }
     }
 }
 
@@ -2116,12 +2829,14 @@ int portStateSyncCoopPlace(int seat, PartyEntry* party) {
     float dx, dy, dz, d;
     const MarioWork* mario = marioGetPtr();
     const unsigned long long now = ssNetMs();
+    OwnMsg at;
     const OwnMsg* r;
     if (seat < 2 || seat > 4 || !O[seat].placed || party == NULL || party != seatParty(seat) || mario == NULL ||
         !portStateSyncCoopHost()) {
         return 0;
     }
-    r = &O[seat].rep;
+    at = ownAt(seat);
+    r = &at;
     dx = r->x - party->position.x, dy = r->y - party->position.y, dz = r->z - party->position.z;
     d = sqrtf(dx * dx + dy * dy + dz * dz);
     if (d > OWN_TELEPORT && hypotf(r->x - mario->position.x, r->z - mario->position.z) > 80.0f) {
@@ -2150,6 +2865,14 @@ int portStateSyncCoopPlace(int seat, PartyEntry* party) {
     party->velY = 0.0f;
     party->accelY = 0.0f;
     party->flags &= ~(PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING);
+    if (r->face != 0) {
+        /* the way its paper faces there, turning as it turns there (put here standing, partyMakeDispDir never
+           turned it: it faced whichever way it last walked in this game, seen backwards) */
+        const float face = (float)(r->face - OWN_FACE) / 10.0f;
+        const float side = fmodf(face + 360.0f, 360.0f);
+        party->displayDirection = face;
+        party->displayDirectionTarget = side >= 90.0f && side <= 270.0f ? 180.0f : 0.0f;
+    }
     if (r->anim[0] != '\0' && (party->animName == NULL || strcmp(party->animName, r->anim) != 0)) {
         partyChgPose(party, r->anim);
     }
@@ -2215,14 +2938,27 @@ static void coopOwnGuestFrame(void) {
     }
     if (FA.swapUntil != 0) {
         /* (this game's own swap on its way: its character stays the one it swapped to, not put back) */
-    } else if (s == 2 && !portBrothersOn() && party != NULL && w->hasPartner && party->currentMemberId != w->partner &&
-        w->partner > 0 && w->partner <= 7) {
-        party = NULL; /* (not the partner the host has out: that one, here too) */
+    } else if (s == 2 && !portBrothersOn() && w->hasPartner && (party == NULL || party->currentMemberId != w->partner) &&
+               w->partner > 0 && w->partner <= 7) {
+        /* (not the partner the host has out, or none at all: that one, here too. A guest that came from the
+           title has a new file's state with no partner out, one from its own field had its own: both walk the
+           host's partner in their own game, as the seat says) */
+        party = NULL;
         if (G.frame - OG.swapAt > 60) {
             OG.swapAt = G.frame;
-            marioPartyKill();
-            marioPartyEntry((PartyId)w->partner);
+            portPartySwapPartner(w->partner); /* (the follower kept: Punio, an escort) */
             ssLog("co-op: this guest's partner is the host's (%d) again", w->partner);
+        }
+    }
+    if (s >= 3 && FA.swapUntil == 0 && !portBrothersOn() && w->hasPartner && w->partner > 0 && w->partner <= 7) {
+        /* (players 3 and 4: the host's partner out here too, as player 2's game has it. Before, only seat 2's game
+           put it back: a player 3 whose link came back after a while (nm51s l51-016, half-open, resumed) was
+           left with no partner out in the host's world, its game unlike the others') */
+        const PartyEntry* partner = partyGetPtr(marioGetPartyId());
+        if ((partner == NULL || partner->currentMemberId != w->partner) && G.frame - OG.partnerAt > 60) {
+            OG.partnerAt = G.frame;
+            portPartySwapPartner(w->partner);
+            ssLog("co-op: the host's partner (%d) out here again", w->partner);
         }
     }
     if (s >= 3 && C.chrKnown && C.chr[s] > 0 && FA.swapUntil == 0) {
@@ -2285,6 +3021,21 @@ static void coopOwnGuestFrame(void) {
 }
 
 static void coopOwnFrame(void) {
+    const MarioWork* mario = marioGetPtr();
+    int s;
+    if (ssNetIsHost() && mario != NULL && mario->animName != NULL) {
+        /* (tests: the host's own Mario, what its guests' ghost of him is measured against) */
+        portLookCheck(29, "mario", mario->position.x, mario->position.y, mario->position.z, mario->displayDirection,
+                      mario->animName);
+    }
+    for (s = 2; s <= 4; s++) {
+        /* (tests: each seat's character as this game draws it; Brothers mode's Luigi checked by brothers_pc.c) */
+        const PartyEntry* party = s == 2 && portBrothersOn() ? NULL : seatParty(s);
+        if (party != NULL && !(party->flags2 & PARTY_DISP_FLAG_HIDDEN) && party->animName != NULL) {
+            portLookCheck(30 + s, s == 2 ? "seat2-partner" : s == 3 ? "seat3" : "seat4", party->position.x,
+                          party->position.y, party->position.z, party->displayDirection, party->animName);
+        }
+    }
     if (ssNetIsHost()) {
         coopOwnHostFrame();
     } else {
@@ -2318,9 +3069,26 @@ static void coopOwnSend(void) {
     m.y = party->position.y;
     m.z = party->position.z;
     m.dir = party->targetDir;
+    if (isfinite(party->displayDirection) && party->displayDirection > -100.0f && party->displayDirection < 360.0f) {
+        m.face = (int16_t)(lroundf(party->displayDirection * 10.0f) + OWN_FACE);
+    }
     snprintf(m.anim, sizeof(m.anim), "%s", party->animName != NULL ? party->animName : "");
     m.hitSeq = sOwnHit.seq;
     snprintf(m.hit, sizeof(m.hit), "%s", sOwnHit.name);
+    {
+        /* a room on the relay: the same as the last (but for its clock) isn't sent again for OWN_SAME_MS, well
+           inside the host's OWN_STALE_MS; a changed one goes at once. By address every one, as before */
+        static OwnMsg sLast;
+        static unsigned long long sLastMs;
+        const uint32_t ms = m.ms;
+        m.ms = sLast.ms;
+        if (ssNetRoom() && sLastMs != 0 && !memcmp(&m, &sLast, sizeof(m)) && ssNetMs() - sLastMs < OWN_SAME_MS) {
+            return;
+        }
+        m.ms = ms;
+        sLast = m;
+        sLastMs = ssNetMs();
+    }
     ssNetSendTo(1, SS_MSG_OWN, &m, sizeof(m));
 }
 
@@ -2372,6 +3140,7 @@ static const char* actName(int kind) {
         case PORT_COOP_ACT_PICK: return "pick";
         case PORT_COOP_ACT_ITEM: return "item";
         case PORT_COOP_ACT_MENU_PARTNER: return "menu partner";
+        case PORT_COOP_ACT_SPIN: return "spin";
     }
     return "?";
 }
@@ -2443,8 +3212,8 @@ unsigned portStateSyncCoopAct(int kind, const char* name, int a, int prev, float
     ActMsg m;
     const int up = kind == PORT_COOP_ACT_ABILITY_UP;
     const int s = up ? seatOf(ssNetMe()) : OG.seat;
-    if (!portStateSyncCoopGuest() || s < 2 || s > 4 || kind < PORT_COOP_ACT_HAMMER || kind > PORT_COOP_ACT_PICK ||
-        (up && !FA.xDown)) {
+    if (!portStateSyncCoopGuest() || s < 2 || s > 4 || kind < PORT_COOP_ACT_HAMMER ||
+        (kind > PORT_COOP_ACT_PICK && kind != PORT_COOP_ACT_SPIN) || (up && !FA.xDown)) {
         return 0;
     }
     memset(&m, 0, sizeof(m));
@@ -2601,7 +3370,7 @@ static void gotActHost(int from, ActMsg* m) {
         }
         return; /* (no answer to it) */
     }
-    if (s < 2 || s > 4 || holder(s) != from || !coopPlayer(from) || !portStateSyncCoopHost()) {
+    if (s < 2 || s > 4 || holder(s) != from || seatSub(s) || !coopPlayer(from) || !portStateSyncCoopHost()) {
         why = "not that player's seat";
     } else if (!isfinite(m->x) || !isfinite(m->y) || !isfinite(m->z) || !isfinite(m->dir) || fabsf(m->x) > 1e5f ||
                fabsf(m->y) > 1e5f || fabsf(m->z) > 1e5f) {
@@ -2610,7 +3379,8 @@ static void gotActHost(int from, ActMsg* m) {
         why = "the host's field isn't free";
     } else if (party == NULL) {
         why = "no character";
-    } else if ((m->kind == PORT_COOP_ACT_HAMMER || m->kind == PORT_COOP_ACT_TALK || m->kind == PORT_COOP_ACT_HIT) &&
+    } else if ((m->kind == PORT_COOP_ACT_HAMMER || m->kind == PORT_COOP_ACT_TALK || m->kind == PORT_COOP_ACT_HIT ||
+                m->kind == PORT_COOP_ACT_SPIN) &&
                sqrtf((m->x - party->position.x) * (m->x - party->position.x) +
                      (m->y - party->position.y) * (m->y - party->position.y) +
                      (m->z - party->position.z) * (m->z - party->position.z)) > ACT_NEAR) {
@@ -2628,6 +3398,17 @@ static void gotActHost(int from, ActMsg* m) {
                     sActSwing.from = from;
                     sActSwing.at = G.frame;
                     done = "swung";
+                }
+                break;
+            case PORT_COOP_ACT_SPIN:
+                /* Luigi's Spin Dash: its game spins him (its own walk); here it counts for what he touches, as
+                   his swing's hit does (pm64_spin.h) */
+                if (!bros) {
+                    why = "not Luigi";
+                } else if (!portBrothersGuestSpin(m->x, m->y, m->z, m->dir)) {
+                    why = "Luigi can't spin now";
+                } else {
+                    done = "spun";
                 }
                 break;
             case PORT_COOP_ACT_TALK:
@@ -2829,11 +3610,24 @@ static void coopLeave(void) {
         portCoopGuestAbility(0); /* (a guest's X held here: let go) */
     }
     memset(&FA, 0, sizeof(FA));
+    memset(O, 0, sizeof(O)); /* (every seat's own-character reports: the next session's start over) */
+    memset(&OG, 0, sizeof(OG));
+    memset(SP.hist, 0, sizeof(SP.hist)); /* (its second controller's seat itself kept: a rejoin asks again) */
+    SP.seat = 0;
+    SP.awayAt = 0;
+    SP.startHeld = 0;
+    if (ssNetIsHost()) {
+        memset(K.subWant, 0, sizeof(K.subWant));
+        memset(K.subLast, 0, sizeof(K.subLast));
+        memset(K.subFull, 0, sizeof(K.subFull));
+    }
     memset(sActWatch, 0, sizeof(sActWatch));
     sActSwing.from = 0;
     K.infoSent = K.bye = K.kicked = 0;
     K.lostAt = 0;
     K.rulesNoted = 0;
+    memset(K.awayUntil, 0, sizeof(K.awayUntil));
+    K.lostAway = K.awaySelf = 0;
 }
 
 /* ---- each guest's copy of the host's adventure (coop_save_pc.c) ---- */
@@ -3045,19 +3839,58 @@ int portStateSyncPlayerRtt(int player) {
     return player == 1 || player == ssNetMe() ? ssNetRttMs(1) : -1;
 }
 
+/* a guest's join, its last steps (port/include/port/statesync.h; online_status_pc.c times them): the host in a
+   game, its whole progress here (a watcher's file isn't shared: none), this game in the host's room */
+int ssJoinWorldStep(void) {
+    const Other* h = &G.pl[1];
+    if (!G.on || ssNetIsHost() || !ssNetLinked(1)) {
+        return -1;
+    }
+    if (!G.watch && !coopTogether()) {
+        return 0; /* (a party game, or each player's own game: nothing of the host's to come into) */
+    }
+    if (present(1) && h->info.seq != SEQ_GAME && h->info.seq != SEQ_BATTLE && h->info.seq != SEQ_MAP_CHANGE) {
+        return 1; /* (the title, its files: the room waits for the host's Play or Party...) */
+    }
+    if (!G.watch && !C.took) {
+        return 2;
+    }
+    if (present(1) && gp != NULL && (G.seq == SEQ_GAME || G.seq == SEQ_BATTLE) &&
+        strcmp(h->info.map, gp->currentMapName) == 0) {
+        return 4;
+    }
+    return 3;
+}
+
 int portStateSyncPlayerQuality(int player) {
     const int rtt = portStateSyncPlayerRtt(player);
     if (!G.on || player < 1 || player > SS_PLAYERS || (player == 1 && ssNetIsHost())) {
         return 0;
     }
-    return rtt >= 0 ? rttQuality(rtt) : (ssNetIsHost() ? 0 : K.quality[player]);
+    if (rtt >= 0) {
+        /* (the slowest tenth of the last 10 seconds' round trips and the quiet, online_status_pc.c: the last
+           ping alone flickered between good and poor on a jittery link) */
+        const int q = portOnlineLinkQuality(player == ssNetMe() ? 1 : player);
+        return q >= PORT_LINK_GOOD ? (q > PORT_LINK_POOR ? PORT_LINK_POOR : q) : rttQuality(rtt);
+    }
+    return ssNetIsHost() ? 0 : K.quality[player];
 }
 
 int portStateSyncRemove(int player) {
     CoopMsg m;
     int s;
-    if (!G.on || !ssNetIsHost() || player < 2 || player > SS_PLAYERS || !ssNetLinked(player)) {
+    if (!G.on || !ssNetIsHost() || player < 2 || player > SS_PLAYERS) {
         return 0;
+    }
+    if (!ssNetLinked(player)) {
+        /* (not linked, but a game holds its place on the relay: one reconnecting, one stuck before its key.
+           It can't be told; the relay takes it out, and it's turned away if it comes back) */
+        if (!ssNetPlaceHeld(player)) {
+            return 0;
+        }
+        ssLog("co-op: the host removes player %d (not linked: the relay takes its place's game out)", player);
+        ssNetRemove(player);
+        return 1;
     }
     memset(&m, 0, sizeof(m));
     m.kind = C_KICK;
@@ -3065,13 +3898,120 @@ int portStateSyncRemove(int player) {
     for (s = 2; s <= 4; s++) {
         if (C.seat[s] == player) {
             C.seat[s] = 0;
+            C.sub[s] = 0; /* (its second controller's too) */
         }
     }
     sendSeats(SS_ALL);
     K.lastSeat[player] = 0;
+    K.subWant[player] = K.subLast[player] = K.subFull[player] = 0;
     K.kickAt[player] = ssNetMs() | 1;
+    /* (turned away from now: told, its game leaves at once and can join again before the close a moment
+       later, and was let back in as new) */
+    ssNetBan(player);
     ssLog("co-op: the host removes player %d (told; the connection closes in a moment)", player);
     return 1;
+}
+
+/* ---- stepping away: a phone's app in the background (port/include/port/statesync.h
+   portStateSyncBackground; docs/STATE_SYNC.md "Leaving and coming back") ---- */
+
+#define AWAY_SECONDS 600 /* a player who stepped away is waited for this long: their place, link and seat */
+
+int ssPlayerAway(int player) {
+    return G.on && player >= 1 && player <= SS_PLAYERS && K.awayUntil[player] > ssNetMs();
+}
+
+int portStateSyncPlayerAway(int player) {
+    return ssPlayerAway(player);
+}
+
+/* a guest: the host gone this long is the room's end (2 minutes; 10 when it said it stepped away) */
+static unsigned long long hostGraceMs(int away) {
+    const char* v = getenv("TTYD_SYNC_HOST_GRACE");
+    if (v != NULL && atoi(v) > 0) {
+        return (unsigned long long)atoi(v) * 1000ull;
+    }
+    return away ? AWAY_SECONDS * 1000ull : 120000ull;
+}
+
+/* a player's stepping away or coming back, said on every screen: "<name> stepped away." / "<name> is back." */
+static void awayNotice(int player, int away) {
+    static char sLine[4][SS_NAME * 2 + 64];
+    static int sAt;
+    char name[SS_NAME * 2];
+    char* line = sLine[sAt++ % 4]; /* (a notice keeps the pointer: a few in a row each their own) */
+    portStateSyncPlayerNameShown(player, name, sizeof(name));
+    if (name[0] == '\0') {
+        snprintf(name, sizeof(name), "%s", portTrGame(player == 1 ? "The host" : "A player"));
+    }
+    snprintf(line, sizeof(sLine[0]), portTrGame(away ? "%s stepped away." : "%s is back."), name);
+    portCoopNotice(line);
+}
+
+/* who stepped away (or is back) as a message says: the host's own and a guest's to it (from), or the host
+   passing a guest's on (v[2]) */
+static void coopAwayGot(int from, const CoopMsg* m) {
+    const int who = ssNetIsHost() ? from : m->v[2];
+    const int away = m->v[0] != 0;
+    const int seconds = m->v[1] > 0 && m->v[1] <= AWAY_SECONDS ? m->v[1] : AWAY_SECONDS;
+    if (who < 1 || who > SS_PLAYERS || who == ssNetMe() || (!ssNetIsHost() && from != 1)) {
+        return;
+    }
+    if (away == (K.awayUntil[who] > ssNetMs())) {
+        if (away) {
+            K.awayUntil[who] = ssNetMs() + (unsigned long long)seconds * 1000ull; /* (said again: from now) */
+        }
+        return;
+    }
+    K.awayUntil[who] = away ? ssNetMs() + (unsigned long long)seconds * 1000ull : 0;
+    ssLog("co-op: player %d %s", who, away ? "stepped away (their app in the background): their place is kept"
+                                          : "is back");
+    if (ssNetIsHost() || who == 1) {
+        ssNetPeerAway(who, away ? seconds : 0); /* (the link to them: their quiet isn't a drop meanwhile) */
+    }
+    if (ssNetIsHost()) {
+        CoopMsg q = *m;
+        q.v[2] = who;
+        coopSend(SS_ALL, &q); /* (the others told too; its own game leaves its own out) */
+    }
+    awayNotice(who, away);
+}
+
+/* a new session with that player's game (it was relaunched: it never says it's back): not away any more, and
+   the host tells the others */
+static void coopAwayForget(int player) {
+    if (player < 1 || player > SS_PLAYERS || K.awayUntil[player] == 0) {
+        return;
+    }
+    K.awayUntil[player] = 0;
+    ssLog("co-op: player %d is back (a new session: their game started again)", player);
+    if (ssNetIsHost() || player == 1) {
+        ssNetPeerAway(player, 0);
+    }
+    if (ssNetIsHost() && player >= 2) {
+        CoopMsg q;
+        memset(&q, 0, sizeof(q));
+        q.kind = C_AWAY;
+        q.v[2] = player;
+        coopSend(SS_ALL, &q);
+    }
+}
+
+/* this game's player steps away (1) or is back (0): the others told (a guest's through the host) */
+static void coopAwaySend(int away) {
+    CoopMsg m;
+    if (!G.on || ssNetMe() < 1 || K.awaySelf == away) {
+        return;
+    }
+    K.awaySelf = away;
+    memset(&m, 0, sizeof(m));
+    m.kind = C_AWAY;
+    m.v[0] = away;
+    m.v[1] = away ? AWAY_SECONDS : 0;
+    m.v[2] = ssNetMe();
+    coopSend(ssNetIsHost() ? SS_ALL : 1, &m);
+    ssLog("co-op: this player %s", away ? "steps away (the app to the background): the others told"
+                                        : "is back (the app in front again): the others told");
 }
 
 /* each frame: the roster (the host's, every 2 seconds), removals, and a guest's room ending; 1: this game
@@ -3106,7 +4046,7 @@ static int coopPeopleFrame(void) {
             memset(&m, 0, sizeof(m));
             m.kind = C_ROSTER;
             for (p = 1; p <= SS_PLAYERS; p++) {
-                K.quality[p] = p == 1 ? 0 : rttQuality(ssNetRttMs(p));
+                K.quality[p] = p == 1 ? 0 : portStateSyncPlayerQuality(p); /* (0..3, as the roster's always were) */
                 m.v[p - 1] = (K.platform[p] & 0xFF) | (K.quality[p] << 8);
             }
             coopSend(SS_ALL, &m);
@@ -3136,8 +4076,16 @@ static int coopPeopleFrame(void) {
         }
         ssLog("co-op: rules: %d of the host's differ from this player's own", portStateSyncRuleDiffs());
     }
-    if (ssNetLinked(1)) {
-        if (K.lostAt != 0 && msSince(K.lostAt, now) > 3000 && !K.welcomed && seatOf(ssNetMe()) >= 2) {
+    /* The host gone (no link) or stepped away (its phone's app in the background): a long wait, never the
+       10 seconds that ended a room on a Wi-Fi blip or a host's relaunch after a crash. After 3 seconds a window
+       says who it's waiting for and how long it waits yet, with Leave always there (online_end_pc.c); the world
+       stays held meanwhile, this player's keys off as ever. Over on the host's coming back (the same session:
+       a relaunched host opens the same room again, online_resume_pc.c), its real goodbye (K.bye: at once), or
+       the wait's end: 2 minutes, 10 when the host said it stepped away ($TTYD_SYNC_HOST_GRACE=<seconds>,
+       tests). No host migration: the host's game is the world, the hub and a shared battle's decider, and no
+       guest has its world as it stands (docs/STATE_SYNC.md). */
+    if (ssNetLinked(1) && !ssPlayerAway(1)) {
+        if (K.lostAt != 0 && msSince(K.lostAt, now) > 3000 && !K.welcomed && !K.lostAway && seatOf(ssNetMe()) >= 2) {
             /* (the reconnect path: the same session back after a drop) */
             static const char* const kBack[3] = {"Welcome back: you're 2P again.", "Welcome back: you're 3P again.",
                                                  "Welcome back: you're 4P again."};
@@ -3145,11 +4093,32 @@ static int coopPeopleFrame(void) {
             portCoopNotice(kBack[seatOf(ssNetMe()) - 2]);
             ssLog("co-op: welcome back: seat %d again (the connection came back)", seatOf(ssNetMe()));
         }
+        if (K.lostAt != 0) {
+            ssLog("co-op: the host's game is back after %llu ms: the wait is over", msSince(K.lostAt, now));
+        }
         K.lostAt = 0;
+        K.lostAway = 0;
     } else if (C.was && K.lostAt == 0 && !K.bye && !K.kicked) { /* (told why already: no wait) */
         K.lostAt = now | 1;
+        K.lostAway = ssPlayerAway(1);
         coopRemember();
-        ssLog("co-op: the host's game is gone: waiting 10 seconds for it");
+        if (K.lostAway) {
+            ssLog("co-op: the host stepped away: waiting %llu seconds for them", hostGraceMs(1) / 1000ull);
+        } else {
+            ssLog("co-op: the host's game is gone: waiting %llu seconds for it", hostGraceMs(0) / 1000ull);
+        }
+    }
+    if (C.was && K.lostAt != 0 && !K.bye && !K.kicked) {
+        const unsigned long long grace = hostGraceMs(K.lostAway |= ssPlayerAway(1));
+        const unsigned long long waited = msSince(K.lostAt, now);
+        if (waited > 3000 && waited < grace) {
+            /* (reconnecting: a room's own relay connection down, the host maybe still there. A guest by address
+               has one connection, to the host: down when the host's game is gone too, so it can't tell, and the
+               host's the one it waits for) */
+            portOnlineWait(ssNetRoom() && ssNetSelfDown() ? PORT_WAIT_RECONNECTING
+                                           : K.lostAway ? PORT_WAIT_HOST_AWAY : PORT_WAIT_HOST_GONE,
+                           portStateSyncPlayerName(1), (int)((grace - waited + 999) / 1000));
+        }
     }
     {
         const int noService = !strcmp(ssNetNote(), PORT_SYNC_NO_SERVICE);
@@ -3157,7 +4126,7 @@ static int coopPeopleFrame(void) {
             why = PORT_END_REMOVED;
         } else if (K.bye) {
             why = PORT_END_HOST_LEFT;
-        } else if (C.was && K.lostAt != 0 && (noService || msSince(K.lostAt, now) > 10000)) {
+        } else if (C.was && K.lostAt != 0 && (noService || msSince(K.lostAt, now) > hostGraceMs(K.lostAway))) {
             why = noService || (ssNetRoom() && strstr(ssNetNote(), "relay") != NULL) ? PORT_END_SERVICE
                                                                                    : PORT_END_HOST_LEFT;
         }

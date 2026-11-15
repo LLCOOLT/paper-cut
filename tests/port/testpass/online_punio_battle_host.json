@@ -1,0 +1,79 @@
+{
+ "desc": "GitHub #59: online co-op battles in Boggly Woods with ch2's Punio following (Android crashed at every battle start). The host (Mario) and a guest (seat 2, the partner) in win_00, Goombella out and Punio in Mario's follower slot in both games (TTYD_FOLLOWER=10); the host's game puts its nearest enemy just east of Mario (TTYD_SYNC_ENEMY_TO_SEAT seat 1) and Mario swings his hammer at it until the battle sequence starts: the host's first strike, the battle shared, both back in the field after with Punio still following in both",
+ "groups": [
+  "online",
+  "together",
+  "issue59"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "win_00",
+  "TTYD_STORY": 76,
+  "TTYD_PARTY": "1,2",
+  "TTYD_FOLLOWER": 10,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_EXIT_FRAMES": 14000,
+  "TTYD_GOD_POWER": 2
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 60",
+     "stick 60 0 2",
+     "press_until_seq b 4 2400",
+     "wait 3000",
+     "wait_seq 2 12000",
+     "press_until_control a 6000",
+     "wait 200",
+     "where"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_ENEMY_TO_SEAT": "1100:1:30:0"
+    },
+    "log_must": [
+     "test: the enemy .* put by seat 1's character",
+     "\\[trace\\] follower 10 out: slot 1",
+     "battle \\d+: this game's follower \\(10\\) out, kept",
+     "battle \\d+: what the battle changed goes to the others"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait_peer battle 6000",
+     "wait_peer field 12000",
+     "wait 200",
+     "where"
+    ],
+    "log_must": [
+     "\\[trace\\] follower 10 out: slot 1",
+     "battle \\d+: this game's follower \\(10\\) out, kept",
+     "battle \\d+: the shared party's HP \\d+, FP \\d+, star power \\d+ kept here"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "battle_ended": true
+  }
+ },
+ "log_must_not": [
+  "the battle didn't start here",
+  "the start never came",
+  "never reached the battle's start"
+ ],
+ "timeout": 420
+}

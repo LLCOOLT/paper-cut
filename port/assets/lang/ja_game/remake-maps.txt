@@ -6,6 +6,9 @@ The remake's map changes
 Warp pipes in the sewers
 ちかの　ワープどかん
 
+The remake's pipe room
+リメイクの　どかんべや
+
 The remake's shortcut pipes
 リメイクの　ちかみち　どかん
 
@@ -93,8 +96,8 @@ Charlieton sells in Boggly Woods by the Great Tree's pipe, and a Toad salesman w
 In chapter 7, Petalburg's hint is enough for Twilight Town's: Glitzville and Boggly Woods are skipped on the way back to Fahr Outpost.
 7しょうで　ハナハナ村の　手がかりだけで　ウスグラ村の　手がかりに　なります：サイハテ村へ　もどる　とちゅうの　ウーロン街と　ふしぎの森は　とばせます
 
-Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
-バレルが　なかまに　なったら　キャンプと　ドクロ岩の　あいだに　ジャンプだい　5しょうの　あと　海賊の　どうくつの　うかぶ　タルが　もどり　ジャングルの　チョロボンは　のこります
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrels back after chapter 5 (two, as in the remake), and the jungle's Fuzzies stay. The barrels and the Fuzzies from the next room.
+バレルが　なかまに　なったら　キャンプと　ドクロ岩の　あいだに　ジャンプだい　5しょうの　あと　海賊の　どうくつの　うかぶ　タルが　ふたつ　もどり　ジャングルの　チョロボンは　のこります　タルと　チョロボンは　つぎの　へやから
 
 Pipes for the long walks back and forth: Twilight Town and the Creepy Steeple both ways once the Steeple has been reached, and the Palace of Shadow's riddle tower back to its gate.
 長い　ゆききの　ための　ドカン：オドロン寺院に　ついた　あとは　ウスグラ村と　寺院の　おうふく　やみのきゅうでんの　なぞの　とうから　入口へ
@@ -105,8 +108,8 @@ The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Tri
 The Save Blocks and Heart Blocks the remake added: Boggly Woods, Twilight Trail, the Steeple, the Pirate's Grotto, the Excess Express, Riverside Station, the X-Naut Fortress and the Palace of Shadow.
 リメイクで　ついかされた　セーブブロックと　ハートブロック：ふしぎの森・ウスグラの道・オドロン寺院・海賊のどうくつ・リッチリッチエクスプレス・リバーサイド駅・メガバッテンのアジト・やみのきゅうでん
 
-The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
-リメイクの　あたらしい　まちぶせ：スットンとりでへの　道　海賊の　どうくつ　そして　メガバッテンのアジトの　エリートぐんだんいん
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress. From the next room.
+リメイクの　あたらしい　まちぶせ：スットンとりでへの　道　海賊の　どうくつ　そして　メガバッテンのアジトの　エリートぐんだんいん　つぎの　へやから
 
 The stairs in the Creepy Steeple's stair room lose their side fences, so Mario can jump down from them.
 オドロン寺院の　かいだん部屋で　かいだんの　よこの　さくが　なくなり　マリオが　飛びおりられます

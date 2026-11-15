@@ -1,0 +1,58 @@
+{
+ "desc": "Wardrobe colours on mario, purple and yellow: every part of theirs (Mario's: every partner's too) in colours far from its own; each recoloured texture dumped as it was and is (TTYD_COSMETIC_DUMP) with its spots counted, and the field and Start menu captured (GitHub discussion #15: spotty colours)",
+ "groups": [
+  "cosmetics",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "cosmetic_cap": 4,
+  "cosmetic_overalls": 3,
+  "cosmetic_partner": 4,
+  "cosmetic_goombella_helmet": 3,
+  "cosmetic_koops_shell": 4,
+  "cosmetic_koops_hoodie": 3,
+  "cosmetic_flurrie_hair": 4,
+  "cosmetic_flurrie_dress": 3,
+  "cosmetic_bobbery_body": 4,
+  "cosmetic_bobbery_fuse": 3,
+  "cosmetic_vivian": 4,
+  "cosmetic_vivian_hat": 3,
+  "cosmetic_vivian_hair": 4,
+  "cosmetic_mowz_mask": 3,
+  "cosmetic_mowz_cape": 4,
+  "playable_luigi": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_COSMETIC_DUMP": "{out}",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 90",
+  "stick 0 -127 30",
+  "wait 30",
+  "shot field",
+  "press start",
+  "wait 90",
+  "shot menu",
+  "press right",
+  "wait 30",
+  "shot party",
+  "end"
+ ],
+ "expect_shots": [
+  "field",
+  "menu",
+  "party"
+ ],
+ "log_must": [
+  "\\[cosmetics\\] dump "
+ ],
+ "timeout": 200
+}

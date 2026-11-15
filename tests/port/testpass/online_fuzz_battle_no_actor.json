@@ -1,0 +1,60 @@
+{
+ "desc": "a shared battle gone apart from player 1's at an actor's gate (online_chase's battle, the guest's game deciding; TTYD_SYNC_CORRUPT actor at the host's step 3): nobody left to act in the host's battle and player 1's actor a unit it lacks, as in a hostile fuzz round where A's snapshots had taken the follower's units out. The host's battle goes on alone with a unit that's there (0.5.1 before: unit -1 went on and btlseqMove read through it: a crash)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 5800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 5600"
+    ],
+    "log_must": [
+     "the shared battle begins",
+     "test: corrupt: nobody here to act, player 1's actor not here",
+     "player 1's actor 63 isn't in this battle: this battle alone",
+     "no unit -1 here to act: unit \\d+ acts instead"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_CORRUPT": "actor@3"
+    },
+    "log_must_not": [
+     "\\*\\*\\* crash"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 150",
+     "goto 443 -50 -40",
+     "wait 5300"
+    ],
+    "log_must": [
+     "met.*invited|invited.*met|fought .*invited"
+    ],
+    "log_must_not": [
+     "\\*\\*\\* crash"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true
+  }
+ },
+ "timeout": 420
+}

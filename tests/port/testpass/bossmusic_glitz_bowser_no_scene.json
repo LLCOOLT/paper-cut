@@ -1,0 +1,31 @@
+{
+ "desc": "No fight is silent: the Glitz Pit's Bowser fight (tou_03's battle 24, chapter 3) in a game whose field had no music when it began, as an online guest joining the host's fight never had the scene's. The game refuses Bowser's battle theme in chapter 3 and keeps the scene's BGM_EVT_KUPPA2: with none to keep, that one plays (0.5.1 before: a Goomba's theme in its place and the no-music line, s51-040's guests)",
+ "groups": [
+  "bossmusic"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tou_03",
+  "TTYD_STORY": 143,
+  "TTYD_GOD": 1,
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 60",
+  "bgm_off",
+  "wait 120",
+  "battle 24",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[music\\] battle music: BGM_EVT_KUPPA2 \\(the scene's"
+ ],
+ "log_must_not": [
+  "\\[music\\] battle with no music"
+ ],
+ "timeout": 300
+}

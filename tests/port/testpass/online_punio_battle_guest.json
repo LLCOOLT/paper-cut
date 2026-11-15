@@ -1,0 +1,83 @@
+{
+ "desc": "GitHub #59: online co-op battles in Boggly Woods with ch2's Punio following, the guest's hit. As online_punio_battle_host, but the host's game puts its nearest enemy a little past the guest's own character (seat 2, the partner, which the guest's game walks) and the guest's stick walks straight into it (TTYD_SYNC_OWN_SEEK): the host's game has its enemy touched by the guest's character and starts the battle, shared; both back in the field after with Punio still following in both",
+ "groups": [
+  "online",
+  "together",
+  "issue59"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "win_00",
+  "TTYD_STORY": 76,
+  "TTYD_PARTY": "1,2",
+  "TTYD_FOLLOWER": 10,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_EXIT_FRAMES": 14000,
+  "TTYD_GOD_POWER": 2
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 5000",
+     "wait_seq 2 12000",
+     "press_until_control a 6000",
+     "wait 200",
+     "where"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_ENEMY_TO_SEAT": "1100:2:0:45"
+    },
+    "log_must": [
+     "co-op: seat 2's character walked by player 2's own game",
+     "test: the enemy .* put by seat 2's character",
+     "\\[trace\\] follower 10 out: slot 1",
+     "battle \\d+: this game's follower \\(10\\) out, kept",
+     "battle \\d+: what the battle changed goes to the others"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 300",
+     "stick 110 -64 90",
+     "wait 4600",
+     "wait_peer field 12000",
+     "wait 200",
+     "where"
+    ],
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)",
+     "\\[trace\\] follower 10 out: slot 1",
+     "battle \\d+: this game's follower \\(10\\) out, kept",
+     "battle \\d+: the shared party's HP \\d+, FP \\d+, star power \\d+ kept here"
+    ],
+    "env": {
+     "TTYD_SYNC_OWN_SEEK": "1130"
+    }
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "battle_ended": true
+  }
+ },
+ "log_must_not": [
+  "the battle didn't start here",
+  "the start never came",
+  "never reached the battle's start"
+ ],
+ "timeout": 420
+}

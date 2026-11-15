@@ -110,6 +110,8 @@ const char* portCrashReportLast(void);
 /* The last run crashed and the report was not looked at yet (the recovery screen: once per crash). */
 int portCrashReportPending(void);
 void portCrashReportDismiss(void);
+/* This start found the last run's report (its notice shown or not): the last run crashed. */
+int portCrashReportFound(void);
 /* Before Aurora starts (main_aurora.c): the report's place in userPath (NULL: Aurora's default
  * folder), the last run's report kept as last_crash.txt; portSettingsLoad does it if this didn't. */
 void portCrashReportEarly(const char* userPath);
@@ -132,6 +134,10 @@ int portCleanFrame(void);
  * mode is on), in English for portTr / portTrGame, or NULL: the page dims it
  * and says this (port/settings/features/gameplus.cpp). */
 const char* portSettingWhyLocked(const int* value);
+/* The highest choice this device allows for a setting (by its value's address), -1 for any: a phone's memory
+ * guard caps Texture upscaling, Supersampling and Texture pack memory (port/include/port/mem_guard.h). The
+ * page greys the choices above it and says why (why: English, for portTr / portTrGame); never on a computer. */
+int portSettingChoiceMax(const int* value, const char** why);
 /* A one-time upgrade step (settings_aurora.c's portSettingsLoad): mark is a setting of its own, 0..1,
  * 0 until the step is done and 1 from then on (written with the next save). 1 once: when a settings.txt
  * was read (fileFound) that hasn't the mark (a release before the step's wrote it); a first start (no
@@ -168,6 +174,9 @@ const char* portSettingsFieldAt(int i, int* value);
 /* A declared setting changed for a while (a mode's run): settings.txt keeps
  * value meanwhile (on), whatever it is in memory; off, its own again. */
 void portSettingsExtraSaveAs(const char* key, int on, int value);
+/* settings.txt keeps another value for it meanwhile (portSettingsExtraSaveAs on): a second hold for the
+ * run leaves that one, the player's, alone */
+int portSettingsExtraHeld(const char* key);
 int portSettingsExtraCount(void);
 const char* portSettingsExtraAt(int i, int* value);
 /* Tests: how many declared settings hold a value outside their range (the
@@ -274,6 +283,9 @@ typedef struct PortSettingsPlaceInfo {
     int isNew; /* new in this version: marked on the full page */
 } PortSettingsPlaceInfo;
 int portSettingsPlace(const char* tab, const char* label, PortSettingsPlaceInfo* out);
+/* every control added so far without a place in settings_layout.cpp, each named on stderr: how many
+ * (--settings-layout-check, which the build runs after linking) */
+int portSettingsLayoutCheck(void);
 /* The tabs in their order: the settings, then the modes and tools. A tab with
  * pages under it (Enhancements) is not listed itself: its pages are, in its
  * place. */

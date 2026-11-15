@@ -8,6 +8,9 @@ Linux: in the container, tools/port/linux-release.Dockerfile):
                                         as the AppImage catalog has it
                                         (data/Paper_Cut), with its .zsync
                                         beside it for AppImageUpdate
+  papercut-<version>-linux-x64.AppImage the same AppImage under the name
+                                        releases before 0.5.0 had, for the
+                                        sites and stores that look for it
   papercut-<version>-linux-x64.flatpak  a Flatpak bundle (flatpak build-export
                                         and build-bundle; installing it takes
                                         its runtime from Flathub)
@@ -167,6 +170,75 @@ def check_starts(folder):
         print(f"linux_packages: {name}: {r.stdout.strip()}")
 
 
+# the Desktop Entry keys desktop-file-validate knows (spec 1.5); others must start X-
+DESKTOP_KEYS = {"Type", "Version", "Name", "GenericName", "NoDisplay", "Comment", "Icon", "Hidden", "OnlyShowIn",
+                "NotShowIn", "DBusActivatable", "TryExec", "Exec", "Path", "Terminal", "Actions", "MimeType",
+                "Categories", "Implements", "Keywords", "StartupNotify", "StartupWMClass", "URL",
+                "PrefersNonDefaultGPU", "SingleMainWindow"}
+DESKTOP_LISTS = {"OnlyShowIn", "NotShowIn", "Actions", "MimeType", "Categories", "Implements", "Keywords"}
+DESKTOP_MAIN_CATEGORIES = {"AudioVideo", "Audio", "Video", "Development", "Education", "Game", "Graphics",
+                           "Network", "Office", "Science", "Settings", "System", "Utility"}
+
+
+def check_desktop_entry(path):
+    """The desktop entry checked as desktop-file-validate does (its errors), and
+    as Flatpak's install takes it: a plain "Exec=papercut %u" (Flatpak rewrites
+    it on install and refuses one holding its own @@ forwarding markers)."""
+    errors = []
+    keys = {}
+    group = None
+    for n, line in enumerate(open(path, encoding="utf-8").read().split("\n"), 1):
+        if line.endswith("\r"):
+            errors.append(f"line {n}: CR line ending")
+            line = line[:-1]
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("["):
+            if not line.endswith("]"):
+                errors.append(f"line {n}: not a group header: {line}")
+            elif group is None and line != "[Desktop Entry]":
+                errors.append(f"line {n}: the first group must be [Desktop Entry]: {line}")
+            group = line
+            continue
+        if group is None:
+            errors.append(f"line {n}: a key before the first group")
+            continue
+        m = re.fullmatch(r"([A-Za-z0-9-]+)(\[[A-Za-z_@.]+\])? *= *(.*)", line)
+        if m is None:
+            errors.append(f"line {n}: not a key=value line: {line}")
+            continue
+        if group != "[Desktop Entry]":
+            continue
+        key, locale, value = m.group(1), m.group(2) or "", m.group(3)
+        if key + locale in keys:
+            errors.append(f"line {n}: {key + locale} given twice")
+        keys[key + locale] = value
+        if key not in DESKTOP_KEYS and not key.startswith("X-"):
+            errors.append(f"line {n}: unknown key {key}")
+        if key in DESKTOP_LISTS and value and not value.endswith(";"):
+            errors.append(f"line {n}: the list {key} must end with ';'")
+    for key in ("Type", "Name"):
+        if key not in keys:
+            errors.append(f"no {key}")
+    if keys.get("Type") == "Application" and "Exec" not in keys:
+        errors.append("an Application with no Exec")
+    if keys.get("Version", "1.5") not in ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5"):
+        errors.append(f"Version {keys['Version']} isn't a spec version")
+    for key in ("Terminal", "NoDisplay", "Hidden", "StartupNotify", "PrefersNonDefaultGPU", "DBusActivatable"):
+        if key in keys and keys[key] not in ("true", "false"):
+            errors.append(f"{key} isn't true or false")
+    if "Categories" in keys and not DESKTOP_MAIN_CATEGORIES & set(keys["Categories"].split(";")):
+        errors.append("no main category in Categories")
+    if keys.get("Icon") != APP_ID:
+        errors.append(f"Icon isn't {APP_ID} (Flatpak exports only icons named for the app)")
+    if keys.get("Exec") != "papercut %u":
+        errors.append(f"Exec is {keys.get('Exec')!r}, not 'papercut %u' (Flatpak's install makes it flatpak run)")
+    if "X-Flatpak" in keys or "@@" in keys.get("Exec", ""):
+        errors.append("already rewritten for Flatpak: its install would fail ('Invalid Exec argument @@u')")
+    if errors:
+        sys.exit(f"linux_packages: {path}:\n  " + "\n  ".join(errors))
+
+
 def share(prefix):
     """The desktop entry, icon and AppStream data under prefix/share."""
     linux = os.path.join(ROOT, "port", "linux")
@@ -183,7 +255,7 @@ def share(prefix):
             out.write(f.read().replace(b"\r\n", b"\n"))
 
 
-def appimage(zpath, outdir, version, arch, work):
+def appimage(zpath, outdir, version, arch, work, top):
     tool = os.environ.get("APPIMAGETOOL") or shutil.which("appimagetool")
     if tool is None:
         print("linux_packages: no appimagetool: no AppImage")
@@ -214,6 +286,15 @@ def appimage(zpath, outdir, version, arch, work):
         made.append(out + ".zsync")
     else:
         print("linux_packages: appimagetool wrote no .zsync: AppImageUpdate won't find this release")
+    # the same file under the old name (papercut-<version>-linux-x64.AppImage), as releases before 0.5.0
+    # were named: mirrors and stores that look for that name find this release too (no .zsync of its own:
+    # its update information is the new name's)
+    legacy = os.path.join(outdir, f"{top}.AppImage")
+    if os.path.exists(legacy):
+        os.remove(legacy)
+    shutil.copy2(out, legacy)
+    print("wrote", legacy)
+    made.append(legacy)
     return made
 
 
@@ -227,19 +308,13 @@ def flatpak(zpath, outdir, top, work, arch="x86_64"):
     unpack(zpath, os.path.join(build, "files", "bin"))
     share(os.path.join(build, "files"))
     # what the host's menus and software centres see (as build-finish exports):
-    # the desktop entry starting the app through flatpak, the disc's path or
-    # invite link forwarded
+    # the desktop entry as it is, "Exec=papercut %u". Flatpak itself rewrites it
+    # when the bundle is installed (to "flatpak run ... --file-forwarding <id>
+    # @@u %u @@", with X-Flatpak), and refuses an entry already rewritten: an
+    # Exec holding "@@u" fails the install with "Invalid Exec argument @@u"
     share(os.path.join(build, "export"))
     entry = os.path.join(build, "export", "share", "applications", f"{APP_ID}.desktop")
-    text, n = re.subn(
-        r"^Exec=papercut %([fu])(?=\r?$)",
-        lambda m: f"Exec=/usr/bin/flatpak run --branch=stable --arch={arch} --command=papercut "
-                  f"--file-forwarding {APP_ID} @@{'u' if m.group(1) == 'u' else ''} %{m.group(1)} @@"
-                  f"\nX-Flatpak={APP_ID}",
-        open(entry, encoding="utf-8").read(), flags=re.M)
-    if n != 1:
-        sys.exit(f"linux_packages: {APP_ID}.desktop has no 'Exec=papercut %f' or '%u' line to point at flatpak")
-    open(entry, "w", encoding="utf-8", newline="\n").write(text)
+    check_desktop_entry(entry)
     with open(os.path.join(build, "metadata"), "w", newline="\n") as f:
         f.write(FLATPAK_METADATA.replace("@ARCH@", arch))
     repo = os.path.join(work, "repo")
@@ -263,6 +338,7 @@ def main():
     if m is None:
         sys.exit(f"linux_packages: {top}.zip isn't papercut-<version>-linux-<x64|arm64>.zip")
     version, arch = m.group(1), ARCHES[m.group(2)]
+    check_desktop_entry(os.path.join(ROOT, "port", "linux", f"{APP_ID}.desktop"))
     work = os.path.join(outdir, f"_{top}_linux")
     shutil.rmtree(work, ignore_errors=True)
     builds = os.path.join(work, "check")
@@ -270,7 +346,7 @@ def main():
     check_versions(builds)
     check_starts(builds)
     shutil.rmtree(builds)
-    made = appimage(zpath, outdir, version, arch, work) + flatpak(zpath, outdir, top, work, arch)
+    made = appimage(zpath, outdir, version, arch, work, top) + flatpak(zpath, outdir, top, work, arch)
     shutil.rmtree(work, ignore_errors=True)
     if not made:
         print("linux_packages: neither package made")

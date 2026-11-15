@@ -1,0 +1,67 @@
+{
+ "desc": "the relay's \"gone\" for a guest that never left (TTYD_NET_FUZZ_INJECT's t: layer, to the host mid-session, as a fuzz round's garbled word did): the host lets the guest's key go, but the guest's messages still come from its place (the relay hands on only what a connection there sent), so a couple of seconds later the host takes it as in the room again: the key again, the session resumed, and the progress after it shared (0.5.1 before: the host waited for a \"peer\" that never came, the guest thought itself linked, and the two never played together again)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 5400
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 3000",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 2400",
+     "wait_peer here 2000",
+     "give 149",
+     "flag 1001",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_NET_FUZZ_FROM": 300,
+     "TTYD_NET_FUZZ_INJECT": "t:gone"
+    },
+    "log_must": [
+     "fuzz: inject: the relay's word \"gone\"",
+     "net: connection lost \\(player 2 left the room\\)",
+     "net: player 2's messages still come from the place the relay said was left",
+     "net: the room's key agreed with player 2",
+     "net: session resumed with player 2"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 3000",
+     "give 154",
+     "coins 10",
+     "wait 2400",
+     "wait_peer here 2000",
+     "give 155",
+     "flag 1002",
+     "wait 700"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 300
+    },
+    "log_must": [
+     "net: session resumed with player 1"
+    ]
+   }
+  ],
+  "link": "relay"
+ },
+ "timeout": 300
+}

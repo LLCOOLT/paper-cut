@@ -1,0 +1,46 @@
+{
+ "desc": "Open world, chapter 7's way in (chapters 1, 2, 3, 4, 5 done, Rogueport at story 273): tik_07's pipe past the Ultra Hammer's stone: chapter 7's title card, then Fahr Outpost (bom_00) (gen_open_world_ways.py)",
+ "groups": [
+  "rando",
+  "open_world_ways"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tik_07",
+  "TTYD_STORY": "273",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "OWWAYS1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_OPEN_TRACKS": "1:63,2:119,3:172,4:219,5:268"
+ },
+ "input": [
+  "wait 120",
+  "press_until_control a 3000",
+  "where",
+  "goto dokan__1",
+  "wait 30",
+  "hold down 40",
+  "wait 240",
+  "press_until_map a bom_00 6000",
+  "press_until_control a 6000",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[open\\] file stamped: seed 'OWWAYS1'",
+  "open world: seed OWWAYS1: \\d+ places",
+  "\\[input\\] where: map 'bom_00'"
+ ],
+ "log_must_not": [
+  "walk_to \\S+: not reached",
+  "\\*\\*\\* crash",
+  "\\[input\\] FAIL"
+ ],
+ "timeout": 420
+}

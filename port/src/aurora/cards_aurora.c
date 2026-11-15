@@ -364,6 +364,8 @@ int portCardsDeck(int* units) {
  * side (sRemote) and sends their presses. The card players' duels stay each game's own. */
 
 static int sRemote;                /* a guest: the host's duel shown here */
+static int sWatch;                 /* ...to a player who isn't in it (player 3 or 4): watched, its presses not sent */
+static int sLeftDuel;              /* a guest that left the host's duel (Z): not shown again until it is over */
 static unsigned short sNow[2];     /* this frame's presses, each side's controller */
 
 static int duelOnline(void) {
@@ -467,6 +469,14 @@ static int guestFrame(void) {
     if (portStateSyncPartyStateGet(PORT_PARTY_CARDS, &n, sizeof(n), &version) == (int)sizeof(n) &&
         version != sSeen && (sState == D_OFF || sRemote)) {
         sSeen = version;
+        if (sLeftDuel) {
+            if (n.state == D_OFF) {
+                sLeftDuel = 0; /* (the host's duel is over: its next one is shown here again) */
+                printf("[cards] the host's duel this player left is over\n");
+                fflush(stdout);
+            }
+            goto shown;
+        }
         if (!netValid(&n)) {
             static int sWarned;
             if (!sWarned) {
@@ -493,10 +503,13 @@ static int guestFrame(void) {
         }
         if (!sRemote) {
             sRemote = 1;
+            /* (the duel is the host's against player 2: player 3's and 4's games watch it) */
+            sWatch = portStateSyncMe() != 2;
             marioStSystemLevel(1);
             statusWinForceClose();
             sOwnLevel = 1;
-            printf("[cards] the host's duel against this player shown here\n");
+            printf(sWatch ? "[cards] the host's duel against player 2 watched here\n"
+                          : "[cards] the host's duel against this player shown here\n");
             fflush(stdout);
         }
         sState = n.state;
@@ -512,7 +525,7 @@ static int guestFrame(void) {
         sSteps = n.steps;
         sRoundWinner = n.roundWinner;
         sRound = n.round;
-        if (n.winner != sWinner && n.winner >= 0 && n.winner == me()) {
+        if (n.winner != sWinner && n.winner >= 0 && !sWatch && n.winner == me()) {
             portAchievementCounterMax("cards_won", 1); /* (a guest's win: Card Shark) */
         }
         sWinner = n.winner;
@@ -523,7 +536,25 @@ shown:
         return 0;
     }
     if (gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle) {
-        portStateSyncPartyPress(PORT_PARTY_CARDS, portPartyPressed(0));
+        const unsigned short b = portPartyPressed(0);
+        if (b & PAD_TRIGGER_Z) {
+            /* this player's own leave (as the host's first controller's Z): the host's game ends the duel
+               against them; a watcher only stops watching */
+            psndSFXOn((const char*)0x20013);
+            if (!sWatch) {
+                portStateSyncPartyLeave(PORT_PARTY_CARDS);
+            }
+            printf(sWatch ? "[cards] this player stopped watching the host's duel\n"
+                          : "[cards] this player left the host's duel\n");
+            fflush(stdout);
+            sRemote = 0;
+            sLeftDuel = 1;
+            end();
+            return 0;
+        }
+        if (!sWatch) {
+            portStateSyncPartyPress(PORT_PARTY_CARDS, b);
+        }
         dispEntry(CAMERA_2D, 904.0f, 1, disp, NULL);
     }
     return 1;
@@ -814,10 +845,10 @@ static void moveCursor(int* cursor, int count, unsigned short b, int columns, un
 /* this screen's player: the guest's game puts the second side at the front
  * (a card player's duel online is the host's: the other games watch it) */
 static int me(void) {
-    if (sRemote) {
+    if (sRemote && !sWatch) {
         return 1; /* (each in their own game: the host's duel, shown in the guest's) */
     }
-    return 0;
+    return 0; /* (a watcher: the host's side at the front) */
 }
 
 static void stars(char* out, size_t size, int n) {
@@ -887,13 +918,13 @@ static void handDisp(float x, float y, float bottom, const Side* s, int showCurs
 
 /* side k is this screen's player, named "You" (its lines take "you take", not "<name> takes") */
 static int isYou(int k) {
-    return sOpponent == PORT_DUEL_PLAYER ? duelOnline() && k == me() : k == 0;
+    return sOpponent == PORT_DUEL_PLAYER ? duelOnline() && !(sRemote && sWatch) && k == me() : k == 0;
 }
 
 static const char* sideName(int k) {
     static char sName[2][48];
     if (sOpponent == PORT_DUEL_PLAYER) {
-        if (duelOnline()) {
+        if (duelOnline() && !(sRemote && sWatch)) {
             snprintf(sName[k], sizeof(sName[k]), "%s", portTrGame(k == me() ? "You" : "The other player"));
         } else {
             snprintf(sName[k], sizeof(sName[k]), portTrGame("Player %d"), k + 1);
@@ -909,7 +940,7 @@ static void disp(CameraId camId, void* param) {
     const u32 seed = portRandState();
     const int front = me(), back = 1 - front;
     const int bothHere = sOpponent == PORT_DUEL_PLAYER && !duelOnline();
-    const char* help = portTrGame(sState == D_OVER ? "{A}: leave the table." :
+    const char* help = sRemote && sWatch ? portTrGame("{Z}: stop watching.") : portTrGame(sState == D_OVER ? "{A}: leave the table." :
                                   "Up and down (left and right): a card. {A}: take it or play it. {Z} on the first controller: leave.");
     /* the help's top (it goes up a line for each it wraps to): the lists end above it */
     const float listBottom = WIN_Y - WIN_H + 34.0f + 12.0f + 6.0f +
@@ -1019,7 +1050,7 @@ static void disp(CameraId camId, void* param) {
         if (sState == D_OVER) {
             if (sWinner < 0) {
                 snprintf(line, sizeof(line), "%s", portTrGame("The duel is a draw."));
-            } else if (sOpponent == PORT_DUEL_PLAYER && !duelOnline()) {
+            } else if (sOpponent == PORT_DUEL_PLAYER && (!duelOnline() || (sRemote && sWatch))) {
                 snprintf(line, sizeof(line), portTrGame("Player %d wins the duel!"), sWinner + 1);
             } else {
                 snprintf(line, sizeof(line), "%s", portTrGame(sWinner == front ? "You win the duel!" : "You lose the duel."));
@@ -1075,6 +1106,20 @@ void portCardsFrame(void) {
         return; /* (online: the host's duel against this player, shown here) */
     }
     readPresses();
+    if (portStateSyncPartyRole() == 1) {
+        /* online: the other player left the duel against them (their Z, or gone from the room): it ends here,
+           and so on every guest's game (end's state) */
+        const unsigned left = portStateSyncPartyLeft(PORT_PARTY_CARDS);
+        if (sState != D_OFF && sOpponent == PORT_DUEL_PLAYER &&
+            ((left >> 2 & 1u) || !portStateSyncPlayerInRoom(2))) {
+            printf("[cards] player 2 left the duel: over\n");
+            fflush(stdout);
+            portCoopNotice("The other player left the duel.");
+            psndSFXOn((const char*)0x20013);
+            end();
+            return;
+        }
+    }
     if (sState == D_OFF) {
         if (sAsk == 0) {
             return;

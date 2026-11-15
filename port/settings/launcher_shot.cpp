@@ -417,7 +417,7 @@ extern "C" void portUiShotFrame(void) {
   }
   if (none) {
     // (tests: told apart from a good capture; the page is still drawn, over black)
-    std::fprintf(stderr, "[uishot] no picture for %s (%s): drawn over black\n", sUiName.c_str(),
+    std::fprintf(stdout, "[uishot] no picture for %s (%s): drawn over black\n", sUiName.c_str(),
                  sUiWaited >= 120 ? "it never came" : "the capture failed");
   }
   parse(); // (the folder)

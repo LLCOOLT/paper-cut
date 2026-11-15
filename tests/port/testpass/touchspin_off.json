@@ -1,0 +1,39 @@
+{
+ "desc": "the touch Spin Dash button hidden with the Spin Dash off (a Paper Mario ROM linked, the setting off): the controls as before it came, no swirl, and none in the layout editor either ($TTYD_TOUCH_DEVICE, Aurora built with TTYD_TOUCH_OVERLAY=ON; ui_shots: touch_800_ui.png, touch_860_ui.png the editor)",
+ "groups": [
+  "touchsize",
+  "touchspin",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_TOUCH_DEVICE": "1920x1080@400",
+  "TTYD_TOUCH_SHOT": "800,860",
+  "TTYD_TOUCH_EDIT": "840-880",
+  "TTYD_EXIT_FRAMES": 920
+ },
+ "settings": {
+  "pm64_spin": 0
+ },
+ "input": [
+  "wait 920",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] spin button hidden \\(sideways",
+  "\\[touch\\] layout editor open",
+  "\\[touch\\] test: shot touch_860"
+ ],
+ "log_must_not": [
+  "spin button shown",
+  "spin button pressed"
+ ],
+ "timeout": 180,
+ "ui_shots": true
+}

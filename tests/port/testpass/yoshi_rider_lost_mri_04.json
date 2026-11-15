@@ -1,0 +1,51 @@
+{
+ "desc": "Riding Yoshi into a scene (chapter 2), the guard beside yoshi_rider_lost_hei_01: Mario rides Yoshi from Boggly Woods' mri_03 into mri_04 while the Puni elder is imprisoned (story 92), where Ms. Mowz's scene (chuchurina_sogu) stops the party before it normalizes Mario, as hei_01's tip scene does. Here the scene waits for the door first, so Yoshi's dismount plays and Mario stands; the scene and its battle play (TTYD_AUTO_BATTLE), then he walks off with control, never left in the saddle",
+ "groups": [
+  "world",
+  "partners",
+  "yoshi_field"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "mri_03,w_bero",
+  "TTYD_STORY": "92",
+  "TTYD_PARTY": "4",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_WATCHDOG": "60",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "input": [
+  "wait 60",
+  "press_until_control a 3000",
+  "press x",
+  "wait 40",
+  "where",
+  "stick -127 0 40",
+  "wait 200",
+  "where",
+  "press_until_control a 6000",
+  "wait 30",
+  "where",
+  "stick 0 -127 40",
+  "wait 20",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[input\\] where: map 'mri_03', .*motion 26, pose M_Y_",
+  "^\\[input\\] where: map 'mri_04', .*story 93, .*control 1, .*motion (?!26,)\\d+, ",
+  "^\\[input\\] where: map 'mri_04', Mario at (?!110 0 -2,)\\S+ \\S+ \\S+, .*control 1, .*motion (?!26,)\\d+, ",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[input\\] where: map 'mri_04', .*control 1, .*motion 26, ",
+  "(?i)fatal:",
+  "watchdog"
+ ],
+ "timeout": 240
+}

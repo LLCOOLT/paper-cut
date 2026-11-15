@@ -33,5 +33,5 @@ L'écart entre les deux yeux : plus, c'est plus profond. Baissez-la si l'image e
 Screen distance
 Distance de l'écran
 
-Where the screen sits in the scene, against the distance to what the camera follows: at 100% Mario is at the screen, nearer things come out of it and farther ones go behind. More brings more of the scene out of the screen.
-Où l'écran se place dans la scène, par rapport à la distance de ce que suit la caméra : à 100% Mario est à l'écran, ce qui est plus près en sort et ce qui est plus loin passe derrière. Plus fait sortir davantage la scène de l'écran.
+How far the picture comes out of the screen: at 100, Mario sits at the screen's depth; higher brings more of the scene out towards you.
+À quel point l'image sort de l'écran : à 100, Mario est à la profondeur de l'écran ; plus haut fait sortir davantage la scène vers vous.

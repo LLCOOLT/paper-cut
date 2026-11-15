@@ -389,15 +389,16 @@ struct Register {
   Register() {
     sOn = portSettingsDeclare("crowd_control", 0, 0, 1);
     sCooldown = portSettingsDeclare("crowd_cooldown", 20, 5, 120);
-    sHarmful = portSettingsDeclare("crowd_harmful", 1, 0, 1);
+    sHarmful = portSettingsDeclare("crowd_harmful", 0, 0, 1);
     portSettingsAddToggle(kTab, "Twitch chat drives the audience",
                           "Viewers' commands in your channel's chat make the crowd throw items, give or take a "
                           "little Star Power, fill the Bingo cards, cheer, leave or come.",
                           PORT_SETTING_CHANGES_PLAY, "crowd_control", "crowd control twitch chat stream viewers");
-    portSettingsAddSlider(kTab, "Cooldown", "Seconds between commands (three times that per viewer).",
+    portSettingsAddSlider(kTab, "Cooldown", "Seconds between chat commands; each viewer waits three times as long.",
                           0, "crowd_cooldown", 5, 120, "%d s", "crowd control rate limit");
-    portSettingsAddToggle(kTab, "Allow the harmful ones", "!rock, !drain and !leave.", PORT_SETTING_CHANGES_PLAY,
-                          "crowd_harmful", "crowd control rocks drain");
+    portSettingsAddToggle(kTab, "Allow the harmful ones",
+                          "Lets chat use !rock, !drain and !leave, which hurt or cost you.",
+                          PORT_SETTING_CHANGES_PLAY, "crowd_harmful", "crowd control rocks drain");
     portSettingsAddSection(kTab, "Chat", nullptr, 0, channelSection, "crowd control twitch channel chat");
     portModHostAddDraw(frame, nullptr);
   }

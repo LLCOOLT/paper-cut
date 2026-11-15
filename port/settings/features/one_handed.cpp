@@ -10,6 +10,7 @@
 //                buttons, the right bumper (Z) and trigger (R) as they are,
 //                the right stick pressed in L, Start
 // The GameCube D-pad is left without a button either way: the game hardly uses it.
+#include "port/bindings.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -47,7 +48,7 @@ bool apply(u32 port, Hand hand) {
   if (PADGetButtonMappings(port, &count) == nullptr) {
     return false;
   }
-  PADRestoreDefaultMapping(port);
+  portPadRestoreDefaults(port); // (on Nintendo's layout, the face buttons on their letters: bindings.h)
   PADButtonMapping* maps = PADGetButtonMappings(port, &count);
   for (u32 i = 0; maps != nullptr && i < count; i++) {
     PADButtonMapping m = maps[i];

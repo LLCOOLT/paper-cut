@@ -49,8 +49,8 @@ Champion
 Shown in Glitzville, once the Glitz Pit has a ranking.
 ウーロン街で　ランキングが　できると　でます
 
-Glitz Pit and chapter 6 pace trims
-とうぎ場と　6しょうの　じかん　たんしゅく
+Shorter Glitz Pit and train trips
+とうぎ場と　れっしゃの　いどうを　みじかく
 
 After your first Glitz Pit match, no guard walks you to the ring: straight there. Every Excess Express trip after chapter 6 goes straight to the other station. Not online.
 とうぎ場の　さいしょの　しあいの　あとは　ガードマンの　あんない　なしで　リングへ　6しょうの　あとの　エクセレントごうの　たびは　すぐ　むこうの　駅へ　オンラインでは　つかえません
@@ -100,8 +100,8 @@ Sell from your bag or from storage?
 A level-up fills every partner's HP, not only the one in battle (HP Plus P counted).
 レベルアップで　バトル中の　なかまだけでなく　ぜんいんの　HPが　まんタンに（HPプラスPも）
 
-In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins).
-クッパの　よこスクロール　ステージで　ポーズ画面の　Yで　ステージを　さいしょから　やりなおします（はじまりの　セーブステート）
+In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins). From the next stage.
+クッパの　よこスクロール　ステージで　ポーズ画面の　Yで　ステージを　さいしょから　やりなおします（はじまりの　セーブステート）　つぎの　ステージから
 
 In shops, how many of the item you hold and your shop points under its name; selling, storing and taking out go straight back to the list; selling from storage too; a storage box at the Howz of Badges; a notice when the Rogueport shop has new stock.
 お店では　アイテム名の　下に　もっている　数と　ポイント　うる・あずける・ひきだすと　すぐ　リストに　もどります　あずけた　アイテムも　うれます　バッジ屋に　あずかり箱　ゴロツキタウンの　お店に　あたらしい　しなが　入ると　おしらせ
@@ -115,8 +115,8 @@ Mario carries up to 9,999 coins (a fourth digit on the screen), and a battle wit
 New mail is a notice in the corner and a chime: Mario walks on. The first mails still play the scene, as they teach the Mailbox SP.
 あたらしい　メールは　画面の　すみの　おしらせと　音だけ：マリオは　あるきつづけます　さいしょの　メールは　メールボックスSPの　せつめいなので　シーンが　ながれます
 
-The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks, and near someone Goombella has not Tattled yet.
-マリオの　上の　『！』が　ゲームが　しるしを　つけた　ところ　だけでなく　Aボタンが　つかえる　すべての　ところと　クリスチーヌが　まだ　しらべていない　人の　近くにも　出ます
+The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks.
+マリオの　上の　『！』が　ゲームが　しるしを　つけた　ところ　だけでなく　Aボタンが　つかえる　すべての　ところに　出ます
 
 The Journal sells a hint for 10 coins: where a Star Piece or Shine Sprite is still hidden, in this area first.
 きろくで　10コインの　ヒントを　買えます：まだ　かくれている　スターのかけらか　シャインスプライトの　場所　まずは　この　エリアから

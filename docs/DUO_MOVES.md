@@ -2,7 +2,7 @@
 
 Team attacks for Mario and the partner: both their moves of the turn spent on one attack, each with its own action command, both at once. Built from the game's own animations: one for every partner from the start, a second at Ultra rank.
 
-The setting is Multiplayer → **Duo moves**: Off, **Co-op and versus** (the default: with a second player in co-op, online and in versus fights) or **Always** (in one-player games too). Online, the host's setting is the game's, as for every setting that changes play.
+The setting is Multiplayer → **Duo moves**: **Off** (the default), **Co-op and versus** (with a second player in co-op, online and in versus fights) or **Always** (in one-player games too). Online, the host's setting is the game's, as for every setting that changes play.
 
 ## Where they are
 

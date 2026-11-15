@@ -271,8 +271,8 @@ void apply() {
 const bool sAdded = [] {
   portSettingsDeclare("sharp_text", 0, 0, 1); // at start, for the launcher's Settings tab
   portSettingsAddToggle("Graphics", "Sharp text",
-                        "The game's font rebuilt as a distance field, so its letters stay sharp at any resolution "
-                        "(the same letters; a texture pack's own font is drawn as the pack's).",
+                        "Keeps the game's letters crisp at any resolution; a texture pack's own font is left as it "
+                        "is.",
                         0, "sharp_text", "font text letters crisp hd resolution distance field");
   return true;
 }();

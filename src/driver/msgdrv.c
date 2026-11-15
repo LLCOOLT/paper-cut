@@ -465,6 +465,11 @@ static inline void msgAddPage(smartEntry* smart, s32 y) {
 /** Lets A or B (and X after <keyxon>) speed up the printing, unless <dkey> turned that off. */
 static inline void msgCheckSkip(smartEntry* smart, MsgWinData* data) {
     s32 btn, trgv;
+#ifdef TARGET_PC
+    if (data->portFollow) {
+        return; /* (another game's text box: read on there, portMsgFollow) */
+    }
+#endif
     if (!(data->flags & MSG_WIN_FLAG_NO_FAST)) {
         btn = PAD_BUTTON_A;
         if (((MsgWinData*)smart->address)->flags & MSG_WIN_FLAG_KEY_X) {
@@ -2020,7 +2025,7 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
             }
             /* Play as Luigi: his name for Mario's; Paper Cut's text, as the ones below
              * (port/include/port/port_text.h: the font puts the game's random numbers back after it) */
-            return portTextOwn(portLuigiText(portModsFitMessage(modded, original)));
+            return portTextOwn(portLuigiTextTag(tag, portModsFitMessage(modded, original)));
         }
     }
 #endif
@@ -2100,7 +2105,7 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
                 result = strcmp(tag, msgEntryText(entry) + lookup[index].startaddr);
                 if (!result) {
 #ifdef TARGET_PC /* Play as Luigi: his name for Mario's (port/include/port/luigi.h) */
-                    return portLuigiText(msgEntryText(entry) + lookup[index].endaddr);
+                    return portLuigiTextTag(tag, msgEntryText(entry) + lookup[index].endaddr);
 #else
                     return msgEntryText(entry) + lookup[index].endaddr;
 #endif
@@ -2118,7 +2123,7 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         /* a partner's joining text in another partner's place (the open world) */
         const char* other = portMsgOtherFile(tag);
         if (other != NULL) {
-            return portLuigiText(other);
+            return portLuigiTextTag(tag, other);
         }
     }
     {
@@ -2127,7 +2132,7 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         const char* area = portMsgArea(tag, &file);
         if (area != NULL) {
             portTraceMsgElsewhere(tag, file, sMsgFile[0]);
-            return portLuigiText(area);
+            return portLuigiTextTag(tag, area);
         }
         area = portMsgBuiltIn(tag);
         if (area != NULL) {
@@ -2400,6 +2405,7 @@ void PORT_HOOKABLE(msgWindow_Add)(const char* msg, s32 id) {
     msgAnalize(smart, msg);
 #ifdef TARGET_PC
     portSpeechAppend(window, msg);
+    portStateSyncSceneTextAdd(msg, id); /* (a scene's text box: its players' copies get it too) */
 #endif
     WIN_STATE(window) = 1;
     window->flags |= WINDOW_FLAG_PRINTING;
@@ -2510,8 +2516,13 @@ static void msgWindow_Main(WindowEntry* window) {
     /* the page shown now, read once and logged; who says it (an NPC's name, not a battle unit's) */
     portSpeechPage(window, data->page, (data->flags & MSG_WIN_FLAG_BATTLE_UNIT) ? NULL : data->speakerName);
     /* a message up: B pages through it on every controller, as in the menus; its pictures of the game's
-     * buttons stay the field's (a lesson's "press B" is the hammer's button: port/include/port/menu_buttons.h) */
-    portMenuMarkText(1);
+     * buttons stay the field's (a lesson's "press B" is the hammer's button: port/include/port/menu_buttons.h).
+     * Only while it reads the buttons (opening, printing, waiting for A, turning a page): stopped for its
+     * script (state 2) a lesson's script reads them itself, as the field has them and as its pictures show
+     * (the Plane Curse's Y on its panel, the hammer lesson's B, Frankly's), so there they stay the field's */
+    if (WIN_STATE(window) != 2 && WIN_STATE(window) != 7 && WIN_STATE(window) != 8) {
+        portMenuMarkText(1);
+    }
 #endif
     if (data->talkTimer) {
         if (!data->talkPoseSet) {
@@ -2600,6 +2611,11 @@ static void msgWindow_Main(WindowEntry* window) {
             }
             break;
         case 3:
+#ifdef TARGET_PC
+            if (data->portFollow) {
+                break; /* (another game's text box: read on there, portMsgFollow) */
+            }
+#endif
             target = PAD_BUTTON_A;
             if (WIN_DATA(window)->flags & MSG_WIN_FLAG_KEY_X) {
                 target = PAD_BUTTON_A | PAD_BUTTON_X;
@@ -2655,6 +2671,11 @@ static void msgWindow_Main(WindowEntry* window) {
             }
             break;
         case 11:
+#ifdef TARGET_PC
+            if (data->portFollow) {
+                break;
+            }
+#endif
             target = PAD_BUTTON_A;
             if (WIN_DATA(window)->flags & MSG_WIN_FLAG_KEY_X) {
                 target = PAD_BUTTON_A | PAD_BUTTON_X;
@@ -2897,6 +2918,9 @@ static void selectWindow_Main(WindowEntry* window) {
             break;
         case 1:
 #ifdef TARGET_PC
+            if (data->portFollow) {
+                break; /* (another game's choice: chosen there, portMsgFollow) */
+            }
             portMenuMark(1); /* a choice up: B picks its cancel on every controller (port/include/port/menu_buttons.h) */
 #endif
             prev = data->sel;
@@ -2973,6 +2997,10 @@ static void selectWindow_Disp(CameraId camId, void* param) {
     windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, window->alpha}, window->x, window->y, window->height, window->width, 30.0f);
     msgDisp(window->userdata, window->alpha, 40.0f + window->x, window->y - 25.0f);
     pos.x = 2.0f + window->x;
+#ifdef TARGET_PC
+    /* the cursor glides to the choice in each draw: as it was after a frame drawn between the game's */
+    portInterpKeep(&data->cursorY, sizeof(data->cursorY));
+#endif
     data->cursorY += 0.3f * (window->y - (f32)(data->sel * 31 + 58) - data->cursorY);
     pos.y = data->cursorY;
     pos.z = 0.0f;
@@ -3028,6 +3056,77 @@ int portMsgChoiceOpen(void) {
         }
     }
     return 0;
+}
+
+/* PC port, playing together (port/src/common/statesync_battle_pc.c, a scene's text boxes): window id is a copy of
+ * another game's text box or choice, read on there: no keys of this game's move it (portMsgFollow does) */
+void portMsgFollowOn(s32 id) {
+    WindowEntry* w = id >= 0 ? windowGetPointer(id) : NULL;
+    if (w != NULL && (w->flags & WINDOW_FLAG_USED) && w->userdata != NULL &&
+        (w->main == msgWindow_Main || w->main == selectWindow_Main)) {
+        WIN_DATA(w)->portFollow = 1;
+    }
+}
+
+/* the reader's game: how far its text box (or choice) window id is: the text's place (its entry), the key wait
+ * it's on (page), the window's state, the choice's cursor (-1 a text box); 0 not one */
+int portMsgProgress(s32 id, s32* entry, s32* page, s32* state, s32* sel) {
+    WindowEntry* w = id >= 0 ? windowGetPointer(id) : NULL;
+    MsgWinData* data;
+    if (w == NULL || !(w->flags & WINDOW_FLAG_USED) || w->userdata == NULL ||
+        (w->main != msgWindow_Main && w->main != selectWindow_Main)) {
+        return 0;
+    }
+    data = WIN_DATA(w);
+    *entry = data->nextEntry;
+    *page = data->curPage;
+    *state = WIN_STATE(w);
+    *sel = w->main == selectWindow_Main ? data->sel : -1;
+    return 1;
+}
+
+/* a copy here, to where the reader's game has its text box: on to the key wait it's on (a page turned as its
+ * reader turned it, a stop the script went on from), printed at once to where it is; a choice's cursor where
+ * its reader has it, and chosen when it's chosen there */
+void portMsgFollow(s32 id, s32 entry, s32 page, s32 state, s32 sel) {
+    WindowEntry* w = id >= 0 ? windowGetPointer(id) : NULL;
+    MsgWinData* data;
+    if (w == NULL || !(w->flags & WINDOW_FLAG_USED) || w->userdata == NULL) {
+        return;
+    }
+    data = WIN_DATA(w);
+    if (w->main == selectWindow_Main) {
+        data->portFollow = 1;
+        if (sel >= 0 && sel < data->numSel && sel != data->sel) {
+            data->sel = (s8)sel;
+            psndSFXOn(SFX_NAME_WORD(0x20005));
+        }
+        if ((state == 7 || state == 4) && WIN_STATE(w) == 1) {
+            WIN_STATE(w) = 7; /* (chosen there) */
+            psndSFXOn(SFX_NAME_WORD(0x20012));
+        }
+        return;
+    }
+    if (w->main != msgWindow_Main) {
+        return;
+    }
+    data->portFollow = 1;
+    if (data->curPage < page) {
+        if (WIN_STATE(w) == 3) {
+            WIN_STATE(w) = 1; /* (its page turned there) */
+            data->pageState = 2;
+        } else if (WIN_STATE(w) == 2) {
+            msgWindow_Continue(id); /* (a stop the script went on from there) */
+        } else if (WIN_STATE(w) == 1 && !(data->flags & MSG_WIN_FLAG_NO_FAST)) {
+            data->flags |= MSG_WIN_FLAG_FAST;
+        }
+    } else if (data->curPage == page && data->nextEntry < entry) {
+        if (WIN_STATE(w) == 2) {
+            msgWindow_Continue(id);
+        } else if (WIN_STATE(w) == 1 && !(data->flags & MSG_WIN_FLAG_NO_FAST)) {
+            data->flags |= MSG_WIN_FLAG_FAST; /* (printed there already: here too) */
+        }
+    }
 }
 
 /* PC port, tests: each window slot in use, for a script that waits on one (the story watch's dump) */

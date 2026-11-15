@@ -1,0 +1,970 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Thu, 12 Nov 2026 11:00:00 -0500
+Subject: [PATCH] gx: a frame recorded and replayed
+
+Frame interpolation and stereoscopic 3D drew their extra pictures by running
+the application's draw code again, so draw code with side effects (frees,
+timers, random numbers) ran more than once a frame. Now a frame can be
+recorded (AuroraRecordBegin/End: every FIFO byte, and a list of the events an
+interpolator blends: XF matrices, projections and channel colours, the TEV
+colour registers, each draw's direct vertices, each vertex array as its draw
+read it, copied and shared with the frame before's when unchanged) and fed
+through the command processor again from the state it began with
+(AuroraReplay*), each event's data maybe replaced by the caller's.
+
+A replay calls no draw-done callback, asks for no readback, evicts no texture
+object (a recorded frame's evictions wait until its recording is freed) and
+makes its EFB copies into textures of its own, never the live frame's. After
+it the state is the live frame's again. Tags (GX_AURORA_REC_TAG) give the
+events the application's identities; pauses (GX_AURORA_REC_PAUSE) leave out
+a part the application draws again itself. A frame that moved memory under
+its draws, or drew outside the FIFO unpaused, says it can't be replayed.
+A replay's own EFB copy textures are let go when there are many of them.
+AuroraProcessorBusyNs: the command processor's busy time (what a frame or a
+replay costs it).
+---
+diff --git a/include/dolphin/gx/GXAurora.h b/include/dolphin/gx/GXAurora.h
+index 9469546..e5673fa 100644
+--- a/include/dolphin/gx/GXAurora.h
++++ b/include/dolphin/gx/GXAurora.h
+@@ -269,6 +269,86 @@ void AuroraMoveMemory(const void* from, const void* to, u32 size);
+  */
+ void AuroraSetDrawsBlocking(bool blocking);
+ 
++//
++// Frame recording and replay (frame interpolation, a second stereo eye: the application's frame drawn again
++// without running its draw code).
++//
++// Between AuroraRecordBegin and AuroraRecordEnd every byte written to the FIFO is kept, and the command processor
++// lists the frame's interpolable events: XF loads (matrices, projections, channel colours), the TEV colour
++// registers, the direct vertices of each draw, and each vertex array as the draw read it (copied, so later writes
++// to it don't reach a replay). AuroraReplay* feeds the kept bytes through the command processor again from the
++// state the frame began with; a table indexed by event may replace each event's data (same size and layout).
++// A replay never queues a readback, calls the draw-done callback, evicts a texture object or touches the copies
++// the live frame made (its own EFB copies go to textures of its own); after the replays the state is the live
++// frame's again (AuroraReplayFinish).
++//
++
++/** Followed by a u32: the identity the following events carry (the application's object). */
++#define GX_AURORA_REC_TAG 0x0080
++/** Followed by a u8: 1, the following commands are not listed or counted (a part the application draws again
++ * itself in a replay); 0, they are again. */
++#define GX_AURORA_REC_PAUSE 0x0081
++
++typedef enum {
++  AURORA_REC_XF = 1,        // reg: XF address; count: words; data: big-endian u32s in the stream
++  AURORA_REC_BP = 2,        // reg: BP register (0xE0-0xE7, TEV colours); data: the big-endian u32 in the stream
++  AURORA_REC_PROJ_FULL = 3, // data: 16 big-endian f32s in the stream
++  AURORA_REC_DRAW = 4,      // reg: the draw command; count: vertices; data: the vertices in the stream
++  AURORA_REC_ARRAY = 5,     // reg: the attribute; data: arrays[offset], the array's bytes as the draw read them
++} AuroraRecEventKind;
++
++typedef struct {
++  u32 tag;
++  u16 kind;
++  u16 reg;
++  u32 offset; // AURORA_REC_ARRAY: its index in arrays; the rest: in the stream
++  u32 size;   // bytes
++  u16 count;
++  u8 vtxSize; // AURORA_REC_DRAW: a vertex's size; AURORA_REC_ARRAY: the stride
++  u8 le;      // AURORA_REC_ARRAY: little-endian data
++  // AURORA_REC_DRAW: the direct position, colour 0 and texture coordinate 0 in a vertex (posOff etc. 0xFF: none)
++  u8 posOff, posType, posCnt, posFrac;
++  u8 clrOff, clrType;
++  u8 texOff, texType, texCnt, texFrac;
++  u8 _pad[2];
++} AuroraRecEvent;
++
++typedef struct AuroraRec AuroraRec;
++
++typedef struct {
++  const u8* stream;
++  u32 streamSize;
++  // the arrays the frame's draws read, as they read them (one the frame before read the same is shared with it)
++  const u8* const* arrays;
++  u32 arrayCount;
++  u32 arrayBytes;    // all of them
++  u32 arrayBytesNew; // those this frame copied (not the frame before's)
++  const AuroraRecEvent* events;
++  u32 eventCount;
++  // why the frame can't be replayed (NULL: it can): a heap move inside it, a direct gfx call outside a pause
++  const char* unreplayable;
++} AuroraRecView;
++
++/** Starts recording (processing what came before first). NULL when one is already recording. */
++AuroraRec* AuroraRecordBegin(void);
++/** Ends it (processing everything first); the state the frame left is kept for AuroraReplayFinish. */
++void AuroraRecordEnd(AuroraRec* rec);
++void AuroraRecordView(const AuroraRec* rec, AuroraRecView* out);
++void AuroraRecordFree(AuroraRec* rec);
++/** The command processor's busy time so far, in nanoseconds (what a frame or a replay costs it). */
++u64 AuroraProcessorBusyNs(void);
++/** The identity of what follows (GX_AURORA_REC_TAG), while recording. */
++void AuroraRecordTag(u32 tag);
++/** GX_AURORA_REC_PAUSE, while recording or replaying; returns the stream position after it (while recording). */
++u32 AuroraRecordPause(GXBool paused);
++/** Replays begin from the state rec began with; subst (count entries; NULL keeps the event's own data) is read
++ * while the bytes written by AuroraReplayWrite are processed, until AuroraReplayEnd. */
++void AuroraReplayBegin(const AuroraRec* rec, const void* const* subst, u32 count);
++void AuroraReplayWrite(const void* data, u32 size);
++void AuroraReplayEnd(void);
++/** After the replays (or none): the live frame's state back, the texture evictions it deferred done. */
++void AuroraReplayFinish(AuroraRec* rec);
++
+ /**
+  * Sets the actual render viewport in native framebuffer coordinates.
+  * Overrides the automatically scaled values set by the logical GXSetViewport.
+diff --git a/lib/gfx/recording.cpp b/lib/gfx/recording.cpp
+index c8cec8b..e6ad5fc 100644
+--- a/lib/gfx/recording.cpp
++++ b/lib/gfx/recording.cpp
+@@ -1044,6 +1044,7 @@ RenderTargetLayout get_render_target_layout() noexcept {
+ }
+ 
+ bool push_custom_draw(DrawTypeId type, const void* payload, size_t payloadSize) {
++  gx::fifo::rec_direct_call("a custom draw (push_custom_draw)");
+   if (type == InvalidDrawType) {
+     Log.warn("push_custom_draw: invalid draw type");
+     return false;
+@@ -1103,6 +1104,7 @@ void end_offscreen() {
+ }
+ 
+ bool create_pass(uint32_t width, uint32_t height) {
++  gx::fifo::rec_direct_call("an offscreen pass (create_pass)");
+   if (width == 0 || height == 0) {
+     Log.warn("create_pass: invalid size {}x{}", width, height);
+     return false;
+@@ -1124,6 +1126,7 @@ bool create_pass(uint32_t width, uint32_t height) {
+ }
+ 
+ bool resolve_pass(const ResolveDesc& desc, ResolvedTargets& out) {
++  gx::fifo::rec_direct_call("a pass snapshot (resolve_pass)");
+   out = {};
+   gx::fifo::drain();
+ 
+@@ -1231,6 +1234,7 @@ bool push_readback_op(std::shared_ptr<readback::Job> job, bool efbSource) {
+ }
+ 
+ bool push_encoder_task(EncoderTaskId type, const void* payload, size_t payloadSize) {
++  gx::fifo::rec_direct_call("an encoder task (push_encoder_task)");
+   if (type == InvalidEncoderTask) {
+     Log.warn("push_encoder_task: invalid encoder task type");
+     return false;
+diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
+index e69cbd3..a6bd7f3 100644
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -1,4 +1,5 @@
+ #include "command_processor.hpp"
++#include "fifo.hpp"
+ 
+ #include "../gfx/recording.hpp"
+ #include "../internal.hpp"
+@@ -21,6 +22,8 @@
+ #include <cmath>
+ #include <limits>
+ #include <cstdint>
++#include <cstring>
++#include <memory>
+ #include <span>
+ #include <vector>
+ 
+@@ -218,6 +221,70 @@ u8 line_mode_for_prim(GXPrimitive prim) noexcept {
+ static void handle_draw(u8 cmd, ByteReader& reader) noexcept;
+ static void handle_aurora(ByteReader& reader) noexcept;
+ 
++// Frame recording and replay (GXAurora.h AuroraRecord*). Set by the game thread while the processor is idle.
++struct RecState {
++  bool logging = false;   // a live frame being recorded: its events listed
++  bool replaying = false; // a recording fed again: its events counted, their data maybe replaced
++  bool paused = false;    // GX_AURORA_REC_PAUSE: neither
++  u32 tag = 0;
++  u64 startAbs = 0; // the recording's first byte in the stream
++  std::vector<AuroraRecEvent>* events = nullptr;
++  AuroraRec* rec = nullptr; // (recording) its arrays
++  std::vector<u32>* deferredTexObjs = nullptr; // texture object evictions held until the replays are done
++  std::vector<u32>* deferredTluts = nullptr;
++  const void* const* subst = nullptr;
++  u32 substCount = 0;
++  const AuroraRecEvent* recorded = nullptr; // (replaying) the recording's own events, each checked against
++  u32 recordedCount = 0;
++  const u8* const* arrays = nullptr; // (replaying) the recording's
++  u32 counter = 0;
++  bool desync = false; // (replaying) an event unlike the recording's: nothing more replaced
++  bool sawMove = false;
++};
++RecState sRec;
++
++static bool rec_active() noexcept { return (sRec.logging || sRec.replaying) && !sRec.paused; }
++
++// (replaying) the data replacing the next event, if it is the recording's next (or null)
++static const u8* rec_replaced(const AuroraRecEvent& ev) noexcept {
++  const u32 i = sRec.counter++;
++  if (sRec.desync) {
++    return nullptr;
++  }
++  if (i >= sRec.recordedCount || sRec.recorded[i].kind != ev.kind || sRec.recorded[i].reg != ev.reg ||
++      sRec.recorded[i].size != ev.size) {
++    sRec.desync = true; // (a draw left out of a full frame, say): the rest as recorded
++    Log.warn("replay: event {} is not the recording's; the rest of this replay is drawn as recorded", i);
++    return nullptr;
++  }
++  return i < sRec.substCount ? static_cast<const u8*>(sRec.subst[i]) : nullptr;
++}
++
++// An event whose data is at data (in the chunk being processed): listed while recording; while replaying, the
++// data replacing it (or null)
++static const u8* rec_event(AuroraRecEvent ev, const u8* data) noexcept {
++  if (sRec.logging) {
++    ev.tag = sRec.tag;
++    ev.offset = static_cast<u32>(detail::sProcAbs + static_cast<u64>(data - detail::sProcData) - sRec.startAbs);
++    sRec.events->push_back(ev);
++    return nullptr;
++  }
++  return rec_replaced(ev);
++}
++
++static bool rec_xf_wanted(u16 addr, u32 count) noexcept {
++  // matrices (position, texture: 0x000-0x0FF; normal: 0x400-0x45F; post-transform: 0x500-0x5FF), the channel
++  // colours (0x100A-0x100F) and the projection (0x1020-0x1026)
++  return addr < 0x100 || (addr >= 0x400 && addr < 0x460) || (addr >= 0x500 && addr < 0x600) ||
++         (addr >= 0x100A && addr <= 0x100F) || (addr == 0x1020 && count == 7);
++}
++
++// where a draw's direct position, colour 0 and texture coordinate 0 are in its vertices
++static void rec_draw_layout(AuroraRecEvent& ev, GXVtxFmt fmt) noexcept;
++
++// (recording) an array as a draw reads it, kept: its index in the recording's arrays
++static u32 rec_keep_array(const u8* data, u32 size) noexcept;
++
+ ProcessResult process(const u8* data, u32 size) noexcept {
+   ZoneScoped;
+   ByteReader reader{{data, size}};
+@@ -231,7 +298,17 @@ ProcessResult process(const u8* data, u32 size) noexcept {
+       continue;
+ 
+     case CP_CMD_LOAD_BP_REG: {
+-      const u32 value = reader.read<u32>();
++      const u8* at = reader.data() + reader.offset();
++      u32 value = reader.read<u32>();
++      if (rec_active() && (value >> 24) >= 0xE0 && (value >> 24) <= 0xE7)
++        UNLIKELY {
++          const u8* sub = rec_event({.kind = AURORA_REC_BP, .reg = static_cast<u16>(value >> 24), .size = 4}, at);
++          if (sub != nullptr) {
++            u32 be;
++            std::memcpy(&be, sub, sizeof(be));
++            value = bswap(be);
++          }
++        }
+       handle_bp(value);
+       if (reg_get(value, 8, 24) == GX_BP_REG_DRAWDONE) {
+         return {static_cast<u32>(reader.offset()), true};
+@@ -249,7 +326,19 @@ ProcessResult process(const u8* data, u32 size) noexcept {
+       const u32 header = reader.read<u32>();
+       const u32 count = ((header >> 16) & 0xFFFF) + 1;
+       const u16 addr = header & 0xFFFF;
+-      handle_xf(addr, reader.take(count * sizeof(u32)));
++      auto data = reader.take(count * sizeof(u32));
++      if (rec_active() && rec_xf_wanted(addr, count))
++        UNLIKELY {
++          const u8* sub = rec_event({.kind = AURORA_REC_XF,
++                                     .reg = addr,
++                                     .size = static_cast<u32>(data.size()),
++                                     .count = static_cast<u16>(count)},
++                                    data.data());
++          if (sub != nullptr) {
++            data = {sub, data.size()};
++          }
++        }
++      handle_xf(addr, data);
+       break;
+     }
+ 
+@@ -385,6 +474,46 @@ static u32 calc_vtx_size(GXVtxFmt fmt) noexcept {
+ }
+ 
+ 
++static void rec_draw_layout(AuroraRecEvent& ev, GXVtxFmt fmt) noexcept {
++  ev.posOff = ev.clrOff = ev.texOff = 0xFF;
++  u32 off = 0;
++  const auto& vtxFmt = g_gxState.vtxFmts[fmt];
++  for (int i = GX_VA_PNMTXIDX; i <= GX_VA_TEX7; ++i) {
++    const auto& attrFmt = vtxFmt.attrs[i];
++    const auto attr = static_cast<GXAttr>(i);
++    switch (g_gxState.vtxDesc[i]) {
++    case GX_NONE:
++      break;
++    case GX_DIRECT: {
++      if (off < 0xFF) {
++        if (attr == GX_VA_POS) {
++          ev.posOff = static_cast<u8>(off);
++          ev.posType = static_cast<u8>(attrFmt.type);
++          ev.posCnt = static_cast<u8>(comp_cnt_count(attr, attrFmt.cnt));
++          ev.posFrac = attrFmt.frac;
++        } else if (attr == GX_VA_CLR0) {
++          ev.clrOff = static_cast<u8>(off);
++          ev.clrType = static_cast<u8>(attrFmt.type);
++        } else if (attr == GX_VA_TEX0) {
++          ev.texOff = static_cast<u8>(off);
++          ev.texType = static_cast<u8>(attrFmt.type);
++          ev.texCnt = static_cast<u8>(comp_cnt_count(attr, attrFmt.cnt));
++          ev.texFrac = attrFmt.frac;
++        }
++      }
++      off += comp_type_size(attr, attrFmt.type) * comp_cnt_count(attr, attrFmt.cnt);
++      break;
++    }
++    case GX_INDEX8:
++      off += i == GX_VA_NRM && attrFmt.cnt == GX_NRM_NBT3 ? 3 : 1;
++      break;
++    case GX_INDEX16:
++      off += i == GX_VA_NRM && attrFmt.cnt == GX_NRM_NBT3 ? 6 : 2;
++      break;
++    }
++  }
++}
++
+ // Bounding box (GXClearBoundingBox/GXReadBoundingBox). The hardware tracks
+ // the extent of the pixels drawn since BP 0x55/0x56 were written; games use
+ // it to size offscreen captures (paper-form models, shadows) and to cull.
+@@ -545,7 +674,30 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, gfx::Rang
+     }
+     auto& array = state.arrays[i];
+     if (array.cachedRange.size == 0) {
+-      array.cachedRange = gfx::push_storage(static_cast<const uint8_t*>(array.data), array.size);
++      const auto* src = static_cast<const uint8_t*>(array.data);
++      if (rec_active())
++        UNLIKELY {
++          if (sRec.logging) {
++            // the array as this draw reads it: a replay reads the copy (the frame may write the array again)
++            AuroraRecEvent ev{.tag = sRec.tag,
++                              .kind = AURORA_REC_ARRAY,
++                              .reg = static_cast<u16>(i),
++                              .offset = rec_keep_array(src, array.size),
++                              .size = array.size,
++                              .vtxSize = array.stride,
++                              .le = static_cast<u8>(array.le ? 1 : 0)};
++            sRec.events->push_back(ev);
++          } else {
++            const u32 k = sRec.counter;
++            const u8* sub = rec_replaced({.kind = AURORA_REC_ARRAY, .reg = static_cast<u16>(i), .size = array.size});
++            if (sub != nullptr) {
++              src = sub;
++            } else if (!sRec.desync && sRec.arrays != nullptr) {
++              src = sRec.arrays[sRec.recorded[k].offset]; // the array as the recorded draw read it
++            }
++          }
++        }
++      array.cachedRange = gfx::push_storage(src, array.size);
+     }
+     immediates.arrayStart[i - GX_VA_POS] = array.cachedRange.offset;
+   }
+@@ -661,7 +813,22 @@ static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader&
+   const bool canMerge = lastDraw != nullptr && lastDraw->instanceCount == 1;
+ 
+   // Push raw vertex data to buffer. Merged draws must remain contiguous with the previous range.
+-  const auto vertexData = reader.take(totalVtxBytes);
++  auto vertexData = reader.take(totalVtxBytes);
++  if (rec_active())
++    UNLIKELY {
++      AuroraRecEvent ev{.kind = AURORA_REC_DRAW,
++                        .reg = static_cast<u16>(static_cast<u32>(prim) | static_cast<u32>(fmt)),
++                        .size = totalVtxBytes,
++                        .count = vtxCount,
++                        .vtxSize = static_cast<u8>(vtxSize)};
++      if (sRec.logging) {
++        rec_draw_layout(ev, fmt);
++      }
++      const u8* sub = rec_event(ev, vertexData.data());
++      if (sub != nullptr) {
++        vertexData = {sub, vertexData.size()};
++      }
++    }
+   if (sBbox.armed)
+     UNLIKELY { bbox_add_vertices(vertexData.data(), vtxCount, vtxSize, fmt); }
+   // (indices, at most: one a vertex for triangles, two for quads, three for strips and fans, six for lines and
+@@ -720,7 +887,20 @@ void handle_aurora(ByteReader& reader) noexcept {
+   ZoneScoped;
+   const u16 subCmd = reader.read<u16>();
+ 
+-  if (subCmd == GX_AURORA_LOAD_VIEWPORT_RENDER) {
++  if (subCmd == GX_AURORA_REC_TAG) {
++    sRec.tag = reader.read<u32>();
++  } else if (subCmd == GX_AURORA_REC_PAUSE) {
++    sRec.paused = reader.read<u8>() != 0;
++  } else if (sRec.replaying && (subCmd == GX_AURORA_READBACK_CAPTURE_PEEKS || subCmd == GX_AURORA_READBACK_CAPTURE_COPIES)) {
++    // a replay asks for no readbacks (the live frame's were asked): the request skipped
++    reader.skip(8 + 8);
++    const u32 count = reader.read<u32>();
++    if (subCmd == GX_AURORA_READBACK_CAPTURE_PEEKS) {
++      reader.skip(1 + static_cast<size_t>(count) * (8 + 1 + 2 + 2));
++    } else {
++      reader.skip(static_cast<size_t>(count) * (8 + 8));
++    }
++  } else if (subCmd == GX_AURORA_LOAD_VIEWPORT_RENDER) {
+     const f32 left = reader.read<f32>();
+     const f32 top = reader.read<f32>();
+     const f32 width = reader.read<f32>();
+@@ -749,9 +929,16 @@ void handle_aurora(ByteReader& reader) noexcept {
+     }
+   } else if (subCmd == GX_AURORA_LOAD_PROJECTION_FULL) {
+     auto& proj = g_gxState.proj;
++    const u8* at = reader.data() + reader.offset();
++    const u8* sub = rec_active() ? rec_event({.kind = AURORA_REC_PROJ_FULL, .size = 64}, at) : nullptr;
+     for (int r = 0; r < 4; ++r) {
+       for (int c = 0; c < 4; ++c) {
+         proj[r][c] = reader.read<f32>();
++        if (sub != nullptr) {
++          u32 be;
++          std::memcpy(&be, sub + (r * 4 + c) * 4, sizeof(be));
++          proj[r][c] = std::bit_cast<f32>(bswap(be));
++        }
+       }
+     }
+     // Invalidate projection XF regs
+@@ -912,9 +1099,19 @@ void handle_aurora(ByteReader& reader) noexcept {
+   } else if (subCmd == GX_AURORA_END_OFFSCREEN) {
+     gfx::end_offscreen();
+   } else if (subCmd == GX_AURORA_DESTROY_TEXOBJ) {
+-    evict_texture_object(reader.read<u32>());
++    const u32 id = reader.read<u32>();
++    if (sRec.logging) {
++      sRec.deferredTexObjs->push_back(id); // (its replays may still load it: evicted after them)
++    } else if (!sRec.replaying) {
++      evict_texture_object(id);
++    }
+   } else if (subCmd == GX_AURORA_DESTROY_TLUT) {
+-    evict_tlut_object(reader.read<u32>());
++    const u32 id = reader.read<u32>();
++    if (sRec.logging) {
++      sRec.deferredTluts->push_back(id);
++    } else if (!sRec.replaying) {
++      evict_tlut_object(id);
++    }
+   } else if (subCmd == GX_AURORA_DESTROY_COPY_TEX) {
+     evict_copy_texture(reinterpret_cast<const void*>(reader.read<u64>()));
+   } else if (subCmd == GX_AURORA_ALIAS_COPY_TEX) {
+@@ -928,7 +1125,13 @@ void handle_aurora(ByteReader& reader) noexcept {
+   } else if (subCmd == GX_AURORA_MOVE_MEMORY) {
+     const auto* from = reinterpret_cast<const void*>(reader.read<u64>());
+     const auto* to = reinterpret_cast<const void*>(reader.read<u64>());
+-    move_memory(from, to, static_cast<size_t>(reader.read<u64>()));
++    const auto size = static_cast<size_t>(reader.read<u64>());
++    if (sRec.logging) {
++      sRec.sawMove = true; // (memory the frame's draws read moved under them: the frame isn't replayed)
++    }
++    if (!sRec.replaying) {
++      move_memory(from, to, size);
++    }
+   } else if (subCmd == GX_AURORA_DRAW_SIZED) {
+     const u8 cmd = reader.read<u8>();
+     const u32 byteLen = reader.read<u32>();
+@@ -966,7 +1169,21 @@ void handle_aurora(ByteReader& reader) noexcept {
+       vtxSize = calc_vtx_size(fmt);
+     }
+     const u32 totalVtxBytes = vtxCount * vtxSize;
+-    const auto vertexData = reader.take(totalVtxBytes);
++    auto vertexData = reader.take(totalVtxBytes);
++    if (rec_active()) {
++      AuroraRecEvent ev{.kind = AURORA_REC_DRAW,
++                        .reg = static_cast<u16>(0x100u | static_cast<u32>(prim) | static_cast<u32>(fmt)),
++                        .size = totalVtxBytes,
++                        .count = vtxCount,
++                        .vtxSize = static_cast<u8>(vtxSize)};
++      if (sRec.logging) {
++        rec_draw_layout(ev, fmt);
++      }
++      const u8* sub = rec_event(ev, vertexData.data());
++      if (sub != nullptr) {
++        vertexData = {sub, vertexData.size()};
++      }
++    }
+     if (!draw_fits(totalVtxBytes, idxBytes)) {
+       return; // (the frame's buffers are full: left out)
+     }
+@@ -1055,3 +1272,246 @@ void bbox_read(u16* left, u16* top, u16* right, u16* bottom) noexcept {
+   *bottom = b.result[3];
+ }
+ } // namespace aurora::gx
++
++// Frame recording and replay (GXAurora.h)
++struct AuroraRec {
++  std::vector<u8> stream;
++  // the arrays the draws read; an array the frame before read unchanged is shared with it (map geometry)
++  std::vector<std::shared_ptr<const std::vector<u8>>> arrays;
++  std::vector<const u8*> arrayPtrs;
++  u64 arrayBytes = 0;
++  u64 arrayBytesNew = 0;
++  std::vector<AuroraRecEvent> events;
++  std::vector<u32> texObjs; // evictions held until the replays are done
++  std::vector<u32> tluts;
++  aurora::gx::GXState start;
++  aurora::gx::CopyAliases startAliases;
++  const char* unreplayable = nullptr;
++};
++
++namespace aurora::gx::fifo {
++namespace {
++// arrays kept by (address, size): the last recording's, and the one being made's
++struct ArrayKey {
++  const void* data;
++  u32 size;
++  bool operator==(const ArrayKey& o) const { return data == o.data && size == o.size; }
++  template <typename H>
++  friend H AbslHashValue(H h, const ArrayKey& k) {
++    return H::combine(std::move(h), k.data, k.size);
++  }
++};
++using ArrayMap = absl::flat_hash_map<ArrayKey, std::shared_ptr<const std::vector<u8>>>;
++ArrayMap sLastArrays, sNewArrays;
++} // namespace
++
++static u32 rec_keep_array(const u8* data, u32 size) noexcept {
++  AuroraRec& rec = *sRec.rec;
++  std::shared_ptr<const std::vector<u8>> blob;
++  const ArrayKey key{data, size};
++  for (const ArrayMap* map : {&sNewArrays, &sLastArrays}) {
++    if (const auto it = map->find(key); it != map->end() && std::memcmp(it->second->data(), data, size) == 0) {
++      blob = it->second;
++      break;
++    }
++  }
++  if (!blob) {
++    blob = std::make_shared<const std::vector<u8>>(data, data + size);
++    rec.arrayBytesNew += size;
++  }
++  sNewArrays[key] = blob;
++  rec.arrayBytes += size;
++  rec.arrays.push_back(blob);
++  rec.arrayPtrs.push_back(blob->data());
++  return static_cast<u32>(rec.arrays.size() - 1);
++}
++
++namespace {
++AuroraRec* sRecording = nullptr; // (game thread) the live frame being recorded
++bool sMainPaused = false;         // (game thread) GX_AURORA_REC_PAUSE as last written
++// what a replay found and puts back: the state outside it
++GXState sOutside;
++CopyAliases sOutsideAliases;
++BoundingBox sOutsideBbox;
++bool sInReplay = false;
++
++void apply_deferred(AuroraRec& rec) noexcept {
++  for (const u32 id : rec.texObjs) {
++    evict_texture_object(id);
++  }
++  for (const u32 id : rec.tluts) {
++    evict_tlut_object(id);
++  }
++  rec.texObjs.clear();
++  rec.tluts.clear();
++}
++} // namespace
++
++// a gfx call that draws outside the FIFO (push_custom_draw and such: recording.cpp) while a frame is recorded and
++// not paused: a replay of the stream wouldn't have it
++void rec_direct_call(const char* what) noexcept {
++  if (sRecording != nullptr && !sMainPaused && sRecording->unreplayable == nullptr) {
++    sRecording->unreplayable = what;
++  }
++}
++} // namespace aurora::gx::fifo
++
++using namespace aurora::gx;
++
++extern "C" {
++AuroraRec* AuroraRecordBegin(void) {
++  if (fifo::sRecording != nullptr || fifo::sInReplay || fifo::in_display_list()) {
++    return nullptr;
++  }
++  fifo::drain();
++  auto* rec = new AuroraRec;
++  // the first draw merges into none before it and reads every array again: as in a replay, which begins afresh
++  fifo::clear_draw_cache();
++  for (auto& array : g_gxState.arrays) {
++    array.cachedRange = {};
++  }
++  g_gxState.dirty |= DirtyImmediates;
++  rec->start = g_gxState;
++  rec->startAliases = copy_aliases();
++  fifo::sRec = {};
++  fifo::sRec.logging = true;
++  fifo::sRec.startAbs = fifo::stream_position();
++  fifo::sRec.events = &rec->events;
++  fifo::sRec.rec = rec;
++  fifo::sLastArrays = std::move(fifo::sNewArrays); // (the last frame's arrays: shared when unchanged)
++  fifo::sNewArrays.clear();
++  fifo::sRec.deferredTexObjs = &rec->texObjs;
++  fifo::sRec.deferredTluts = &rec->tluts;
++  fifo::rec_capture_start(&rec->stream);
++  fifo::sRecording = rec;
++  fifo::sMainPaused = false;
++  return rec;
++}
++
++void AuroraRecordEnd(AuroraRec* rec) {
++  if (rec == nullptr || rec != fifo::sRecording) {
++    return;
++  }
++  fifo::drain();
++  fifo::rec_capture_stop();
++  if (fifo::sRec.sawMove && rec->unreplayable == nullptr) {
++    rec->unreplayable = "memory moved under the frame's draws (AuroraMoveMemory)";
++  }
++  if (fifo::sRec.paused && rec->unreplayable == nullptr) {
++    rec->unreplayable = "a pause not ended";
++  }
++  fifo::sRec = {};
++  fifo::sRecording = nullptr;
++  fifo::sMainPaused = false;
++}
++
++void AuroraRecordView(const AuroraRec* rec, AuroraRecView* out) {
++  *out = {};
++  if (rec == nullptr) {
++    return;
++  }
++  out->stream = rec->stream.data();
++  out->streamSize = static_cast<u32>(rec->stream.size());
++  out->arrays = rec->arrayPtrs.data();
++  out->arrayCount = static_cast<u32>(rec->arrayPtrs.size());
++  out->arrayBytes = static_cast<u32>(std::min<u64>(rec->arrayBytes, UINT32_MAX));
++  out->arrayBytesNew = static_cast<u32>(std::min<u64>(rec->arrayBytesNew, UINT32_MAX));
++  out->events = rec->events.data();
++  out->eventCount = static_cast<u32>(rec->events.size());
++  out->unreplayable = rec->unreplayable;
++}
++
++void AuroraRecordFree(AuroraRec* rec) {
++  if (rec == nullptr) {
++    return;
++  }
++  if (rec == fifo::sRecording) {
++    AuroraRecordEnd(rec);
++  }
++  fifo::drain();
++  fifo::apply_deferred(*rec);
++  if (!fifo::sInReplay) {
++    trim_replay_copies(); // (a recording let go each frame: the replays' own copies kept from growing)
++  }
++  delete rec;
++}
++
++void AuroraRecordTag(u32 tag) {
++  if (fifo::sRecording == nullptr || fifo::in_display_list()) {
++    return;
++  }
++  fifo::write_u8(GX_AURORA);
++  fifo::write_u16(GX_AURORA_REC_TAG);
++  fifo::write_u32(tag);
++}
++
++u32 AuroraRecordPause(GXBool paused) {
++  if ((fifo::sRecording == nullptr && !fifo::sInReplay) || fifo::in_display_list()) {
++    return 0;
++  }
++  fifo::write_u8(GX_AURORA);
++  fifo::write_u16(GX_AURORA_REC_PAUSE);
++  fifo::write_u8(paused ? 1 : 0);
++  fifo::sMainPaused = paused != 0;
++  return fifo::sRecording != nullptr ? static_cast<u32>(fifo::stream_position() - fifo::sRec.startAbs) : 0;
++}
++
++void AuroraReplayBegin(const AuroraRec* rec, const void* const* subst, u32 count) {
++  if (rec == nullptr || fifo::sRecording != nullptr || fifo::sInReplay) {
++    return;
++  }
++  fifo::drain();
++  fifo::sOutside = g_gxState;
++  fifo::sOutsideAliases = copy_aliases();
++  fifo::sOutsideBbox = fifo::sBbox;
++  g_gxState = rec->start;
++  set_copy_aliases(rec->startAliases);
++  fifo::clear_draw_cache();
++  g_replayCopies = true;
++  fifo::sRec = {};
++  fifo::sRec.replaying = true;
++  fifo::sRec.subst = subst;
++  fifo::sRec.substCount = subst != nullptr ? count : 0;
++  fifo::sRec.recorded = rec->events.data();
++  fifo::sRec.recordedCount = static_cast<u32>(rec->events.size());
++  fifo::sRec.arrays = rec->arrayPtrs.data();
++  fifo::detail::sReplaying.store(true, std::memory_order_relaxed);
++  fifo::sInReplay = true;
++}
++
++void AuroraReplayWrite(const void* data, u32 size) {
++  if (!fifo::sInReplay || data == nullptr || size == 0) {
++    return;
++  }
++  fifo::write_data(data, size);
++  fifo::publish();
++}
++
++void AuroraReplayEnd(void) {
++  if (!fifo::sInReplay) {
++    return;
++  }
++  fifo::drain();
++  fifo::sRec = {};
++  fifo::detail::sReplaying.store(false, std::memory_order_relaxed);
++  g_replayCopies = false;
++  // the state as it was outside the replay (the live frame's, and what was set after it)
++  g_gxState = fifo::sOutside;
++  set_copy_aliases(fifo::sOutsideAliases);
++  fifo::sBbox = fifo::sOutsideBbox;
++  fifo::clear_draw_cache();
++  fifo::sInReplay = false;
++  fifo::sMainPaused = false;
++}
++
++u64 AuroraProcessorBusyNs(void) { return fifo::detail::sBusyNs.load(std::memory_order_relaxed); }
++
++void AuroraReplayFinish(AuroraRec* rec) {
++  if (rec == nullptr || fifo::sInReplay) {
++    return;
++  }
++  fifo::drain();
++  fifo::apply_deferred(*rec);
++  trim_replay_copies();
++}
++}
+diff --git a/lib/gx/fifo.cpp b/lib/gx/fifo.cpp
+index 38641b2..02dfaa4 100644
+--- a/lib/gx/fifo.cpp
++++ b/lib/gx/fifo.cpp
+@@ -5,6 +5,7 @@
+ 
+ #include <algorithm>
+ #include <atomic>
++#include <chrono>
+ #include <cstring>
+ #include <limits>
+ #include <mutex>
+@@ -20,6 +21,10 @@ bool sInDisplayList = false;
+ uint8_t* sDlBuffer = nullptr;
+ uint32_t sDlSize = 0;
+ uint32_t sDlWritePos = 0;
++uint64_t sProcAbs = 0;
++const uint8_t* sProcData = nullptr;
++std::atomic<bool> sReplaying{false};
++std::atomic<uint64_t> sBusyNs{0};
+ } // namespace detail
+ 
+ namespace {
+@@ -40,8 +45,14 @@ std::mutex sBufferMutex;
+ std::atomic<uint32_t> sWorkerWake{0};
+ thread::Thread sWorkerThread;
+ std::atomic<DrawDoneCallback> sDrawDoneCallback{nullptr};
++// a recording's copy of the stream (main thread): the bytes from sRecFrom on, appended before the buffer is reset
++std::vector<uint8_t>* sRecBytes = nullptr;
++uint64_t sRecFrom = 0;
+ 
+ void dispatch_draw_done() noexcept {
++  if (detail::sReplaying.load(std::memory_order_relaxed)) {
++    return; // (a replay's draw-done tokens are the live frame's, already told)
++  }
+   if (const auto callback = sDrawDoneCallback.load(std::memory_order_acquire); callback != nullptr) {
+     callback();
+   }
+@@ -63,7 +74,14 @@ void process_to(uint64_t target, std::memory_order order) noexcept {
+                     sStreamBase + detail::sBufferSize);
+       const auto start = static_cast<uint32_t>(processed - sStreamBase);
+       const auto size = static_cast<uint32_t>(target - processed);
++      detail::sProcAbs = processed; // (a recording's events: where in the stream)
++      detail::sProcData = detail::sBufferData + start;
++      const auto from = std::chrono::steady_clock::now();
+       result = process(detail::sBufferData + start, size);
++      detail::sBusyNs.fetch_add(static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
++                                                          std::chrono::steady_clock::now() - from)
++                                                          .count()),
++                                std::memory_order_relaxed);
+     }
+     AURORA_ASSERT(result.bytesProcessed > 0 && result.bytesProcessed <= target - processed,
+                   "FIFO processor made invalid progress: processed {} of {} remaining bytes", result.bytesProcessed,
+@@ -264,6 +282,7 @@ void drain() {
+   }
+   }
+ 
++  rec_capture_flush();
+   {
+     std::lock_guard lock{sBufferMutex};
+     sStreamBase = target;
+@@ -272,6 +291,33 @@ void drain() {
+   sPendingDraws = 0;
+ }
+ 
++uint64_t stream_position() noexcept { return sStreamBase + detail::sBufferSize; }
++
++void rec_capture_start(std::vector<uint8_t>* out) noexcept {
++  sRecBytes = out;
++  sRecFrom = stream_position();
++}
++
++void rec_capture_flush() noexcept {
++  if (sRecBytes == nullptr) {
++    return;
++  }
++  const uint64_t end = stream_position();
++  if (sRecFrom < sStreamBase) {
++    sRecFrom = sStreamBase; // (never: every reset flushes first)
++  }
++  if (end > sRecFrom) {
++    const auto* from = detail::sBufferData + (sRecFrom - sStreamBase);
++    sRecBytes->insert(sRecBytes->end(), from, from + (end - sRecFrom));
++  }
++  sRecFrom = end;
++}
++
++void rec_capture_stop() noexcept {
++  rec_capture_flush();
++  sRecBytes = nullptr;
++}
++
+ const uint8_t* get_buffer_data() { return detail::sBufferData; }
+ uint32_t get_buffer_size() { return detail::sBufferSize; }
+ 
+@@ -279,6 +325,7 @@ void clear_buffer() {
+   const uint64_t processed = sProcessed.load(std::memory_order_acquire);
+   AURORA_ASSERT(sPublished.load(std::memory_order_acquire) == processed,
+                 "fifo::clear_buffer: published commands are still pending");
++  rec_capture_flush();
+   std::lock_guard lock{sBufferMutex};
+   sStreamBase = processed;
+   detail::sBufferSize = 0;
+diff --git a/lib/gx/fifo.hpp b/lib/gx/fifo.hpp
+index 0d6a5d8..74db7ec 100644
+--- a/lib/gx/fifo.hpp
++++ b/lib/gx/fifo.hpp
+@@ -2,7 +2,9 @@
+ 
+ #include "../internal.hpp"
+ 
++#include <atomic>
+ #include <cstring>
++#include <vector>
+ 
+ namespace aurora::gx::fifo {
+ 
+@@ -14,6 +16,13 @@ extern bool sInDisplayList;
+ extern uint8_t* sDlBuffer;
+ extern uint32_t sDlSize;
+ extern uint32_t sDlWritePos;
++// the chunk the processor is on: its stream position and data (a recording's events find their place from them)
++extern uint64_t sProcAbs;
++extern const uint8_t* sProcData;
++// a replay is being processed: no draw-done callbacks (set by the game thread while the processor is idle)
++extern std::atomic<bool> sReplaying;
++// the processor's busy time so far (AuroraProcessorBusyNs)
++extern std::atomic<uint64_t> sBusyNs;
+ } // namespace detail
+ 
+ enum class ProcessingMode : uint8_t {
+@@ -107,6 +116,14 @@ bool in_display_list();
+ // Ensure all buffered commands have been processed.
+ void drain();
+ 
++// Recording (GXAurora.h AuroraRecord*): the stream from now on appended to out, before each reset of the buffer
++uint64_t stream_position() noexcept;
++void rec_capture_start(std::vector<uint8_t>* out) noexcept;
++void rec_capture_flush() noexcept;
++void rec_capture_stop() noexcept;
++// a gfx call drawing outside the FIFO while a frame is recorded (command_processor.cpp)
++void rec_direct_call(const char* what) noexcept;
++
+ // Internal buffer inspection
+ const uint8_t* get_buffer_data();
+ uint32_t get_buffer_size();
+diff --git a/lib/gx/gx.hpp b/lib/gx/gx.hpp
+index 6897a9f..f495f76 100644
+--- a/lib/gx/gx.hpp
++++ b/lib/gx/gx.hpp
+@@ -513,6 +513,14 @@ void evict_copy_texture(const void* dest) noexcept;
+ void forget_memory(const void* lo, const void* hi) noexcept;
+ void move_memory(const void* from, const void* to, size_t size) noexcept;
+ void evict_texture_object(u32 texObjId) noexcept;
++// Frame replay (GXAurora.h AuroraReplay*): while true, EFB copies go to textures of the replay's own and copy
++// evictions touch only the copy registry (g_gxState.copyTextures, restored after), never the live frame's copies
++extern bool g_replayCopies;
++// the copy aliases (GXAliasCopyTex) kept and put back with the registry
++using CopyAliases = absl::flat_hash_map<const void*, const void*>;
++CopyAliases copy_aliases() noexcept;
++void set_copy_aliases(const CopyAliases& aliases) noexcept;
++void trim_replay_copies() noexcept;
+ void evict_tlut_object(u32 tlutObjId) noexcept;
+ Vec2<uint32_t> logical_fb_size() noexcept;
+ gfx::Viewport map_logical_viewport(const gfx::Viewport& logicalViewport) noexcept;
+diff --git a/lib/gx/texture.cpp b/lib/gx/texture.cpp
+index acd2a61..80a380f 100644
+--- a/lib/gx/texture.cpp
++++ b/lib/gx/texture.cpp
+@@ -191,6 +191,8 @@ gfx::LruCache<TextureContentKey, gfx::TextureHandle> s_contentCache{
+ void retire_copy_texture(const GXState::CopyTextureRef& copy);
+ // GXAliasCopyTex destinations whose source was not copied yet (dest -> src)
+ absl::flat_hash_map<const void*, const void*> s_copyAliases;
++// a replay's EFB copies (g_replayCopies): their own textures, kept for the next replays
++absl::flat_hash_map<GXState::CopyTextureKey, gfx::TextureHandle> s_replayCopyTextures;
+ gfx::LruCache<GXState::CopyTextureKey, GXState::CopyTextureRef> s_copyCache{
+     gfx::RenderTextureCacheLimits,
+     retire_copy_texture,
+@@ -629,6 +631,19 @@ const TextureStats& texture_stats() noexcept { return s_stats; }
+ namespace texture {
+ GXState::CopyTextureRef resolve_copy_texture(const GXState::CopyTextureKey& key) noexcept {
+   ZoneScoped;
++  if (g_replayCopies) {
++    // a replay's copy: never the live frame's texture (which the next frame may still sample)
++    auto& handle = s_replayCopyTextures[key];
++    if (!handle) {
++      handle = gfx::tex_copy_conv::needs_conversion(key.format)
++                   ? gfx::new_conv_texture(key.width, key.height, key.format, "Replay Copy Conv Texture")
++                   : gfx::new_render_texture(key.width, key.height, GX_TF_RGBA8, "Replay Resolved Texture");
++    }
++    auto& current = g_gxState.copyTextures[key.dest];
++    current = {.handle = handle, .revision = current.revision + 1, .key = key};
++    invalidate_bindings();
++    return current;
++  }
+   auto* copy = s_copyCache.pin(key);
+   auto& current = g_gxState.copyTextures[key.dest];
+   if (current && current.key != key) {
+@@ -999,7 +1014,25 @@ void alias_copy_texture(const void* src, const void* dest) noexcept {
+   texture::invalidate_bindings();
+ }
+ 
++bool g_replayCopies = false;
++
++CopyAliases copy_aliases() noexcept { return s_copyAliases; }
++
++void set_copy_aliases(const CopyAliases& aliases) noexcept { s_copyAliases = aliases; }
++
++void trim_replay_copies() noexcept {
++  if (s_replayCopyTextures.size() > 64) {
++    s_replayCopyTextures.clear(); // (copies to many places over time: made again when next needed)
++  }
++}
++
+ void evict_copy_texture(const void* dest) noexcept {
++  if (g_replayCopies) {
++    g_gxState.copyTextures.erase(dest);
++    s_copyAliases.erase(dest);
++    texture::invalidate_bindings();
++    return;
++  }
+   g_gxState.copyTextures.erase(dest);
+   s_copyAliases.erase(dest);
+   s_copyCache.erase_if([&](const auto& key) { return key.dest == dest; });
+@@ -1020,7 +1053,9 @@ void forget_memory(const void* lo_, const void* hi_) noexcept {
+   const size_t copies = absl::erase_if(g_gxState.copyTextures, [&](const auto& kv) { return in(kv.first); });
+   const size_t aliases =
+       absl::erase_if(s_copyAliases, [&](const auto& kv) { return in(kv.first) || in(kv.second); });
+-  s_copyCache.erase_if([&](const auto& key) { return in(key.dest); });
++  if (!g_replayCopies) { // (a replay: the registry only, the live frame's copies stay)
++    s_copyCache.erase_if([&](const auto& key) { return in(key.dest); });
++  }
+   if (copies != 0 || aliases != 0) {
+     update_cache_stats();
+     texture::invalidate_bindings();
+-- 
+2.47.0
+

@@ -186,8 +186,8 @@ File %d: %s, capitolo %d, livello %d
 Offer
 Proponi
 
-A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
-Un nuovo file può iniziare nella piazza di Fannullopoli: l'introduzione saltata (la lettera, la nave, il porto e Fustighino), Goombella appena arrivata e ciò che dà l'introduzione già dato. No: il menu dei file come l'originale. Proponi: {A} dall'inizio, {Y} a Fannullopoli. Sempre: i nuovi file iniziano a Fannullopoli. Non nella modalità fedele alla console.
+Skip the opening: a new file starts in Rogueport's plaza with Goombella and everything the opening gives. Offer: the file menu asks ({A} for the beginning, {Y} for Rogueport). Always: every new file. Not in Console-accurate mode.
+Salta l'inizio: un nuovo file parte dalla piazza di Fannullopoli, con Goombella e tutto ciò che dà l'inizio. Proponi: il menu dei file chiede ({A} per l'inizio, {Y} per Fannullopoli). Sempre: ogni nuovo file. Non nella modalità fedele alla console.
 
 You're in the host's adventure.
 Sei nell'avventura dell'host.

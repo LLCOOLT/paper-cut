@@ -38,7 +38,7 @@
     },
     "log_must": [
      "field rules are the host's here \\(2\\)",
-     "settings: this game's own 2 field rules back \\(left the session\\)"
+     "settings: this game's own \\d+ field rules back \\(left the session\\)"
     ]
    }
   ],

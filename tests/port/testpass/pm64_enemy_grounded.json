@@ -1,0 +1,60 @@
+{
+ "desc": "Paper Mario 64 enemies' battle states: Petal Meadows' Paragoomba and Koopa Troopa (hei, battle 5) as their PM64 cousins; Mario stomps the Paragoomba, which loses its wings (its host becomes a Goomba) and plays on as the PM64 Goomba, not a wingless Paragoomba's standing pose; Cool Mode on",
+ "groups": [
+  "pm64",
+  "pm64_enemy_anims"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 25,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "pm64_story_enemies": 2,
+  "fun_cool": 1
+ },
+ "input": [
+  "wait 160",
+  "battle 5 foe",
+  "wait 300",
+  "shot start",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 10",
+  "press a",
+  "wait 60",
+  "shot stomped",
+  "wait 180",
+  "shot grounded",
+  "wait 600",
+  "shot later",
+  "end"
+ ],
+ "expect_shots": [
+  "start",
+  "stomped",
+  "grounded"
+ ],
+ "log_must": [
+  "\\[pm64\\] story: hei_01 Paragoomba for kind",
+  "\\[pm64\\] anim: Goomba "
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 240
+}

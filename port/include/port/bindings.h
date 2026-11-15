@@ -24,7 +24,8 @@
  * buttons doesn't also do an action (the game's wins; a combo needs one of
  * its two buttons free); a button that starts a combo still does its own
  * action alone, when it is let go without the combo; the game doesn't see a
- * combo's buttons while both are held. An action that is off online (rewind,
+ * combo's buttons while both are held, nor the one still held after the
+ * other is let go (until it is let go too). An action that is off online (rewind,
  * save states...) stays off there: its feature decides. */
 #ifndef PORT_BINDINGS_H
 #define PORT_BINDINGS_H
@@ -37,14 +38,14 @@ enum PortBindAction {
     PORT_BIND_SETTINGS,      /* F1, Back: the settings page */
     PORT_BIND_FAST_FORWARD,  /* Tab, the right stick pressed in: held (or toggles, as the setting says) */
     PORT_BIND_FF_TOGGLE,     /* none: fast-forward on and off */
-    PORT_BIND_REWIND,        /* Backspace (rewind_key), the Rewind button (rewind_pad): held */
+    PORT_BIND_REWIND,        /* Backspace (rewind_key), Back + B (or rewind_pad's old choice): held */
     PORT_BIND_PHOTO,         /* P, both sticks pressed in */
-    PORT_BIND_SCREENSHOT,    /* F12 */
-    PORT_BIND_SAVE_STATE,    /* F5 */
-    PORT_BIND_LOAD_STATE,    /* F8 */
-    PORT_BIND_FRAME_HOLD,    /* F6: frame advance on and off */
-    PORT_BIND_FRAME_STEP,    /* F7: one frame (held: one per key repeat) */
-    PORT_BIND_MESSAGE_LOG,   /* L */
+    PORT_BIND_SCREENSHOT,    /* F12, Back + Y */
+    PORT_BIND_SAVE_STATE,    /* F5, Back + D-pad up */
+    PORT_BIND_LOAD_STATE,    /* F8, Back + D-pad down */
+    PORT_BIND_FRAME_HOLD,    /* F6, Back + D-pad left: frame advance on and off */
+    PORT_BIND_FRAME_STEP,    /* F7, Back + D-pad right: one frame (held: one per key repeat) */
+    PORT_BIND_MESSAGE_LOG,   /* L, Back + X */
     PORT_BIND_DISPLAY_MODE,  /* F11 (and Alt+Enter, fixed) */
     PORT_BIND_VOLUME_DOWN,   /* F9 */
     PORT_BIND_VOLUME_UP,     /* F10 */
@@ -53,10 +54,12 @@ enum PortBindAction {
     PORT_BIND_WALK_BOOST,    /* Left Shift, the right stick pressed in (walk_boost_key/_pad): held (polled) */
     PORT_BIND_PING,          /* G, Share/Capture: co-op pings, held to aim (polled per player, port/include/port/ping.h) */
     PORT_BIND_LUA_CONSOLE,   /* F4: Lua mods' console (port/settings/features/lua_console.cpp) */
-    PORT_BIND_PARTNER_HINT,  /* H: the partner says where to go next (port/include/port/qol.h) */
-    PORT_BIND_LAUNCHER,      /* F2: Back to the launcher's question (port/include/port/launcher_back.h) */
+    PORT_BIND_PARTNER_HINT,  /* H, Back + A: the partner says where to go next (port/include/port/qol.h) */
+    PORT_BIND_LAUNCHER,      /* F2, Back + Start: Back to the launcher's question (port/include/port/launcher_back.h) */
     PORT_BIND_NOTE_READ,     /* C, LB / L1: opens the paper note Mario stands at (polled, player 1's; the game's L,
                                 which Mario doesn't use in the field, does it too: port/include/port/notes.h) */
+    PORT_BIND_SPIN_DASH,     /* Z: Paper Mario 64's Spin Dash (polled per player; a tap of the game's L, a controller's
+                                left trigger, does it too, where no paper note is near: port/include/port/pm64_spin.h) */
     PORT_BIND_COUNT
 };
 
@@ -86,6 +89,9 @@ int portBindingsPadUsableOn(int action, int port);
  * binding's ("Back + R"), as printed on player 1's controller, or "". */
 const char* portBindingsKeyName(int action);
 const char* portBindingsPadName(int action);
+/* The same two in the game's encoding (portTrGame's), for text its font draws: a Start menu form's value */
+const char* portBindingsKeyNameGame(int action);
+const char* portBindingsPadNameGame(int action);
 /* What player 1's binding is, for the text's button icons (port/include/port/
  * button_markup.h): an action's (action >= 0) or a game row's (action -1;
  * row 0-19: A B X Y Z L R Start, the D-pad's up down left right, the stick's,
@@ -167,6 +173,11 @@ int portBindingsProfileDelete(int i);
 int portBindingsProfileIsDefault(int i, int player);
 void portBindingsProfileSetDefault(int i, int player, int on);
 void portBindingsProfilesRefresh(void);
+
+/* A player's controller back to its defaults (C++ feature files): Aurora's, with the game's A, B, X and Y on
+ * the buttons printed A, B, X and Y on a Nintendo-lettered one (a Switch Pro Controller, a Joy-Con pair, an
+ * NSO SNES pad, an 8BitDo in Switch mode), where Aurora's go by place. */
+void portPadRestoreDefaults(unsigned port);
 
 #ifdef __cplusplus
 }

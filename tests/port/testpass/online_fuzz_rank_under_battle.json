@@ -1,0 +1,58 @@
+{
+ "desc": "Mario's rank goes up under a shared battle that began at rank 0 (online_chase's battle; TTYD_SYNC_CORRUPT rank at the host's battle frame 300, then the nozzle check an attack's aftereffect makes, as a fuzz round's own pouch put back mid-battle did): the stage keeps its own rank's set-up, so the check doesn't read the nozzles' data a rank-0 stage never had (0.5.1 before: _nozzle_type_init read through NULL, a crash), and the battle ends in the field in both",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 5800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 5600"
+    ],
+    "log_must": [
+     "the shared battle begins",
+     "test: corrupt: Mario's rank now 1 under the battle, then the nozzles' check"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_CORRUPT": "rank@300"
+    },
+    "log_must_not": [
+     "\\*\\*\\* crash"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 150",
+     "goto 443 -50 -40",
+     "wait 5300"
+    ],
+    "log_must": [
+     "met.*invited|invited.*met|fought .*invited"
+    ],
+    "log_must_not": [
+     "\\*\\*\\* crash"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

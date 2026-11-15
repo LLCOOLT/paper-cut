@@ -1,5 +1,5 @@
 {
- "desc": "Aurora: the host drops its versus fight right after the guest's yes; the guest, on its way to the ring, is taken back to the field with its own words, nobody wins",
+ "desc": "Aurora: the host drops its versus fight right after the guest's yes; the guest, on its way to the ring, is taken back to the field with its own words, nobody wins. The drop is 0 ms after the yes, but its word can still reach a guest after its fight is set up (a loaded host: 206 frames in t51o02), so either way back counts here; online_a_versus_drop_fight holds the fight's way",
  "groups": [
   "online",
   "online_aurora"
@@ -1650,7 +1650,7 @@
     "log_must": [
      "the host's versus fight isn't on",
      "the versus fight isn't fought here alone",
-     "^.versus. taken back: out of the ring to gor_01",
+     "^.versus. taken back: (out of the ring to gor_01|its battle ends as run away)",
      "^.versus. leaving the ring: the file's own words back"
     ],
     "backend": "offscreen",

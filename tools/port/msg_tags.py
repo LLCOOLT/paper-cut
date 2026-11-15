@@ -32,6 +32,8 @@ SETTING = re.compile(r'\b\w*[Ss]etting\w*\(\s*$')  # (a setting's key, not a mes
 NOT_ASKED = {
     ("pc_pm64_rowf", "headless"): "Rowf's NPC name (pm64_field_pc.c's tattles): he is only ever there on Aurora "
                                   "(pm64_badges_aurora.c)",
+    ("pc_recipes", "headless"): "a setting's key, not a message: gor_01.c's cook_sweep (tests) looks the recipe "
+                                "options up by name, and Paper Cut's recipes setting is Aurora's (battlex.cpp)",
 }
 LITERAL = re.compile(r'"([A-Za-z0-9_]+)"')
 

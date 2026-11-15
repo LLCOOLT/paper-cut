@@ -21,7 +21,8 @@ THINGS = [
     ("gon_05_pipe", "gon_05", 215, 915, 150, "pipe to gon_01", {"TTYD_GSWF": "1503"}),
     ("jin_08_pipe", "jin_08", -60, 0, 115, "pipe to usu_00", {}),
     ("las_27_pipe", "las_27", 500, 0, 100, "pipe to las_00", {}),
-    ("usu_01_pipe", "usu_01", 330, 0, 130, "pipe to gra_06", {}),
+    # (Twilight Town's end: there once the Trail's end's has been gone down, GSW 2031)
+    ("usu_01_pipe", "usu_01", 330, 0, 130, "pipe to gra_06", {"TTYD_GSW": "2031:1"}),
     ("gra_06_pipe", "gra_06", -220, 0, 160, "pipe to usu_01", {}),
     ("las_10_pipe", "las_10", -150, 0, 250, "pipe to las_00", {}),
     ("muj_01_jump", "muj_01", 320, 0, -20, "jump_stand", {"TTYD_GSW": "2030:1"}),
@@ -52,7 +53,10 @@ def scenario(name, m, x, y, z, what, extra, on):
     # Mario a step to the thing's left (the camera looks along -z): the thing beside him; or walked in
     # from a door ("_input"), where a goto would leave the camera behind
     walk = env.pop("_input", None)
-    inp = (walk or ["wait 5", "goto %d %d %d" % (x - 90, y + 10, z + 20), "wait 120"]) + ["where", "shot near", "end"]
+    pipe = on and what is not None and what.startswith("pipe")
+    # a pipe: Mario dropped onto it first, where he lands its top: 30 above the floor, as the rooms' own (#49)
+    stand = ["wait 60", "goto %d %d %d" % (x, y + 45, z), "wait 60", "where"] if pipe else []
+    inp = stand + (walk or ["wait 5", "goto %d %d %d" % (x - 90, y + 10, z + 20), "wait 120"]) + ["where", "shot near", "end"]
     s = {
         "desc": "%s with %s: %s placed, captured from beside it" % (m, "every remake map switch on" if on else "every switch off", what or "ambush"),
         "groups": ["world", "maps_remake"],
@@ -68,9 +72,40 @@ def scenario(name, m, x, y, z, what, extra, on):
         pat = what if what.startswith("\\") else r"\[map edits\] %s: %s" % (m, what.split()[0])
         if on:
             s["log_must"] = [pat]
+            if pipe:
+                s["log_must"].append(r"\[input\] where: map '%s', Mario at %d %d %d," % (m, x, y + 30, z))
         else:
             s["log_must_not"] = [pat]
     return s
+
+
+# Two-way shortcuts open from their far end (the remake's way): the near end not there (no pipe, no "!" over
+# Mario) until Mario has come through from the far end once; then it is
+def far_end_scenarios():
+    keys = {k: (1 if k != "remake_ambushes" else 0) for k in MAP_KEYS}
+    base = {"groups": ["world", "maps_remake"], "versions": ["us", "jp", "eu"], "settings": keys, "timeout": 200}
+    return {
+        "maps_usu_01_pipe_unfound": dict(base, **{
+            "desc": "usu_01 with every remake map switch on, the Trail's end's pipe never gone down: no pipe by "
+                    "the east gate yet (no \"!\" over Mario there)",
+            "versions": ["us"],
+            "env": {"TTYD_MAP": "usu_01", "TTYD_STORY": "405", "TTYD_EXIT_FRAMES": 3000},
+            "input": ["wait 60", "goto 240 10 150", "wait 120", "where gsw 2031", "shot near", "end"],
+            "expect_shots": ["near"],
+            "log_must_not": [r"\[map edits\] usu_01: pipe"],
+        }),
+        "maps_gra_06_pipe_opens_town": dict(base, **{
+            "desc": "gra_06 with every remake map switch on: Mario stands on the Trail's end's pipe (its top 30 "
+                    "above the floor), goes down it to Twilight Town, and the town's pipe is there from then",
+            "env": {"TTYD_MAP": "gra_06", "TTYD_STORY": "405", "TTYD_EXIT_FRAMES": 4000},
+            "input": ["wait 60", "goto -220 45 160", "wait 60", "where", "shot on_pipe", "hold down 60",
+                      "wait 240", "where gsw 2031", "goto 240 10 150", "wait 60", "shot town", "end"],
+            "expect_shots": ["on_pipe", "town"],
+            "log_must": [r"\[input\] where: map 'gra_06', Mario at -220 30 160,", r"\[map edits\] gra_06: pipe",
+                         r"\[input\] where: map 'usu_01'", r"\[map edits\] usu_01: pipe"],
+            "timeout": 240,
+        }),
+    }
 
 
 def main():
@@ -84,6 +119,11 @@ def main():
                 json.dump(scenario(*t, on), f, indent=1, ensure_ascii=False)
                 f.write("\n")
             n += 1
+    for name, s in far_end_scenarios().items():
+        with open(os.path.join(OUT, name + ".json"), "w", newline="\n") as f:
+            json.dump(s, f, indent=1, ensure_ascii=False)
+            f.write("\n")
+        n += 1
     print("%d scenarios" % n)
 
 

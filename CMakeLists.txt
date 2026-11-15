@@ -40,6 +40,9 @@ set_property(CACHE TTYD_BACKEND PROPERTY STRINGS aurora headless)
 option(TTYD_PC_32BIT "Build a 32-bit executable (headless only)" OFF)
 option(TTYD_PTRWIDTH_WARNINGS "Report only int<->pointer width warnings (audit build)" OFF)
 option(TTYD_FORTIFY "Keep the C library's _FORTIFY_SOURCE checks in game code (audit build)" OFF)
+# zero (default), pattern (an audit build: 0xAA.. bytes make a read of an unset local show) or off
+set(TTYD_AUTO_VAR_INIT zero CACHE STRING "Locals the code never set start as: zero, pattern or off")
+set_property(CACHE TTYD_AUTO_VAR_INIT PROPERTY STRINGS zero pattern off)
 
 # --- iOS (cmake/toolchains/ios.cmake; docs/PC_PORT.md, "iOS") ---
 # Aurora only. An iOS app may only run code signed into its bundle (no
@@ -455,6 +458,19 @@ else()
     # then lists every overflowing copy (each must land in unread padding).
     if(NOT TTYD_FORTIFY)
         list(APPEND TTYD_CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0)
+    endif()
+    # The game reads some locals it never set: an out-parameter a callee leaves unwritten on one path
+    # (marioGetRub's turn count once made every jump a Spring Jump), a buffer a branch never fills.
+    # The GameCube's stack held harmless leftovers there; on PC and phones it held whatever the
+    # compiler left, different per platform. Starting every local at zero makes those reads the
+    # same everywhere (the matched GameCube build is MWCC's and doesn't see this). Known cases are
+    # fixed in the source as well; this catches the ones not found.
+    if(NOT TTYD_AUTO_VAR_INIT STREQUAL "off")
+        include(CheckCCompilerFlag)
+        check_c_compiler_flag(-ftrivial-auto-var-init=${TTYD_AUTO_VAR_INIT} TTYD_HAVE_AUTO_VAR_INIT_${TTYD_AUTO_VAR_INIT})
+        if(TTYD_HAVE_AUTO_VAR_INIT_${TTYD_AUTO_VAR_INIT})
+            list(APPEND TTYD_CFLAGS -ftrivial-auto-var-init=${TTYD_AUTO_VAR_INIT})
+        endif()
     endif()
     if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         list(APPEND TTYD_CFLAGS -Wno-error=incompatible-function-pointer-types)
@@ -977,7 +993,7 @@ if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
     # coop_camera_pc, the co-op camera's springs and the players' fall watch)
     foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc luigi_jump_pc costume_pc skin_pc battlex_pc enemy_variant_pc duo_pc
                brothers_pc page_turn_pc chaos_pc open_world_pc heap_overflow_pc second_player_pc crowd_seats_pc
-               coop_camera_pc)
+               coop_camera_pc pm64_models_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
@@ -1173,6 +1189,50 @@ endif()
 if(WIN32)
     target_link_libraries(ttyd PRIVATE dbghelp ws2_32) # ws2_32: LiveSplit (port/src/common/livesplit_pc.c)
 endif()
+# libjuice (MPL-2.0, a fixed release, fetched by hash; the dependency cache has it): online play's direct
+# connection between two players' games, ICE over UDP (port/src/common/online_ice_pc.c). Its sources
+# are built here as a static library of their own (its CMakeLists.txt would add a shared library, and
+# a BUILD_SHARED_LIBS option every later target would take): SOURCE_SUBDIR names no CMakeLists.txt, so
+# FetchContent only fetches. The headless test build too (its scenarios play direct on this computer:
+# its loopback addresses are candidates there), never the browser (no UDP).
+option(TTYD_DIRECT "Online play: direct connections between players (libjuice)" ON)
+if(TTYD_DIRECT AND NOT EMSCRIPTEN)
+    include(FetchContent)
+    FetchContent_Declare(libjuice
+        URL https://github.com/paullouisageneau/libjuice/archive/refs/tags/v1.7.4.tar.gz
+        URL_HASH SHA256=95c088862aa1b88b73d62aa99577135010eb768fcafb252d13aa85a8515ef798
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        SOURCE_SUBDIR papercut-sources-only)
+    FetchContent_MakeAvailable(libjuice)
+    set(TTYD_JUICE_SOURCES)
+    foreach(_f addr agent crc32 const_time conn conn_poll conn_thread conn_mux base64 hash hmac ice juice log
+               random server stun timestamp tcp turn udp)
+        list(APPEND TTYD_JUICE_SOURCES ${libjuice_SOURCE_DIR}/src/${_f}.c)
+    endforeach()
+    add_library(ttyd_juice STATIC ${TTYD_JUICE_SOURCES})
+    target_include_directories(ttyd_juice PUBLIC ${libjuice_SOURCE_DIR}/include
+        PRIVATE ${libjuice_SOURCE_DIR}/include/juice ${libjuice_SOURCE_DIR}/src)
+    # (no TURN server of its own: NO_SERVER; its own hashes, not Nettle's)
+    target_compile_definitions(ttyd_juice PUBLIC JUICE_STATIC PRIVATE JUICE_EXPORTS USE_NETTLE=0 NO_SERVER)
+    if(TTYD_BACKEND STREQUAL "headless")
+        target_compile_definitions(ttyd_juice PRIVATE JUICE_ENABLE_LOCALHOST_ADDRESS=1)
+    endif()
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    target_link_libraries(ttyd_juice PUBLIC Threads::Threads)
+    if(WIN32)
+        target_compile_definitions(ttyd_juice PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
+        target_link_libraries(ttyd_juice PUBLIC ws2_32 bcrypt)
+    endif()
+    if(MSVC)
+        target_compile_options(ttyd_juice PRIVATE /w)
+    else()
+        target_compile_options(ttyd_juice PRIVATE -w)
+    endif()
+    set_target_properties(ttyd_juice PROPERTIES C_STANDARD 11 POSITION_INDEPENDENT_CODE ON)
+    target_link_libraries(ttyd PRIVATE ttyd_juice)
+    target_compile_definitions(ttyd PRIVATE PORT_DIRECT=1)
+endif()
 if(TTYD_BACKEND STREQUAL "aurora")
     target_link_libraries(ttyd PRIVATE aurora::core aurora::gx aurora::gd aurora::vi
         aurora::pad aurora::si aurora::os aurora::mtx aurora::card aurora::dvd
@@ -1211,6 +1271,13 @@ if(TTYD_BACKEND STREQUAL "aurora")
             "Online play's relays, wss://<name>.<subdomain>.workers.dev, separated by spaces")
         if(TTYD_ONLINE_RELAY)
             target_compile_definitions(ttyd PRIVATE PORT_ONLINE_RELAY_URL="${TTYD_ONLINE_RELAY}")
+        endif()
+        # paper notes, leaderboards, bingo, daily and raid: their own address if set (a relay with the
+        # same worker); empty: the first relay's, as before ($TTYD_ONLINE_SERVICES overrides it)
+        set(TTYD_ONLINE_SERVICES "" CACHE STRING
+            "Notes, boards, bingo, daily and raid: wss:// or https://<name>.<subdomain>.workers.dev (empty: the relay's)")
+        if(TTYD_ONLINE_SERVICES)
+            target_compile_definitions(ttyd PRIVATE PORT_ONLINE_SERVICES_URL="${TTYD_ONLINE_SERVICES}")
         endif()
     endif()
     # Windows: SDL3, Dawn (+ the DXC DLLs it loads), nod, libpng, zlib next to the exe.
@@ -1361,8 +1428,15 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_rando.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/open_world.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/open_world_trips.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/game_names.cpp
-        ${CMAKE_SOURCE_DIR}/port/archipelago/ap_verify.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/rando_tracker.cpp)
+        ${CMAKE_SOURCE_DIR}/port/archipelago/ap_verify.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/rando_tracker.cpp
+        ${CMAKE_SOURCE_DIR}/port/archipelago/ap_tls_socket.cpp)
     target_include_directories(ttyd_mods PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
+    # Archipelago's own WebSocket over Mbed TLS (port/archipelago/ap_tls_socket.cpp): wss:// on Linux,
+    # macOS and phones, wherever Mbed TLS is built
+    if(TARGET mbedtls AND NOT EMSCRIPTEN)
+        target_link_libraries(ttyd_mods PRIVATE mbedtls mbedx509 mbedcrypto)
+        target_compile_definitions(ttyd_mods PRIVATE PORT_AP_MBEDTLS=1)
+    endif()
     target_compile_features(ttyd_mods PRIVATE cxx_std_20)
     target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 ${TTYD_VERSION_DEFINES}
         TTYD_MOD_PLATFORM="${TTYD_MOD_PLATFORM}")
@@ -1495,12 +1569,15 @@ const int portBuiltinModCount = @_builtin_count@;
         # HTTPS (port/apple/http_apple.m, for port/settings/http.cpp). Its own
         # library: the game's prefix header must not reach Objective-C.
         enable_language(OBJC)
-        # And text to speech (port/apple/speech_apple.m, AVSpeechSynthesizer).
+        # And text to speech (port/apple/speech_apple.m, AVSpeechSynthesizer), and online play's news of
+        # the network's changes (port/apple/netpath_apple.m, Network.framework's path monitor).
         add_library(ttyd_cloud STATIC ${CMAKE_SOURCE_DIR}/port/apple/cloud_apple.m
-            ${CMAKE_SOURCE_DIR}/port/apple/http_apple.m ${CMAKE_SOURCE_DIR}/port/apple/speech_apple.m)
+            ${CMAKE_SOURCE_DIR}/port/apple/http_apple.m ${CMAKE_SOURCE_DIR}/port/apple/speech_apple.m
+            ${CMAKE_SOURCE_DIR}/port/apple/netpath_apple.m)
         target_include_directories(ttyd_cloud PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
         target_compile_options(ttyd_cloud PRIVATE -fobjc-arc)
-        target_link_libraries(ttyd PRIVATE ttyd_cloud "-framework Foundation" "-framework AVFoundation")
+        target_link_libraries(ttyd PRIVATE ttyd_cloud "-framework Foundation" "-framework AVFoundation"
+            "-framework Network")
     endif()
     if(NOT ANDROID)
         # Save sync: iCloud Drive on Apple devices (above), any folder on Windows and Linux
@@ -1514,7 +1591,9 @@ const int portBuiltinModCount = @_builtin_count@;
     # invisible cutscene characters on an iPhone). Made from runs on the
     # user's own disc, so it is bundled when present, never committed. Aurora
     # reads it from SDL_GetBasePath(): an iOS bundle's root, a macOS app's
-    # Contents/Resources, elsewhere the executable's folder.
+    # Contents/Resources, Android's APK assets (port/android/app/build.gradle
+    # puts it there), elsewhere the executable's folder (the release packages
+    # take it from there: tools/port/release.py, which also requires it).
     set(TTYD_PIPELINE_SEED ${CMAKE_SOURCE_DIR}/data/initial_pipeline_cache.db CACHE FILEPATH
         "Bundled pipeline seed (initial_pipeline_cache.db), used when it exists")
     if(EXISTS ${TTYD_PIPELINE_SEED})
@@ -1880,4 +1959,15 @@ if(Threads_FOUND)
         target_link_libraries(musyx_mixer_test PRIVATE Threads::Threads)
         target_link_libraries(musyx_seq_sweep PRIVATE Threads::Threads)
     endif()
+endif()
+
+# Every setting has its place on the settings page (port/settings/settings_layout.cpp): the linked program
+# names each one without and the build fails (a new feature's control must be given one). Only where the
+# program can run here; TTYD_SETTINGS_LAYOUT_CHECK=OFF skips it.
+option(TTYD_SETTINGS_LAYOUT_CHECK "Fail the build when a setting has no place in settings_layout.cpp" ON)
+if(TTYD_SETTINGS_LAYOUT_CHECK AND TTYD_BACKEND STREQUAL "aurora" AND NOT CMAKE_CROSSCOMPILING AND NOT ANDROID
+   AND NOT IOS AND NOT EMSCRIPTEN)
+    add_custom_command(TARGET ttyd POST_BUILD
+        COMMAND $<TARGET_FILE:ttyd> --settings-layout-check
+        COMMENT "Checking every setting has its place (settings_layout.cpp)")
 endif()

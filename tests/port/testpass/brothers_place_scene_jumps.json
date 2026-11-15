@@ -1,0 +1,52 @@
+{
+ "desc": "Brothers mode, the full run's segment 11 from its checkpoint (Petal Meadows' scenes, hei_00 and hei_01): Luigi doesn't jump over and over while a scene has Mario (no more than a hop each 5 seconds; none where the scene has Mario jump), nor in place while Mario stands. Before, 37 hops in one scene",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "11_castle"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "11_castle"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1"
+ },
+ "input": "tests/port/full_run/11_castle.txt",
+ "log_must": [
+  "^\\[bros-trace\\] scene-end f=\\d+ map=hei_0\\d .*verdict=",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900,
+ "new": true,
+ "log_must_not": [
+  "^\\[bros-trace\\] (arrive|scene-end) .*verdict=BAD:[a-z,]*jumps",
+  "verdict=BAD:hops"
+ ]
+}

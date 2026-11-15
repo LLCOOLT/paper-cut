@@ -1,0 +1,50 @@
+{
+ "desc": "The relay's day nearly used (the stand-in's --budget, as online_relay_diet_busy): the host is told once, as a notice (The free relay is busy today...), with the time the day starts again in its own time, and the room plays on",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1600
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--budget",
+   "1"
+  ],
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: the relay says its day is mostly used",
+     "quality: the relay is busy today \\(its day starts again at 00:00 UTC, \\d\\d:\\d\\d here\\): told the player",
+     "\\[coop\\] The free relay is busy today: new rooms may be turned away\\. Yours plays on\\."
+    ],
+    "log_must_not": [
+     "told the player[\\s\\S]*told the player"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 200
+    }
+   }
+  ]
+ },
+ "timeout": 300
+}

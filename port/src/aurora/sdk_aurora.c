@@ -20,14 +20,16 @@ GXRenderModeObj* DEMOGetRenderModeObj(void); /* sdk/DEMOInit.c: the game's rende
         static int sLogged;                             \
         if (!sLogged) {                                 \
             sLogged = 1;                                \
-            fprintf(stderr, "STUB " #name "\n");        \
+            fprintf(stdout, "STUB " #name "\n");        \
         }                                               \
     } while (0)
 
 /* ---- reporting */
 
+/* (the game's reports go where the port's own lines go, stdout: a second stream written between them split
+   buffered lines mid-line in a captured log, and the tests' patterns missed them) */
 void OSVReport(const char* msg, va_list list) {
-    vfprintf(stderr, msg, list);
+    vfprintf(stdout, msg, list);
 }
 
 void OSReport(const char* msg, ...) {
@@ -39,6 +41,7 @@ void OSReport(const char* msg, ...) {
 
 void OSPanic(const char* file, int line, const char* msg, ...) {
     va_list list;
+    fflush(stdout); /* (what came before, out first) */
     fprintf(stderr, "OSPanic %s:%d: ", file, line);
     va_start(list, msg);
     vfprintf(stderr, msg, list);

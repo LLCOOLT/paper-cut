@@ -247,7 +247,7 @@ static BattleUnit* secondUnit(BattleWork* wp, const PortDuoMove* m) {
 
 static int setting(void) {
     if (sSetting == NULL) {
-        sSetting = portSettingsDeclare("duo_moves", 1, 0, 2); /* 0 off, 1 co-op and versus, 2 always */
+        sSetting = portSettingsDeclare("duo_moves", PORT_DUO_MOVES_DEFAULT, 0, 2); /* (port/include/port/duo.h) */
     }
     return *sSetting;
 }

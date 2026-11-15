@@ -1,5 +1,6 @@
 {
  "desc": "3 games together, hei_02_02's Paragoomba and Koopa (no Spiky Goomba: Jump alone can win it): the host's Mario and player 2's partner played by pressing A (Jump / the first move, the first target); players 3-4 idle in the audience emote and throw; Team bonus at the end",
+ "settings": {"team_bonus": 1, "audience_players": 1},
  "env": {
   "TTYD_AUTO_TEXT": 1,
   "TTYD_GOD": 1,

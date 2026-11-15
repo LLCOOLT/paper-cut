@@ -3,5 +3,5 @@
 Controller haptics
 タイミングの　しんどう
 
-A short pulse as an action command's or a guard's timing window opens, and as a gauge or stick command reaches where it succeeds, with a tick as it steps on. Guards against attacks other than jumps are felt once that attack has been seen twice. On a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
-アクションコマンドや　ガードの　タイミングが　はじまる　しゅんかんと　ゲージや　スティックの　コマンドが　せいこうする　ところに　とどいた　しゅんかんに　みじかく　ふるえ　だんかいが　すすむと　かるく　ふるえます　ジャンプいがいの　こうげきの　ガードは　その　こうげきを　2かい　みたあとから　ふるえます　DualSenseでは　Rを　おしつづける　コマンドの　あいだ　トリガーが　かたく　なります
+The controller pulses when an action command's or guard's timing window opens, so you can feel when to press; on a DualSense the triggers also push back. Follows Rumble and Rumble strength.
+コマンドや　ガードの　タイミングで　コントローラーが　ふるえます

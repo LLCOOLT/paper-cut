@@ -318,6 +318,32 @@ void PORT_HOOKABLE(marioYoshiForceCancel)(void) {
     }
 }
 
+#ifdef TARGET_PC
+/**
+ * PC: Mario left in the riding motion with no ride under him (Yoshi no longer being used: a script's
+ * evt_party_stop took him out of his ride mode first). marioYoshiForceCancel does nothing then (it checks the
+ * ride), so this puts Mario down standing: the ride's display offsets cleared (mot_yoshi_post also restores his
+ * shadow and pose flags) and Yoshi's work area freed, as the end of a ride does.
+ */
+void portYoshiRiderLost(void) {
+    MarioWork* mario = marioGetPtr();
+    PartyEntry* party = partyGetPtr(marioGetPartyId());
+
+    if (mario->currMotionId != MARIO_MOTION_YOSHI || yoshiGetStatus() != 0) {
+        return;
+    }
+    if (party != NULL) {
+        L_resetOfs(party);
+        if (party->currentMemberId == PARTY_MEMBER_YOSHI && party->useStruct != NULL) {
+            __memFree(HEAP_DEFAULT, party->useStruct);
+            party->useStruct = NULL;
+        }
+    }
+    marioChgPose("M_S_1");
+    marioChgMot(MARIO_MOTION_STAY);
+}
+#endif
+
 /**
  * Yoshi's goodbye handler (party_data): if Mario is riding, dismounts first and keeps running the ride code;
  * otherwise plays the partner goodbye and moves to run mode 0xe when it ends.

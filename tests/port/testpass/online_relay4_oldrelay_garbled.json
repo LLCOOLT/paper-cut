@@ -1,0 +1,96 @@
+{
+ "desc": "player 3's connection to the relay drops (--kill peer0) and, as it comes back, before the key, the host's link hands it a garbled frame of the old relay's kind (with bytes) and then one as the host's note itself (TTYD_NET_FUZZ_INJECT_AT=here): the garbled one is left out, the note is only believed when it comes again on the next connection, so player 3 goes into the room again, isn't told it again (this relay frames) and plays on with all four (0.5.0 stopped for good on any frame of that kind: 'The host's relay needs an update')",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 5400
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here3 3000",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 2000",
+     "wait_peer here3 2000",
+     "give 149",
+     "flag 1001",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: session resumed with player [34]"
+    ],
+    "log_must_not": [
+     "doesn't frame the guest's messages"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here3 3000",
+     "wait 2000",
+     "wait_peer here3 2000",
+     "wait 800"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here3 3000",
+     "wait 2000",
+     "wait_peer here3 2000",
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 300,
+     "TTYD_NET_FUZZ_FROM": 300,
+     "TTYD_NET_FUZZ_INJECT": "f:1:4:12@0=0102030405;f:1:4:0",
+     "TTYD_NET_FUZZ_INJECT_AT": "here"
+    },
+    "log_must": [
+     "fuzz: inject: at the next time the other's in the room",
+     "fuzz: inject: a room frame from player 1, type 4, 12 bytes",
+     "net: a relay word left out \\(a garbled frame\\)",
+     "net: the host says its relay can't take players 3 and 4: into the room again to be sure",
+     "net: session resumed with player 1"
+    ],
+    "log_must_not": [
+     "net: The host's relay needs an update"
+    ]
+   },
+   {
+    "role": "guest3",
+    "input": [
+     "wait_peer here3 3000",
+     "wait 2000",
+     "wait_peer here3 2000",
+     "wait 800"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 600
+    }
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--kill",
+   "peer0:14",
+   "peer1:16"
+  ]
+ },
+ "timeout": 420
+}

@@ -51,8 +51,8 @@ La nuova posta è un avviso nell'angolo e un suono: Mario continua a camminare. 
 In shops, how many of the item you hold and your shop points under its name; selling, storing and taking out go straight back to the list; selling from storage too; a storage box at the Howz of Badges; a notice when the Rogueport shop has new stock.
 Nei negozi, quanti ne hai e i tuoi punti negozio sotto il nome; vendere, depositare e ritirare tornano subito alla lista; si vende anche dal deposito; un baule di deposito alla Casa delle Medaglie; un avviso quando il negozio di Fannullopoli ha novità.
 
-The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks, and near someone Goombella has not Tattled yet.
-Il «!» sopra Mario appare in ogni punto dove agisce il pulsante A, non solo in quelli segnati dal gioco, e vicino a qualcuno che Goombella non ha ancora analizzato.
+The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks.
+Il «!» sopra Mario appare in ogni punto dove agisce il pulsante A, non solo in quelli segnati dal gioco.
 
 The file screen shows each file's partner and the date it was saved, a colour per file, and a gold star on a finished story.
 La schermata dei file mostra il compagno di ogni file e la data del salvataggio, un colore per file e una stella d'oro per una storia finita.
@@ -60,8 +60,8 @@ La schermata dei file mostra il compagno di ogni file e la data del salvataggio,
 In the Start menu's items and badges, Left and Right turn the page (past the edge of the items' two columns).
 Negli oggetti e nelle medaglie del menu Start, Sinistra e Destra girano pagina (oltre il bordo delle due colonne di oggetti).
 
-In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins).
-Nei livelli a scorrimento di Bowser, Y nella pausa rigioca il livello dall'inizio (uno stato salvato quando comincia).
+In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins). From the next stage.
+Nei livelli a scorrimento di Bowser, Y nella pausa rigioca il livello dall'inizio (uno stato salvato quando comincia). Dal livello successivo.
 
 Which tracks the Jukebox lists: those heard on this file; also a share of the list for each Shine Sprite found (all with the last); or every track.
 Quali brani elenca il Jukebox: quelli ascoltati in questo file; in più una parte della lista per ogni Sole trovato (tutti con l'ultimo); oppure tutti i brani.
@@ -69,8 +69,8 @@ Quali brani elenca il Jukebox: quelli ascoltati in questo file; in più una part
 The Journal sells a hint for 10 coins: where a Star Piece or Shine Sprite is still hidden, in this area first.
 Il Diario vende un indizio per 10 monete: dove è ancora nascosto un Frammento Stella o un Sole, prima in quest'area.
 
-Glitz Pit and chapter 6 pace trims
-Scorciatoie dell'Arena Sbrilla e del capitolo 6
+Shorter Glitz Pit and train trips
+Tragitti più brevi: Arena Sbrilla e treno
 
 After your first Glitz Pit match, no guard walks you to the ring: straight there. Every Excess Express trip after chapter 6 goes straight to the other station. Not online.
 Dopo il tuo primo incontro all'Arena Sbrilla, nessuna guardia ti accompagna al ring: ci vai subito. Ogni viaggio sull'Espresso Lusso dopo il capitolo 6 va dritto all'altra stazione. Non online.

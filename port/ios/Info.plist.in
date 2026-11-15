@@ -98,6 +98,10 @@
 	<!-- Screenshots (the settings page) are added to Photos. -->
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Screenshots you take in the game are saved to your photo library.</string>
+	<!-- Online play on the same network: a game by address, and the direct connection
+	     (port/src/common/online_ice_pc.c), which tries the other game's local addresses first. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Online play connects straight to your friends' games on this network when you play by address or with Direct connection on.</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 

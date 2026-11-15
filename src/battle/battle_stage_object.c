@@ -53,23 +53,14 @@ typedef f32 (*IntplSubArgOrderFn)(s32 mode, f32 start, f32 end, s32 cur, s32 ste
 #include "port/hooks/src_battle_battle_stage_object.h"
 #endif
 #ifdef TARGET_PC
-#include "port/platform.h"
 #include "port/statesync.h"
-/* PC port, a shared online battle (port/include/port/statesync.h): a falling stage object's picks (its type,
- * its target, the lucky dodge) are taken with the random numbers of the moment the stage decided it falls
- * (BattleStage_ObjectFallCheck, in the action's script, the same moment in every game), kept in the fall
- * event's LW(14)/LW(15). _object_fall_attack runs once the other events are over, a different number of
- * frames later in each game (a follower may have taken player 1's next random numbers by then), so the
- * same fall hit Mario on one screen and the partner on the other (online_battle2_duo_tough) */
-#define FALL_RAND_MARK 0x46414C4C /* LW(14): LW(15) holds the decision's random numbers */
-static u32 sFallRandKeep;
-static BOOL sFallRandSwapped;
-static void fallRandBack(void) {
-    if (sFallRandSwapped) {
-        sFallRandSwapped = FALSE;
-        portRandSetState(sFallRandKeep);
-    }
-}
+/* PC port, a shared online battle (port/include/port/statesync.h): every stage event (a falling object, the
+ * iron frame, the nozzles' turns and bursts, a background set falling, the units' ceiling-fall reactions)
+ * draws from random numbers of its own, the same in every game. The stage decides each at the same moment in
+ * every game, but the event runs once the other events are over, a different number of frames later in each
+ * game, and drew its picks (its target, a dodge, a status) from numbers gone apart by then: the same fall hit
+ * Mario on one screen and the partner on the other (online_battle2_duo_tough) */
+#define STAGE_EVENT(entry, what) portStateSyncBattleStageEvent(entry, what)
 #endif
 
 static USER_FUNC(_set_mobj_shake_init);
@@ -524,6 +515,9 @@ void PORT_HOOKABLE(BattleStage_DestroyA1)(void) {
     entry = evtEntry(evt, 10, 0);
     if (entry) {
         wp->stageObjectWork.bgDestroyEvtId = entry->eventId;
+#ifdef TARGET_PC
+        STAGE_EVENT(entry, "background set A1 falls");
+#endif
     }
 }
 
@@ -540,7 +534,11 @@ void PORT_HOOKABLE(BattleStage_DestroyA2)(void) {
     if (!evt) {
         evt = _object_turn_event_A2;
     }
+#ifdef TARGET_PC
+    STAGE_EVENT(evtEntry(evt, 10, 0), "background set A2 falls");
+#else
     evtEntry(evt, 10, 0);
+#endif
 }
 
 /**
@@ -563,6 +561,9 @@ void PORT_HOOKABLE(BattleStage_DestroyB)(void) {
     entry = evtEntry(evt, 10, 0);
     if (entry) {
         wp->stageObjectWork.bgDestroyEvtId = entry->eventId;
+#ifdef TARGET_PC
+        STAGE_EVENT(entry, "background set B falls");
+#endif
     }
 }
 
@@ -3166,6 +3167,9 @@ static void _Nozzle_Change_Check(u8 index, u8* rate) {
             sw->nozzleTurnEvtId[index] = evt->eventId;
             if (evt) {
                 evt->unitId = index;
+#ifdef TARGET_PC
+                STAGE_EVENT(evt, "a nozzle turns"); /* (its unitId is the nozzle's, never a unit's: not an action's) */
+#endif
             }
         }
     }
@@ -3272,7 +3276,15 @@ void PORT_HOOKABLE(BattleStage_WallCloseCheck)(void) {
 
     if (!(sw->flags & STAGE_OBJ_FLAG_WALL_CLOSING)) {
         sw->flags |= STAGE_OBJ_FLAG_WALL_CLOSING;
+#ifdef TARGET_PC
+        {
+            EventEntry* wall = evtEntry(_close_wall_event, 10, 0);
+            sw->closeWallEvtId = wall->eventId;
+            STAGE_EVENT(wall, "the escape wall closes");
+        }
+#else
         sw->closeWallEvtId = evtEntry(_close_wall_event, 10, 0)->eventId;
+#endif
     }
 }
 
@@ -3318,7 +3330,15 @@ void PORT_HOOKABLE(BattleStage_IronFrameFallCheck)(void) {
 
     if (!(sw->flags & STAGE_OBJ_FLAG_NO_IRON_FRAME_FALL) && !(sw->flags & STAGE_OBJ_FLAG_IRON_FRAME_GONE)) {
         sw->flags |= STAGE_OBJ_FLAG_IRON_FRAME_GONE;
+#ifdef TARGET_PC
+        {
+            EventEntry* frame = evtEntry(_fall_frame_event, 10, 0);
+            sw->fallFrameEvtId = frame->eventId;
+            STAGE_EVENT(frame, "the iron frame falls");
+        }
+#else
         sw->fallFrameEvtId = evtEntry(_fall_frame_event, 10, 0)->eventId;
+#endif
     }
 }
 
@@ -3360,6 +3380,9 @@ static USER_FUNC(_fall_frame_wait_unit_ready) {
                 evt = evtEntry(unit->ceilFallEventCode, 10, 0);
                 if (evt) {
                     evt->unitId = unit->unitId;
+#ifdef TARGET_PC
+                    STAGE_EVENT(evt, "a unit's ceiling-fall reaction");
+#endif
                 }
                 unit->ceilFallEventId = evt->eventId;
             }
@@ -3433,7 +3456,14 @@ void PORT_HOOKABLE(BattleStage_NozzleWorkCheck)(s32 type) {
     BattleStageObjectWork* sw = STAGE_WORK(wp);
     EventEntry* evt;
 
+#ifdef TARGET_PC
+    /* the battle's own rank, as its stage was set up (BattleStageObjectInit: the nozzles and their data only
+       from rank 1): online, another game's progress can raise Mario's rank under a battle that began at rank 0,
+       and the nozzle data, never set, was read through NULL (a fuzz round's crash, _nozzle_type_init) */
+    if (sw->nozzleData != NULL) {
+#else
     if (pouchGetPtr()->rank > 0) {
+#endif
         _nozzle_type_init();
         if (type || sw->nozzleType) {
             if (sw->nozzleWorkEvtId && !evtCheckID(sw->nozzleWorkEvtId)) {
@@ -3446,6 +3476,9 @@ void PORT_HOOKABLE(BattleStage_NozzleWorkCheck)(s32 type) {
                     evt = evtEntry(_nozzle_work_event_0, 10, 0);
                 }
                 sw->nozzleWorkEvtId = evt->eventId;
+#ifdef TARGET_PC
+                STAGE_EVENT(evt, "the nozzles fire");
+#endif
             }
         }
     }
@@ -3460,11 +3493,22 @@ static void _nozzle_type_init(void) {
     s8 i;
 
     if (sw->nozzleType == -1) {
+#ifdef TARGET_PC
+        /* (a shared online battle: the first turn's pick is outside any action's script, so from the stage's own
+           numbers, alike in every game) */
+        unsigned keep = 0;
+        const int own = portStateSyncBattleStageDrawBegin(&keep);
+#endif
         total = 0;
         for (i = 0; i < 4; i++) {
             total += data->typeRate[i];
         }
         total = irand(total);
+#ifdef TARGET_PC
+        if (own) {
+            portStateSyncBattleStageDrawEnd(keep);
+        }
+#endif
         for (i = 0; i < 4; i++) {
             total -= data->typeRate[i];
             if (total < 0) {
@@ -3876,10 +3920,7 @@ s32 PORT_HOOKABLE(BattleStage_ObjectFallCheck)(void) {
     }
     evt = evtEntry(_object_fall_event, 10, 0);
 #ifdef TARGET_PC
-    if (portStateSyncSharedBattle()) {
-        evt->lwData[14] = FALL_RAND_MARK; /* (the picks' random numbers: fallRandBack, above) */
-        evt->lwData[15] = (EvtWord)portRandState();
-    }
+    STAGE_EVENT(evt, "an object falls");
 #endif
     sw->objectFallEvtId = evt->eventId;
     return evt->eventId;
@@ -4032,14 +4073,6 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
     s32 unitId;
     s32 partId;
     if (isFirstCall) {
-#ifdef TARGET_PC
-        if (event->lwData[14] == FALL_RAND_MARK && portStateSyncSharedBattle()) {
-            sFallRandKeep = portRandState();
-            sFallRandSwapped = TRUE;
-            portRandSetState((u32)event->lwData[15]); /* (put back as the picks are over: fallRandBack) */
-        }
-        event->lwData[14] = 0;
-#endif
         w = BattleAlloc(sizeof(FallObjectWork));
         event->userdatap[0] = w;
         event->userdata[1] = 0;
@@ -4050,9 +4083,6 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
         }
 
         if (BattleCheckConcluded(wp)) {
-#ifdef TARGET_PC
-            fallRandBack();
-#endif
             evtSetValue(event, outArg, event->userdata[1]);
             return 2;
         }
@@ -4107,9 +4137,6 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
             if (e->kind == 0) {
                 BattleSamplingEnemy(&targets, weapon, BattleGetSystemPtr(wp)->unitId, 1, weapon->targetClassFlags, weapon->targetPropertyFlags, -wp->alliances[1].attackDirection);
                 if (targets.numTargets <= 0) {
-#ifdef TARGET_PC
-                    fallRandBack();
-#endif
                     evtSetValue(event, outArg, event->userdata[1]);
                     return 2;
                 }
@@ -4128,9 +4155,6 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
         }
 
         if (!found) {
-#ifdef TARGET_PC
-            fallRandBack();
-#endif
             evtSetValue(event, outArg, event->userdata[1]);
             return 2;
         }
@@ -4161,9 +4185,6 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
                 }
             }
         }
-#ifdef TARGET_PC
-        fallRandBack();
-#endif
     }
     sfxTub2 = (0, "SFX_BTL_STAGE_DAMAGE_TUB1"); // FAKE: comma expr makes the literal an early @ temp (same pointer)
     sfxNormal = "SFX_BTL_STAGE_DAMAGE_NORMAL1";

@@ -1,0 +1,37 @@
+# Special places in Japanese for the JP release's own font (the Journal's map, Bowser's pause): kana and its few kanji, words apart.
+
+Special places
+とくべつな　ばしょ
+
+Mario's house
+マリオの　家
+
+Bowser's Castle
+クッパ城
+
+Bowser's stage 1
+クッパの　ステージ　1
+
+Bowser's stage 2
+クッパの　ステージ　2
+
+Bowser's stage 3
+クッパの　ステージ　3
+
+Back to where you came from
+きた　ばしょへ　もどる
+
+{A}: go there. {B}: back.
+{A}：いく　{B}：もどる
+
+Off in Console-accurate mode.
+ゲームキューブ　モードでは　つかえません
+
+Not seen in the story yet.
+まだ　みていません
+
+{X}: leave, back to where Mario came from.
+{X}：でて　マリオが　きた　ばしょへ　もどる
+
+Bowser's Castle: the far door leads back.
+クッパ城：おくの　とびらから　もどれます

@@ -1,0 +1,46 @@
+{
+ "desc": "Spin Dash with Speedy Spin worn (#51): a tap of L from a run, the stick held right, a longer and faster spin (58 frames spinning free, the first 42 at 2.7 times the run's speed, as Paper Mario's 30 and 21); compare its logged distance with pm64_spin_dash's",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_BADGES": "0x1AE",
+  "TTYD_EXIT_FRAMES": 700
+ },
+ "settings": {
+  "pm64_spin": 1,
+  "pm64_badges": 1
+ },
+ "input": [
+  "wait 160",
+  "where",
+  "stick 127 0 20",
+  "stick 127 0 2 l",
+  "wait 10",
+  "shot speedy",
+  "wait 70",
+  "where",
+  "end"
+ ],
+ "expect_shots": [
+  "speedy"
+ ],
+ "log_must": [
+  "\\[badges\\] TTYD_BADGES: 430 \\(0x1ae\\) worn",
+  "\\[spin\\] Mario spins at .*: 58 frames, .*Speedy Spin",
+  "\\[spin\\] Mario's spin ends \\([^)]*\\): \\d+ units in \\d+ frames"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 150
+}

@@ -1,0 +1,39 @@
+{
+ "desc": "Charlieton and a Grotto salesman turned on in Boggly Woods' mri_00: Charlieton comes at once, without a room change; turned off, he goes at once",
+ "groups": [
+  "settings",
+  "maps_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "mri_00",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_merchants": 0
+ },
+ "input": [
+  "wait 5",
+  "goto 240 50 350",
+  "wait 60",
+  "setting remake_merchants 1",
+  "wait 60",
+  "where npcs",
+  "shot on",
+  "setting remake_merchants 0",
+  "wait 60",
+  "where npcs",
+  "end"
+ ],
+ "expect_shots": [
+  "on"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "\\[input\\] setting remake_merchants = 1[\\s\\S]*\\[remake\\] mri_00: rm_charlieton[\\s\\S]*\\[input\\] setting remake_merchants = 0[\\s\\S]*\\[remake\\] mri_00: rm_charlieton taken away"
+ ]
+}

@@ -18,7 +18,7 @@ static const char* const kPortOnlineLocalKeys[] = {
     "companion", "ac_cue", "controller_haptics", "crowd_", "custom_music", "settings_hint", "game_sound_mode", "speakers",
     "controller_light", "discord_status", "tts", "captions", "colorblind", "rewind_key", "rewind_pad",
     "paper_shadows", "paper_physics", "paper_edges", "launcher_popup",
-    "battery_saver", "keep_game_speed", "partner_wheel", "system_bars",
+    "battery_saver", "keep_game_speed", "partner_wheel", "system_bars", "safe_graphics", "gfx_backend",
     /* the controls (each player's keys and buttons: the pads' state crosses, not the mapping),
        the free camera's mouse, the controller's speaker, the HUD's look, this computer's
        updates and save library, the what's-new page, the bingo tracker over the picture */
@@ -37,6 +37,15 @@ static const char* const kPortOnlineLocalKeys[] = {
     "handheld_preset", "save_before_sleep",
     /* stereoscopic 3D: the picture for two eyes (this player's screen or glasses) */
     "stereo_",
+    /* 0.5.1: what a shared battle shows each player, never what it does (they took the host's in shared battles):
+       the FP preview, Star Power greyed, the spring jump's cue, the immune cross, the page turn, the battle
+       themes, the Japanese frog texts, the talk prompts, the lists' L/R scroll, the mail that doesn't stop the
+       game, and the restorations that are only a look or a text (the X-Naut crowd changes a room: the host's) */
+    "battle_fp_preview", "battle_sp_grey", "spring_jump_cue", "battle_immune_cross", "page_turn", "pg_battle_theme_",
+    "pg_jp_hooktail_frogs", "talk_prompts", "list_lr_scroll", "mail_no_stop", "rs_chalk_outline", "rs_bunny_boo",
+    "rs_jp_flashes",
+    /* online play's direct connection (port/online_ice.h): each player's own choice, never the host's */
+    "online_direct",
 };
 
 /* The session's field rules: the host's in every game for the whole session, not only in shared
@@ -55,6 +64,20 @@ static const char* const kPortOnlineSessionKeys[] = {
     "luigi_high_jump",
     /* how far the Paper Mario 64 partners' field abilities reach (pm64_field_pc.c): the host's rule too */
     "pm64_field",
+    /* Paper Mario 64's Spin Dash in the field (pm64_spin_pc.c): a move every game of the session has, or none */
+    "pm64_spin",
+    /* what the field holds and pays, the same in every game (0.5.1: each was the host's only in shared battles,
+       so two games of one session could differ in the field): Console-accurate's lock-out (it turns level_sync,
+       chaos_mode and the fun toggles off), the Director's Cut's enemies, stock and pipe, every remake_ room and
+       field change (pipes, blocks, ambushes, merchants, enemies' notice, field projectiles, the field hammer:
+       "remake_" takes remake_balance in too), every rules_ rule, the daily shop specials, the Pit's pay, the
+       battle grades' coins, the remix's enemies and badge draft, moon gravity's jumps (as luigi_high_jump), and
+       Brothers mode's Luigi in the field */
+    "console_accurate", "directors_cut", "remake_", "rules_", "daily_specials", "pit_plus", "battle_grades", "remix_",
+    "fun_moon_gravity", "brothers_mode", "rs_xnaut_crowd",
+    /* the scenes skipped and the fixed random numbers: every guest is pulled into the host's scenes and shared
+       battles, so these match the host's (the daily specials' day is the host's too: its roster, statesync_pc.c) */
+    "skip_scenes", "rng_fixed", "rng_seed",
 };
 
 /* a key that is the session's field rule (prefixes, as above: "difficulty" takes its enemy HP and

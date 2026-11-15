@@ -11,6 +11,7 @@
 #include "driver/seqdrv.h"
 #include "mario/mariost.h"
 #include "port/cardsave_pc.h"
+#include "port/brothers.h"
 #include "port/online_end.h"
 #include "port/replay.h"
 #include "port/platform.h"
@@ -115,6 +116,30 @@ static int oldResume(const char* path) {
     return strstr(text, "v2") == NULL;
 }
 
+/* Brothers mode: Luigi's HP and FP as the quick resume's snapshot had them (its sidecar's "luigi=HP FP"
+ * line, resume_aurora.c), kept on Continue instead of full */
+static void resumeLuigi(const char* path) {
+    char sidecar[1024], text[512];
+    const char* l;
+    int hp, fp;
+    size_t n = strlen(path);
+    FILE* f;
+    if (n < 4 || n >= sizeof(sidecar) || strcmp(path + n - 4, ".gci") != 0) {
+        return;
+    }
+    memcpy(sidecar, path, n - 4);
+    memcpy(sidecar + n - 4, ".txt", 5);
+    if ((f = portFopen(sidecar, "r")) == NULL) {
+        return;
+    }
+    n = fread(text, 1, sizeof(text) - 1, f);
+    fclose(f);
+    text[n] = '\0';
+    if ((l = strstr(text, "\nluigi=")) != NULL && sscanf(l + 7, "%d %d", &hp, &fp) == 2 && hp > 0 && fp >= 0) {
+        portBrothersResumeStats(sSlot, hp, fp);
+    }
+}
+
 /* the field maps with a house or shop the game shows on walking in (evt_door.c's
  * door and house setups, snd_door_in) */
 static const char* const kHouseMaps[] = {"aaa_00", "bom_01", "bom_02", "gor_01", "gor_02",
@@ -191,6 +216,9 @@ static void loadSave(const char* path) {
     if (sSlot != WARP_SLOT && strncmp(name, "resume_", 7) == 0 && !portReplayActive() &&
         oldResume(path)) {
         atEntranceIfHouseMap();
+    }
+    if (sSlot != WARP_SLOT && strncmp(name, "resume_", 7) == 0 && !portReplayActive()) {
+        resumeLuigi(path);
     }
     portContinueGame(sSlot);
     portPracticeFileLoaded();

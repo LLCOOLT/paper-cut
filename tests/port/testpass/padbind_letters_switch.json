@@ -1,0 +1,34 @@
+{
+ "desc": "GitHub #60: a Switch Pro Controller (a virtual one, 057E:2009) as player 1 on a fresh user folder: the game's A, B, X and Y are on the buttons printed A, B, X and Y (its right, bottom, top and left ones), the page's defaults the same, the menus' confirm its A; the prompts draw those letters (TTYD_PADBIND_TEST=switch:attach)",
+ "groups": [
+  "menus",
+  "padbind"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_SETTINGS_OPEN": 1,
+  "TTYD_SETTINGS_TAB": "Controls",
+  "TTYD_PADBIND_TEST": "switch:attach"
+ },
+ "log_must": [
+  "^\\[bindings\\] .*\\(057e_2009, player \\d\\): A, B, X and Y put on their printed letters$",
+  "^\\[padbind\\] switch:attach: SDL type \\d+, player 1 yes; confirm A, back B, third Y$",
+  "^\\[padbind\\] switch:attach: the game's A on A, B on B, X on X, Y on Y; defaults A A, B B, X X, Y Y$",
+  "^\\[padbind\\] Start menu pages: the game's A->0100 B->0200 X->0400 Y->0800",
+  "^\\[padbind\\] attached only$"
+ ],
+ "log_must_not": [
+  "no virtual controller",
+  "left as the player has them"
+ ],
+ "exit": "any",
+ "timeout": 120,
+ "settings": {
+  "background_input": 1
+ }
+}

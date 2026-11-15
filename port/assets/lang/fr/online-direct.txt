@@ -1,0 +1,14 @@
+# Direct connection (port/src/common/online_ice_pc.c, port/settings/features/online_direct.cpp), en français : une ligne en anglais, puis sa traduction, puis une ligne vide.
+
+Direct connection
+Connexion directe
+
+In an online room, connect straight to the host's game when both networks allow it (both players need this on): quicker, and lighter on the online service. The other player's game sees your internet address. If it can't connect or drops, the room carries on as before by itself.
+Dans un salon en ligne, se connecter directement au jeu de l'hôte quand les deux réseaux le permettent (les deux joueurs doivent l'activer) : plus réactif, et cela ménage le service en ligne. Le jeu de l'autre joueur voit votre adresse internet. Si la connexion échoue ou s'arrête, le salon continue tout seul comme avant.
+
+Online play's direct connection uses libjuice (Mozilla Public License 2.0, unchanged; its source: github.com/paullouisageneau/libjuice).
+La connexion directe du jeu en ligne utilise libjuice (Mozilla Public License 2.0, non modifiée ; son code source : github.com/paullouisageneau/libjuice).
+
+# The Players page: a player's messages go by the relay ("direct" when the direct connection is up)
+relay
+relais

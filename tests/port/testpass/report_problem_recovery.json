@@ -1,0 +1,15 @@
+{
+ "desc": "Report a problem on the recovery screen after a crash (TTYD_REPORT_PROBLEM_TEST): the zip also holds the crash report, the graphics flight record and the settings' recent changes",
+ "groups": ["platform", "recovery", "softcrash"],
+ "versions": ["us"],
+ "user_from": "softcrash_change_crash",
+ "env": {"TTYD_REPORT_PROBLEM_TEST": 30, "TTYD_RECOVERY_TEST": "dismiss:200", "TTYD_EXIT_FRAMES": 600},
+ "log_must": [
+  "^\\[report\\] the list shown \\(recovery\\)",
+  "^\\[report\\] zip: papercut-report-test\\.zip, \\d+ files, \\d+ bytes: system\\.txt crash_report\\.txt flight_record_last\\.txt .*settings_changes\\.txt",
+  "^\\[recovery\\] dismissed"
+ ],
+ "file_must": {"user/papercut-report-test.zip": ["crash_report\\.txt", "\\*\\*\\* crash: ", "tex_filter 0 1"]},
+ "timeout": 120,
+ "new": true
+}

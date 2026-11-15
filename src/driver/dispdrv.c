@@ -12,6 +12,9 @@
 #include "port/hud.h"
 #include "port/toggles.h"
 #endif
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+#include "port/interp_replay.h"
+#endif
 
 #define DISP_MAX_ENTRIES 1024
 
@@ -176,10 +179,14 @@ void dispDraw(CameraId camId) {
             currentWorkPtr = entry;
 #if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
             portHudDraw(camId, entry->callback, entry->param); /* PC port: HUD scale (port/hud.h) */
+            portInterpEntry(camId, entry, (void*)entry->callback, entry->param); /* its identity; drawn once a frame */
 #endif
             entry->callback(camId, entry->param);
         }
     }
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    portInterpCamera(camId);
+#endif
 #if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
     portHudDraw(camId, NULL, NULL);
 #endif

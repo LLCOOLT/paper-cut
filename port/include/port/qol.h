@@ -116,10 +116,11 @@ int portFortuneGet(int i, char* label, int size);
 /* gameplus2_pc.c: the shop stock the restock notice last told of on this file
  * (0 none yet; -1 no game); set: record value. */
 int portFileStock(int set, int value);
-/* Tattle prompts ("talk_prompts"): gameplus2_pc.c keeps the field Tattles
- * heard on this file (an NPC's tattle message tag; party_kuribo.c marks one
- * heard): 1 heard (or no game), 0 new. portTattlePrompt (mario_balloon.c):
- * the "!" shows, Goombella out and an NPC with a Tattle not heard yet near. */
+/* The field Tattles heard on this file: gameplus2_pc.c keeps them (an NPC's
+ * tattle message tag; party_kuribo.c marks one heard): 1 heard (or no game),
+ * 0 new. (0.5.1 had a Tattle "!" from these; it is gone: a "!" means A does
+ * something, and the field Tattle on X names only the NPC A talks to, whose
+ * talk balloon is up already: port/include/port/prompt_check.h.) */
 #define PORT_TATTLE_MAX 256
 int portTattleHeard(const char* tag, int mark);
 /* The field Tattle's message for an NPC (party_kuribo.c): the game's, the
@@ -130,7 +131,6 @@ const char* portTattleTag(const char* name);
 /* A module's own Tattle for an NPC of its own, by the moment (pm64_story_aurora.c: a story boss's while it frees a
  * partner): its tag, or NULL for the NPC's name's as above */
 extern const char* (*gPortTattleTagHook)(const char* name);
-int portTattlePrompt(void);
 /* The Glitz Pit roster screen: tou.c gives its ranking's reader while its REL
  * is linked (NULL when unlinked); portTouRoster reads place i (0 the champion's
  * seat): the fighter's name and title (the game's text, read from the ring's

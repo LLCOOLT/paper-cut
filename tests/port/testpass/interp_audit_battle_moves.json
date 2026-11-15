@@ -1,0 +1,56 @@
+{
+ "desc": "at 120 Hz with the interpolation audit (TTYD_INTERP_AUDIT=1; then tools/port/interp_audit_check.py over the run): a battle (hei_00, battle 4): Mario's jump with its action command (every command's icon slid in and out in its draw: twice as fast), the moves list (its scroll, rows and arrows stepped in the draw) and Ms. Mowz's Kiss Thief (its screen copy took a second 285 KB buffer in each frame drawn between the game's)",
+ "groups": [
+  "interp_audit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_PARTY": "7,1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 4000,
+  "TTYD_STORY": "405",
+  "TTYD_INTERP_AUDIT": "1"
+ },
+ "settings": {
+  "framerate": "120"
+ },
+ "input": [
+  "wait 60",
+  "battle 4",
+  "wait 300",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 240",
+  "press a",
+  "wait 30",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 400",
+  "where",
+  "wait 200",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must": [
+  "^\\[input\\] end$",
+  "^\\[interp\\] 2 frames per game frame",
+  "^\\[interp-audit\\] net "
+ ],
+ "log_must_not": [
+  "^\\[interp-audit\\] net writer (battleAcDisp_\\w+|portAcDispKept|mono_capture|DrawSubMenuCommon\\w*|DrawMenuCursorAndScrollArrow|_disp_target_mark\\w*)\\b",
+  "^\\[interp-audit\\] net check incomplete",
+  "\\*\\*\\* crash",
+  "^\\[interp-audit\\] net writer (?:(?:mem\\w*|PSMTX\\w*|PSVEC\\w*|MTX\\w*|C_MTX\\w*|GX\\w*|qqsort|str\\w*|\\w*printf\\w*|0[0-9a-f]+)(?:__body)?(?:\\+0x[0-9a-f]+)?(?: \\([^)]*\\))? <- )*+(?!(?:(?s:shadowCharShadowDisp_Collision)|(?s:btlUnitPartsDisp)|(?s:disp_texture)|(?s:imgDisp)|(?s:windowDispGX.*)|(?s:_windowDispGX_Message)|(?s:smartTexObj)|(?s:winHelpDisp)|(?s:animSetMaterial_ChangeTexture)|(?s:extDraw)|(?s:puniDraw)|(?s:puniLoadTexture)|(?s:demo_img)|(?s:msgWindow_Disp)|(?s:disp_3D)|(?s:effFireDisp3)|(?s:BattleAudienceDispAudience)|(?s:dispProc)|(?s:screen_capture)|(?s:gans_tex)|(?s:monitor_tev)|(?s:effSnowfallDisp)|(?s:effSplashGetCol)|(?s:btl_camera_set_mode)|(?s:camDispOff)|(?s:winRootBgCaptureDisp)|(?s:BattleAudience_GetItemOn)|(?s:offscreenDisp)|(?s:offscreenAddBoundingBox)|(?s:`anonymous\\ namespace'::init_texobj_common)|(?s:effFlameDisp)|(?s:effPokopiThunderDisp)|(?s:select_disp3.*)|(?s:menuDisp)|(?s:animPoseMain)|(?s:dispEntry)|(?s:qqsort)|(?s:portInterpDraw))(?:__body)?(?:\\+0x[0-9a-f]+)?(?: \\(| <- |$))",
+  "^\\[interp-audit\\] net global (?!(?:(?s:currentWorkPtr)|(?s:current_mp)|(?s:g_modeling_mtx.*)|(?s:fontColor)|(?s:fontAlpha)|(?s:fontScale)|(?s:winTexTpl)|(?s:char_shadow_work)|(?s:shadowConfig)|(?s:tmp0)|(?s:tmp1)|(?s:tmp2)|(?s:disableMapDraw)|(?s:projTexObj)|(?s:winZenkakuStrPad_buf)|(?s:col_normal)|(?s:col_poison)|(?s:a)|(?s:buttons)|(?s:canvas)|(?s:edge)|(?s:face)|(?s:mtx)|(?s:pixels)|(?s:shadow)|(?s:sqlite3Prng)|(?s:kpa_stage_clear)|(?s:vcd)|(?s:every)|(?s:depth_shadow_work)|(?s:rampTex16)|(?s:kiss_col)|(?s:partysDt)|(?s:funemizu_color0_tbl)|(?s:gor_fune_color0_tbl)|(?s:text)|(?s:idxBuf)|(?s:s[A-Z].*)|(?s:`anonymous\\ namespace'::.*)|(?s:aurora::.*)|(?s:_Init_global_epoch)|(?s:sqlite3Stat)|(?s:winMutex_.*)|(?s:time)|(?s:warned)|(?s:comp)|(?s:cache)|(?s:next)|(?s:work))$)"
+ ]
+}

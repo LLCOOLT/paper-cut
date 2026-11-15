@@ -1,0 +1,41 @@
+{
+ "desc": "Open world, chapter 6's way in (Rogueport just past the prologue, no chapter done): the station's train attendant, the Train Ticket held: he offers the Excess Express (story 280) and the first ride's guard answers (chapter 6's way in; the ride's needs are the logic's) (gen_open_world_ways.py)",
+ "groups": [
+  "rando",
+  "open_world_ways"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_04",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "OWWAYS1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_OPEN_ITEMS": "0x35",
+  "TTYD_STORY_KICK": "talk:rel_gor__ekiin_talk",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "input": [
+  "wait 600",
+  "press_until_control a 6000",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[open\\] file stamped: seed 'OWWAYS1'",
+  "open world: seed OWWAYS1: \\d+ places",
+  "\\[open\\] trip 1 \\(the train\\): "
+ ],
+ "log_must_not": [
+  "walk_to \\S+: not reached",
+  "\\*\\*\\* crash",
+  "\\[input\\] FAIL"
+ ],
+ "timeout": 420
+}

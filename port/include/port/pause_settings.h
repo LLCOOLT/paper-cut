@@ -72,6 +72,9 @@ s32 portPauseWardrobeMain(WindowWork* wp);
 void portPauseWardrobeDisp(s32 camId, WindowWork* wp, s32 idx);
 void portPauseWardrobeExit(WindowWork* wp);
 const char* portPauseWardrobeMsg(const char* tag);
+/* Yoshi's colour (0-6) set as the Wardrobe's row sets it (the pouch, his field model): the second screen's
+ * row, done by the game (port/companion.h, PORT_COMPANION_TAP_YOSHI); nothing in a replay */
+void portWardrobeYoshiSet(int colour);
 
 /* the Online tab: as the Wardrobe's above */
 void portPauseOnlineTabDisp(WindowWork* wp, float x, float y, float scale, GXColor c);

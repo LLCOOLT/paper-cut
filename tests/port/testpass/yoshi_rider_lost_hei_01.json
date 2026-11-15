@@ -1,0 +1,50 @@
+{
+ "desc": "Riding Yoshi into a scene: Mario rides Yoshi from Petal Meadows' hei_13 back into hei_01 the first time (story 24), where Goombella's tip scene stops the party before it normalizes Mario (christine_hei_01, as an open-world or Daily seed reaches it). Before the fix Mario stayed in the saddle with no Yoshi under him and never moved again; now he is put down standing (portYoshiRiderLost), the tip plays, and he walks off with control",
+ "groups": [
+  "world",
+  "partners",
+  "yoshi_field"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "hei_13,e_bero",
+  "TTYD_STORY": "24",
+  "TTYD_PARTY": "4",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_WATCHDOG": "60",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 60",
+  "press_until_control a 3000",
+  "press x",
+  "wait 40",
+  "where",
+  "stick 127 0 40",
+  "wait 200",
+  "where",
+  "wait 400",
+  "press_until_control a 1200",
+  "wait 30",
+  "where",
+  "stick 127 0 40",
+  "wait 20",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[input\\] where: map 'hei_13', .*motion 26, pose M_Y_",
+  "^\\[input\\] where: map 'hei_01', Mario at (?!-570 0 -10,)\\S+ \\S+ \\S+, .*control 1, .*motion (?!26,)\\d+, ",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[input\\] where: map 'hei_01', .*control 1, .*motion 26, pose M_N_2",
+  "(?i)fatal:",
+  "watchdog"
+ ],
+ "timeout": 180
+}

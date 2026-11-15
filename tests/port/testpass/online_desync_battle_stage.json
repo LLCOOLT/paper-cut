@@ -1,0 +1,59 @@
+{
+ "desc": "Desync healing in a shared battle: online_chase's battle (the guest meets the Spiky Goomba in the Rogueport Sewers, tik_01, so the guest's game decides it), and at the battle's step 3 the host's game puts its stage state and turn count wrong, unsaid (TTYD_SYNC_CORRUPT stage). The next step's snapshot corrects the turn at once; the stage's nozzle kind differs at two steps in a row: the host's game logs DRIFT battle stage and takes the guest's, and the battle ends in the field in both",
+ "groups": [
+  "online",
+  "desync"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 5800
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 5600"
+    ],
+    "log_must": [
+     "the shared battle begins",
+     "test: corrupt: this game's stage put wrong, unsaid",
+     "correction.* turn \\d+->\\d+",
+     "DRIFT battle stage: player 1's differs at two steps in a row, healed: nozzle kind",
+     "desync: .* battle stages 1 healed"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_CORRUPT": "stage@3"
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 150",
+     "goto 443 -50 -40",
+     "wait 5300"
+    ],
+    "log_must": [
+     "met.*invited|invited.*met|fought .*invited"
+    ],
+    "log_must_not": [
+     "DRIFT"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "drift": false
+  }
+ },
+ "timeout": 420
+}

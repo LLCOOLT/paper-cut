@@ -73,6 +73,9 @@ enum {
 };
 
 #define PORT_DUO_MAX_MOVES 32
+/* the setting "duo_moves"'s default, for both its declarations (duo_pc.c, port/settings/features/duo_moves.cpp):
+   0 off, 1 co-op and versus, 2 always */
+#define PORT_DUO_MOVES_DEFAULT 0
 
 /* One duo move. The poses are the partner's own animation names (its
  * unit_party_*.c scripts'); NULL leaves that step's pose as it is. */

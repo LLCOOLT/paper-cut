@@ -98,7 +98,8 @@
      "wait 400"
     ],
     "env": {
-     "TTYD_EXIT_FRAMES": 9000
+     "TTYD_EXIT_FRAMES": 9000,
+     "TTYD_SYNC_HOST_GRACE": 10
     },
     "log_must": [
      "net: session with player",

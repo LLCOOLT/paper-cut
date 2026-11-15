@@ -1,0 +1,46 @@
+# 0.5.1: every setting says plainly what it does (the JP font's text for the Start menu)
+
+Enemy HP when Difficulty is Custom; 100 is the original.
+カスタムの　ときの　てきの　ＨＰ　100が　もとの　まま
+
+Enemy damage when Difficulty is Custom; 100 is the original.
+カスタムの　ときの　てきの　ダメージ　100が　もとの　まま
+
+How much faster Mario moves while the boost is held.
+ブーストを　おしている　間の　マリオの　はやさ
+
+The save file New Game+ copies from.
+つよくて　ニューゲームが　ひきつぐ　ファイル
+
+Keeps the picture and buttons away from the notch, camera cutout and rounded corners.
+画面と　ボタンを　ノッチや　まるい　かどから　はなします
+
+The phone or tablet vibrates when no controller can.
+コントローラーが　ないとき　スマホが　しんどう　します
+
+A light buzz each time you press an on-screen button.
+画面の　ボタンを　おすたびに　かるく　しんどう　します
+
+How see-through the on-screen controls are.
+画面の　ボタンの　すけぐあい
+
+A small push of the on-screen stick is enough to run.
+画面の　スティックを　すこし　たおすだけで　はしります
+
+The on-screen stick stays in one place instead of appearing under your thumb.
+画面の　スティックが　おなじ　場所に　とどまります
+
+Tapping the game picture presses A.
+画面を　タップすると　Aボタンに　なります
+
+The language of the game's own text.
+ゲームの　もじの　ことば
+
+Co-op camera
+きょうりょくプレイの　カメラ
+
+Allow every guard, only Superguards, or no guarding at all.
+ガードの　ルール
+
+With your Paper Mario ROM linked: Mario dashes forward spinning, as in Paper Mario, with Z on the keyboard or a tap of L (Spin Dash in Bindings). With Paper Mario 64 badges on, Rowf sells badges that improve it. Online, only when everyone has the ROM linked.
+マリオが　まわりながら　ダッシュします

@@ -85,7 +85,16 @@ over.
   Luigi, follower and companion as the host's game moves them. The room's
   enemies and townsfolk are the host's (layer 2: the host owns every room);
   the host's scenes and talks play on every screen with their text boxes and
-  the host's camera (layer 4).
+  the host's camera (layer 4). A guest or watcher that joins from its own
+  Start menu (the Online page's Join) has the menu closed for it as the join
+  succeeds ("Joining *host*'s game..."), the way the menu always closes, and
+  then goes to the host's room. A room change never comes under an open
+  Start menu: one the player opens again later holds the guest where it is,
+  with "*host* went to another room: close the menu to follow.", until it's
+  closed. (One did in 0.5.0, and the guest's game was left with the field
+  switched off behind the menu's picture: a black screen. Should any room
+  change come with the menu up, the game now puts the field back and lets
+  it run.)
 - **The host's progress.** As the guest joins, the host's whole progress (the
   story, the area's flags, the items, coins, Star Pieces and Shine Sprites,
   Mario's level and the partners) takes the place of what the guest's game
@@ -108,9 +117,17 @@ over.
   in its own game, from its own controller, as a second controller on one
   computer walks it ([PLAYERS.md](PLAYERS.md)): it moves on the guest's screen
   in the frame the stick is pushed, whatever the ping. Each frame the guest's
-  game sends where it is, and the host's game puts that character there
-  (a step past what a walk can do is cut to it; a jump far from where the
-  host has it and from Mario is refused). Everything it does to the world is
+  game sends where it is, its pose and the way its paper faces, and the host's
+  game plays those reports back smoothly, a little behind (as far as the most
+  they've come late lately): its walk, its pose and its turns as the guest's
+  screen had them, never standing between reports in a walking pose (a step
+  past what a walk can do is cut to it; a jump far from where the host has it
+  and from Mario is refused). While the host's game walks it instead, the
+  guest draws it from the host's word interpolated with the host's Mario, as
+  every ghost is. Room changes are the host's Mario's: at an exit (a road out
+  of the room past its doorway, the open side of a field) a guest's character
+  is held at the floor's edge as at a wall, never walked off the map; one that
+  falls anyway is put back beside Mario. Everything it does to the world is
   still the host's: the host's enemies notice and touch it where it is put,
   and what its buttons do is the host's game's to decide (below). The host holds
   the character (its game moves it, the guest's draws the host's) while its
@@ -179,8 +196,16 @@ host again afterwards.
 ## Leaving and coming back
 
 - **The host leaves.** When the host picks **Leave the room**, its game tells
-  every guest at once; when its game closes or goes quiet, each guest waits 10
-  seconds for it. Either way the guest's game never just times out: a window
+  every guest at once; when its game closes or goes quiet, each guest waits for
+  it: after 3 seconds a window says "Waiting for *Name* to come back..." with
+  the time left (2 minutes; 10 when the host said it stepped away) and **Keep
+  waiting** and **Leave the room**, the world held meanwhile. A host whose game
+  crashed and is opened again within 15 minutes is offered **Open your room
+  again** (below): the same code, so its guests, still waiting, come back to
+  their seats. There's no host migration: the host's game is the world, every
+  guest's hub and a shared battle's decider, and no guest has its world as it
+  stands (a copy of its save is minutes old). Either way the guest's game never
+  just times out: a window
   says "*Name* left the room. Your copy of the adventure is kept." and offers
   **Back to your own adventure** (the file the guest played before joining,
   or the newest on the card, as it was: a guest's game never saves while it
@@ -193,18 +218,40 @@ host again afterwards.
   host gives it the same player number and seat ("Welcome back: you're 2P
   again."), if no one has taken the seat meanwhile.
 - **Players.** The Multiplayer page's **Players...** lists everyone in the
-  room: their seat, their computer and their connection (good, fair or poor,
-  from the round trip of the games' pings). The host can remove a player
+  room: their seat, their computer and their connection (good, fair or poor
+  and the round trip in ms: the slowest tenth of the last 10 seconds' pings,
+  [ONLINE_RELAY.md](ONLINE_RELAY.md#what-the-player-sees-of-the-connection)),
+  and whether the room goes through the relay or by address. The host can remove a player
   (asked twice): that guest sees "The host removed you from the room." with
   the same choices, and its game is turned away if it comes back this session.
 - **Rules.** As a guest joins, a note says "Playing on *host*'s rules" or
   "Same rules as yours"; **Rules...** lists the rule settings that differ,
   the player's own value then the host's (never display, sound or controls).
 - **The online service.** When the relay can't be reached (6 seconds without
-  getting in, or 15 without it once in), every way in (Host, Join by code,
-  the launcher's, an invite link) says "Can't reach the online service. Try
-  again, or play on one computer." with **Try again** and **Back**; never a
-  wait without end.
+  getting in, or a minute without it once in, tried again and again meanwhile:
+  at once after a drop, then from half a second to one and a half, 2, 4 and 8
+  seconds, at most 15), every way in (Host, Join by code, the launcher's, an
+  invite link) says "Can't reach the online service. Try again, or play on one
+  computer." with **Try again** and **Back**; never a wait without end. A relay
+  that restarts (a deploy) or cuts a long session is no loss: each game is back
+  in a moment with its ticket, its session resumed.
+- **Stepping away (phones).** When a phone's app goes to the background (a
+  message, a call, another app), its game tells the others it stepped away
+  ("*Name* stepped away.") before the system holds it; their games keep its
+  place, connection and seat for up to 10 minutes (no quiet drop), and in a
+  shared battle the deciding player plays its units at once. On iOS its
+  connection is also closed cleanly (iOS takes a suspended app's sockets),
+  its place kept by the relay's ticket. Back in front ("*Name* is back.") it
+  connects again at once when it was away long. The system's news that the
+  network changed (Wi-Fi to cellular) also connects again at once; a gap
+  shorter than 8 seconds (a tunnel) is ridden out on the same connection.
+- **After a crash.** While a game plays in a room it keeps
+  `<user>/online_resume.txt` (the room, its session id and the relay's ticket,
+  its seat), gone on a Leave. If the game ends without a Leave (a crash, the
+  system ending a phone's app in the background), for 15 minutes its title and
+  Multiplayer page offer **Rejoin the room** (a guest: back in the same seat)
+  or **Open your room again** (the host: the same code), never joined by
+  itself; **Forget that room** lets it go.
 - **Names.** **Your name** (on the Multiplayer page before hosting or joining,
   and the launcher's) starts as the computer's user name, or Player; up to 24
   letters.
@@ -287,8 +334,22 @@ connection per player exactly as by address. The host and each player agree a
 key of their own from the secret half (EC J-PAKE) and everything after it is
 sealed (ChaCha20-Poly1305), so the relay can neither read nor change it, and
 one player can't read another's messages to the host. The relay counts
-messages, so the games send in batches: every 3 frames, and at once when a
-game waits for the others. When a player comes into the room the relay tells
+messages, so the games send in batches, one relay message per player, and only
+when something in it can't wait: what a player does (every reliable message, a
+co-op guest's controller and character, a change in a player's state: a map, a
+battle, a menu, keys off) goes at the next 3 frames, as it always has, and at
+once when a game waits for the others; places, the room's lists and the
+connection's upkeep wait for that player's pace and ride along with anything
+going sooner (a player in the same room as another: every 6 frames; in no
+other player's room or in a battle: every 30; to a watcher 15, a watcher's own
+45; playing together, every 3 as before). A place, a list, a controller or a
+character the same as the last one sent isn't sent again for a while (a
+heartbeat: a place 0.5 s, 0.25 s playing together; a controller 0.25 s; a co-op
+guest's own character 0.1 s, inside the host's 0.3 s). A relay from 0.5.1 on
+also takes one message from the host for all its players and splits it
+([ONLINE_RELAY.md](ONLINE_RELAY.md)), so three or four players cost the host
+what two do. Each game's log counts its relay messages ("net: relay messages:
+... a minute of play"). When a player comes into the room the relay tells
 the host, and that pair's key is agreed again; a dropped connection takes its
 place again with the relay's ticket. If one player's link goes quiet, the host
 starts that pair's key again without leaving the room, so the others play on.
@@ -301,12 +362,43 @@ Either way there are two kinds of message:
 - **Unreliable**: each player's place, the room's NPCs and objects. The newest
   one wins, and a lost one is replaced by the next.
 - **Reliable**: story flags, the pouch, defeats, a shared battle's input. These
-  are numbered and kept until the other game acknowledges them, and sent again
-  when no acknowledgement comes (go-back-N). They are taken in order and only
-  once. After a reconnect, each side sends whatever the other is missing.
+  are numbered and kept until the other game acknowledges them. They are taken
+  in order and only once. Both ways are streams (TCP, the relay's WebSocket),
+  where nothing is lost while the connection is up, so nothing is sent again on
+  a timer: after a reconnect each side sends whatever the other is missing (the
+  hello says where it is). A gap a game sees anyway (a test's dropped message)
+  is said with its acknowledgement, and the other goes back to it at once; a
+  last message still unanswered after 2 s (or four round trips) while the other
+  game's words keep coming goes again.
   A test game ending at its last frame first pumps until everything it sent
   is acknowledged (at most 4 seconds), so a change made just before the end
   isn't lost with the program.
+
+**Direct connection** (Settings, Multiplayer; off by default, and it must be on
+in both games). In a room, a few seconds after a player's hello the host offers
+that player a direct way over UDP: ICE (libjuice), with Cloudflare's public
+STUN server to find each side's outside address and no TURN server, the offer,
+the answer and the candidates going through the relay as sealed reliable
+messages. Once a packet comes through each way, that pair's messages go direct,
+at the same pace as that player's relay batches would (several to a packet, a
+long one in pieces, one over 32 KB by the relay), every packet sealed with the
+pair's key, with its own count (a repeat is dropped, and an unreliable message
+older than one already taken). The reliable ones keep their numbers, and one
+acknowledgement serves both ways (the next one wanted, whether one came after a
+gap, and which of those after it are held): one that comes early is held until
+the missing ones come, the sender goes back for the missing ones at once (at
+most once a round trip) and leaves out those held, and on the direct way only,
+one not acknowledged goes again after the measured round trip (1.25 x the
+smoothed one + 4 x its variance, 200 ms to 2 s). The relay's connection stays open and quiet (a
+WebSocket ping every 20 s keeps it). From 0.6 s with nothing direct, everything
+goes both ways; after 2 s the direct way is given up: everything goes by the
+relay at once, what wasn't acknowledged goes again there, and the host tries
+again later (20 s, then a minute, two, five). The other game sees this one's
+internet address, which the relay never shows: that is why it's a choice.
+Not in the browser (no UDP), and not by address (already a connection of its
+own). Tests: `TTYD_SYNC_DIRECT=force|off`, `TTYD_SYNC_STUN=none`,
+`TTYD_SYNC_UDP_FAULTS` (`drop:`, `dup:`, `delay:`, `blackhole_at:`, `nocand`;
+`port/online_ice.h`).
 
 Each connection has its own numbering, its own log of what wasn't
 acknowledged, its own hello and version check, and goes through
@@ -372,7 +464,10 @@ the other's whole progress (below).
 
 ## Layer 1: a shared world, each player free
 
-**Where each player is.** Every 3 frames (a host with a co-op guest: every frame) each game sends:
+**Where each player is.** Every 3 frames (a host with a co-op guest: every frame) each game sends
+(in a relay room: when it changed, with another player in the room; every 15
+frames when nobody is; the same again after a heartbeat; a change in its state
+at once):
 
 - its player's map;
 - position and facing;
@@ -391,7 +486,13 @@ guest has no ghost of its own: the character it plays is the host's. It's drawn 
 partner and Mario are drawn, and it only draws: no game state, no random
 numbers. Its place is interpolated 100 ms behind the other game's clock,
 between the two samples around that time, and the clocks' offset is measured
-from the samples. A ghost leaving the room is let go with its poses.
+from the samples. When the places come further apart (a relay room's batches,
+a jittery link) the ghost is drawn as far behind as the longest wait for the
+next place lately, and a little more (at most 400 ms), eased a few ms a frame
+so it never jumps; a player standing still and setting off sends their last
+still place first, so their ghost sets off when they did. In a relay room the
+room's NPC lists that come together in one batch are played out one per 3
+frames, as the owner made them. A ghost leaving the room is let go with its poses.
 
 **The shared progress.** Each frame a game compares its progress with a copy
 (the *shadow*), and sends what changed as reliable messages. The other game
@@ -422,8 +523,19 @@ picks something up, the other gets it once, and when one uses an item it's
 gone from both. A battle's coins and Star Points come across as the
 differences they are. A join, even mid-game, needs no restart: the two games
 merge what each has. Each `[sync]` status line carries a hash of each game's
-story and pouch, and every 300 frames the games compare those hashes
-("digest: story same, pouch same").
+story and pouch, and every 300 frames the games compare those hashes and two
+more ("digest: story same, pouch same, stats same, area same"): Mario's level
+and the partners (what their merge brings together: levels, upgrades, Star
+Power, partners joined) and, playing together, the area's flags and words.
+A guest whose progress differs from the host's in the same part (story,
+pouch, stats or area) at two digests in a row, with both games in the field
+(no battle, scene or mode holding the progress), logs `DRIFT progress` and
+heals it: playing together it takes the host's whole progress again; each
+player free, the two merge again both ways, as a join does. A change on its
+way differs at one digest only (an item picked up just as the host's digest
+went), and two such changes in different parts, one after the other, aren't
+a drift; nor is a digest that waited here for this game's battle to end
+(it's from before the battle's changes crossed).
 
 **What shows a change.** A flag changed in the other game is in this game's
 memory straight away. A room that reads that flag when it loads shows the
@@ -482,6 +594,24 @@ These are shared both ways, whoever owns the room:
 Items and blocks that are collected for good set their flags (GSWF or LSWF),
 which layer 1 shares, so a room loaded later has them gone or spent.
 
+**When enemies come back.** Alone, the game forgets defeat records as Mario
+moves on: every record when he changes area, and on an area's open field maps
+(Petal Meadows, Keelhaul Key's jungle, ...) all but the map he's on and the one
+before it. A forgotten map's enemies are back when it next loads. Online, every
+game forgetting by its own player's moves would let the games disagree about
+a room two players share (one game back in a map its own rule forgot, its
+enemies back, while the game owning the room has them gone), and the room's
+digest would find it again after every walk away. So online with others no
+game forgets a record by its own rule alone: each keeps a list of the maps
+whose records its own rule still keeps and tells the others whenever that
+list changes (and again for a new session or a newcomer). As a map loads, its
+record is kept if this game's own rule keeps it or any other player's does;
+otherwise its enemies are back, and the other games forget its record too.
+The enemies come back once every player has left them behind as the game
+would for one player, and a room two players share has the same record in
+both games. Records no player keeps any more are dropped as a map loads. A
+game over or a save loaded alone still sets that game's own records.
+
 The per-type field lists, as sm64coopdx's sync objects declare theirs:
 
 | Type | Owner → follower, unreliable | Both ways, reliable |
@@ -490,6 +620,27 @@ The per-type field lists, as sm64coopdx's sync objects declare theirs:
 | Map object (blocks, switches, springs...), every 15 frames, up to 64 | name, x y z (followed when off by more than 2 units), hidden and invisible flags, its type's state: a chest opened and a ? or badge block emptied show used, a floor switch pressed shows pressed | deleted (map, name) |
 | Item on the ground | | picked up (map, name, item id, place) |
 | The map's defeats | | `deadInfo` mask per map, union |
+| The records each game keeps, on a change of that list (and a new session or newcomer) | | the maps whose records this game's own rule keeps, with their masks (joined there), and a map whose enemies just came back (forgotten there) |
+| The room's digest, every 150 frames | the map's defeat mask; a hash per enemy alive, per map object (and whether it is used), per item on the ground placed by name | |
+
+**When a room drifts.** Each piece of news above crosses once. One that never
+takes (lost with a session, come before its room was made in the other game,
+or that game's own events gone another way) would leave the rooms apart for
+good, so the owner also sends a digest of its room every 150 frames. Each
+game following the room compares it with its own room, and what differs at
+two digests in a row (news on its way comes within a round trip) is a drift:
+the game logs `DRIFT room` with what differs and heals it at once, the
+owner's room being the room. An enemy it followed as the owner's that's gone
+there is defeated here; a defeat recorded there is recorded here and its enemy
+defeated, one recorded only here is sent to the owner again; an object or a
+named item here that the owner's room hasn't is deleted, and one that went
+here but is still there is sent to the owner again; an object used there is
+shown used. Things the port itself places for each player (the remake's map
+edits) and items dropped at run time (named by each game's own count) aren't
+compared, nor is a named item this game made itself after coming in (a tree
+it shook: its coins have names) that the owner's room never had. Something the owner's room has that this game never had can't be
+made here: it's logged once and left. A test's game logs how many it found and
+healed as it ends (`desync: rooms ... found, ... healed`).
 
 ## Layer 3: battles together
 
@@ -544,13 +695,25 @@ players 3 and 4 a companion each.
      the phase is), its random numbers, who plays now, and a snapshot of what
      the battle keeps: every unit's HP and FP, its statuses and their turns,
      its moves left; Star Power and the bag's items; each side's clear
-     condition. Every other game waits at the same step for it, takes A's
+     condition; the turn's number; and what the stage's own events left (the
+     nozzles' aim and kind, the iron frame, the background knocked down, the
+     escape wall, the fog). Every other game waits at the same step for it, takes A's
      snapshot where its own differs, and goes on with A's verdict, so every
-     game passes the same steps in the same order. As an action's script
+     game passes the same steps in the same order. The stage is compared only
+     when no stage event runs in either game, and what differs at two steps in
+     a row is logged `DRIFT battle stage` and put as A's stage has it. As an action's script
      starts, the random numbers come again, so everything in it rolls alike:
      those of the game whose player plays the acting unit (A's for the
      enemies). That game starts the action the moment its player chooses it,
-     with no round trip to A and back; the others take its numbers.
+     with no round trip to A and back; the others take its numbers. The
+     stage's events (a falling object, the iron frame, the nozzles, a
+     background set falling) run once the other events are over, a
+     different number of frames later on each screen, so each draws from
+     numbers of its own, made from the battle, the step and its order in
+     it: the same target, dodge and status on every screen. The crowd's
+     acts on the battle (its throws, a Boo's invisibility, a Shy Guy's run
+     onto the stage) are off in a shared battle: each game's crowd is its
+     own.
    - **Each player's choices.** A unit's choices are its player's: Mario's
      player 1's, the partner's player 2's (or player 3's or 4's when it's
      their companion's partner; Luigi's player 2's in Brothers mode), a
@@ -708,7 +871,13 @@ This layer is driven by the game where the scene plays:
 3. B sees the scene as A plays it: A's ghost, and A's NPCs (A owns the room,
    layer 2). B's camera is held on A's. Each of A's text boxes opens on B's
    screen too, from B's own copy of the same message, with its speaker's
-   tail; it closes when A's does.
+   tail, and so do the text added to it and A's choices. B's copy follows A's:
+   it turns a page when A's does, goes on when A's script does, and its
+   choice's cursor moves and picks as A's does. B's own keys never move it
+   (read on by them, it once ran ahead of A's and closed while A's talk went
+   on). It closes when A's does. Whoever began the talk reads it in A's game:
+   a guest's Luigi's or partner's talk is read on, and its choices answered,
+   by that guest's buttons, which the host's game plays as theirs.
 4. A's story flags and items come across when it's over. B's own pouch is put
    back as it was when B came, so a scene the room also plays for B can't give
    B anything twice.

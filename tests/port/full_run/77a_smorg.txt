@@ -1,0 +1,123 @@
+#start map=hom_00,n_bero_2 story=325 party=6,1,2,3,4,5 level=20 hp=35 fp=30 coins=200 maxsp=600 stars=63 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_ULTRA_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR flags=@rogueport_open,@ch2_sewers_cleared,@ch2_great_tree_done
+#end story=331 map=rsh_05_a
+#env TTYD_GOD_POWER=2
+# Full run, segment 77a: from the drawbridge (hom_00, 325) to the Smorgs leaving the baggage car (331). Down the
+# station's steps east to the ground, south, up the platform's ramp (x -190..-165) and west along it to the train
+# door (n_bero_1, -810 55): the boarding scene and the conductor (326), Mario's cabin (rsh_02_c cabin 5); the bed
+# (A facing west): the end of day 2 (327) and day 3 (328). East through rsh_01 to the engine (rsh_00): the engineer
+# and the Smorgs at the window (329). West through every car to the baggage car (rsh_05): the swarm holds the
+# waitress (50 0 0) and the conductor (-115 0 20); Flurrie's breath (X held) blown west at each from 40 east of it, twice round, frees both (331).
+wait_seq 2 3000
+press_until_control a 3000
+walk_to -200 -130 600
+walk_to -40 -130 600
+walk_to -40 60 600
+walk_to -130 90 400
+walk_to -250 90 600
+walk_to -790 80 1200
+walk_to n_bero_1 600
+press_until_story a 326 6000
+press_until_control a 6000
+where
+walk_to -260 -205 300
+walk_to -300 -205 8
+press a
+press_until_story a 327 6000
+press_until_story a 328 6000
+press_until_control a 6000
+where
+walk_to a_tobira_5_heya stop 300
+walk_to -220 -40 8
+press a
+wait 30
+press_until_control a 600
+on_map rsh_02_a walk_to 370 0 900
+on_map rsh_02_a walk_to 380 -100 300
+on_map rsh_02_a stick 127 0 30
+on_map rsh_02_a press a
+on_map rsh_02_a press_until_control a 3000
+on_map rsh_02_a walk_to -370 0 300
+on_map rsh_02_a walk_to 370 0 900
+on_map rsh_02_a walk_to 380 -100 300
+on_map rsh_02_a stick 127 0 30
+on_map rsh_02_a press a
+on_map rsh_02_a press_until_control a 3000
+on_map rsh_01_a walk_to -370 0 300
+on_map rsh_01_a walk_to 370 0 900
+on_map rsh_01_a walk_to 380 -100 300
+on_map rsh_01_a stick 127 0 30
+on_map rsh_01_a press a
+on_map rsh_01_a press_until_control a 3000
+on_map rsh_01_a walk_to -370 0 300
+on_map rsh_01_a walk_to 370 0 900
+on_map rsh_01_a walk_to 380 -100 300
+on_map rsh_01_a stick 127 0 30
+on_map rsh_01_a press a
+on_map rsh_01_a press_until_control a 3000
+walk_to npc 運転手 600
+press a
+press_until_story a 329 6000
+press_until_control a 6000
+where
+walk_to -230 -100 900
+stick -127 0 30
+press a
+press_until_control a 3000
+walk_to 370 0 300
+walk_to -370 0 900
+walk_to -380 -100 300
+stick -127 0 30
+press a
+press_until_control a 3000
+where
+walk_to 370 0 300
+walk_to -370 0 900
+walk_to -380 -100 300
+stick -127 0 30
+press a
+press_until_control a 3000
+where
+walk_to -460 -100 1200
+press_until_control a 6000
+walk_to -460 -100 1200
+stick -127 0 30
+press a
+press_until_control a 3000
+where
+walk_to 370 0 300
+walk_to -370 0 900
+walk_to -380 -100 300
+stick -127 0 30
+press a
+press_until_control a 3000
+where
+press_until_story a 330 3000
+press_until_control a 6000
+where
+party 5
+wait 30
+on_map rsh_05_a walk_to 90 0 300
+on_map rsh_05_a stick -127 0 2
+on_map rsh_05_a hold x 240
+wait 20
+where
+on_map rsh_05_a walk_to -75 20 300
+on_map rsh_05_a stick -127 0 2
+on_map rsh_05_a hold x 240
+wait 20
+where
+on_map rsh_05_a walk_to 90 0 300
+on_map rsh_05_a stick -127 0 2
+on_map rsh_05_a hold x 240
+wait 20
+where
+on_map rsh_05_a walk_to -75 20 300
+on_map rsh_05_a stick -127 0 2
+on_map rsh_05_a hold x 240
+wait 20
+where
+press_until_story b 331 3000
+press_until_control a 6000
+where
+save
+end

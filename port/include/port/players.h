@@ -45,6 +45,9 @@ void portCoopNpcTargetBegin(struct NpcEntry* npc);
 void portCoopNpcTargetEnd(void);
 struct NpcEntry* portCoopFieldTouch(struct NpcEntry* found, void* kind); /* kind: the hit's u32 */
 int portCoopTouchedBy(const struct NpcEntry* npc);
+/* the touch was a first strike after all (Luigi's Spin Attack: port/include/port/pm64_spin.h): no longer a
+ * plain contact */
+void portCoopTouchForget(void);
 
 /* the players now: 1 (Mario's alone) to PORT_PLAYERS_MAX */
 int portCoopPlayers(void);
@@ -54,6 +57,10 @@ int portCoopPlayerHere(int player);
 /* the story's follower's party id (an escort, a Trouble's client), -1 none: marioGetExtraPartyId(), except
  * that player 3's companion, out in the follower's slot, is no follower (second_player_pc.c) */
 int portCoopStoryFollowerId(void);
+/* Mario's partner swapped to member (1-7; 0, or one that can't come out: none), the follower's slot left as
+ * it is. marioPartyKill() empties both slots, so a partner swapped with it took the story's follower (ch2's
+ * Punio, an escort, a Trouble's client) away for good while the game's scripts still had him following */
+void portPartySwapPartner(int member);
 
 /* A seated controller disconnecting (a battery, a cable), on one computer: the seat is kept for 60 s,
  * their character waiting at Mario's side, a note at their place; the controller coming back (or any

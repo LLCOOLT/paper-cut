@@ -1,0 +1,59 @@
+{
+ "desc": "Desync healing, a defeats record told again: each player free in the Rogueport Sewers (tik_01, TTYD_SYNC_PICK -1: the host owns the room), the guest's game defeats its Spiky Goomba at frame 1,300 and its word never goes (TTYD_SYNC_CORRUPT npc_dead:enemy). The host's room digest still has the enemy alive and no defeat recorded; at two in a row the guest's game logs DRIFT room and tells the host its defeats record again, and the host's game records it and defeats its own Spiky Goomba",
+ "groups": [
+  "online",
+  "desync"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 3200
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer room1 4000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "room: .* defeated here too \\(the other game's defeats record\\)"
+    ],
+    "log_must_not": [
+     "DRIFT",
+     "the shared battle begins"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer room1 4000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_CORRUPT": "npc_dead:enemy@1300"
+    },
+    "log_must": [
+     "test: corrupt: .* defeated here, unsaid",
+     "DRIFT room tik_01: .*defeats recorded here, not there",
+     "room: tik_01's defeats record [0-9a-f]{8} told the owner's game again"
+    ]
+   }
+  ],
+  "check": {
+   "drift": false
+  }
+ },
+ "timeout": 360
+}

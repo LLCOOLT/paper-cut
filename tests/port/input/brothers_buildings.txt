@@ -1,0 +1,36 @@
+# Brothers mode: into Rogueport's plaza houses and out again (door entrances inside the map: the walls fold
+# away, Mario walks in through the door). After each door Luigi must be in, drawn, on the floor near Mario
+# (the place trace's scene-end lines, brothers_pc.c), not left outside behind the wall.
+wait 60
+where
+walk_to A_ie_01_doa01 stop 900
+hold up 8
+press a
+wait 240
+where
+walk_to A_ie_01_doa02 stop 600
+hold down 8
+press a
+wait 240
+where
+walk_to A_ie_03_f1_doa01 stop 1500
+hold up 8
+press a
+wait 240
+where
+walk_to A_ie_03_f1_doa02 stop 600
+hold down 8
+press a
+wait 240
+where
+walk_to A_ie_02_f1_doa01 stop 1500
+hold up 8
+press a
+wait 240
+where
+walk_to A_ie_02_f1_doa02 stop 600
+hold down 8
+press a
+wait 240
+where
+end

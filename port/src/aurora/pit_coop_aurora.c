@@ -149,6 +149,26 @@ static void secondPlayerBack(void) {
     sSavedSecond = -1;
 }
 
+int portPitCoopAutosave(void) {
+    /* autosave (port/src/common/autosave_pc.c): the run's floor kept as the deepest as soon as Mario is on it, as
+       endRun would keep it (the story's file saves itself at the floor change) */
+    int floor;
+    if (!sActive || !sEntered || gp == NULL || seqGetSeq() != SEQ_GAME ||
+        strncmp(gp->currentMapName, "jon", 3) != 0) {
+        return 0;
+    }
+    floor = swByteGet(GSW_JON_FLOOR) + 1;
+    readBest();
+    if (floor <= sBestFloor) {
+        return 0;
+    }
+    sBestFloor = floor;
+    writeBest();
+    printf("[autosave] Pit in co-op: floor %d kept as the deepest\n", floor);
+    fflush(stdout);
+    return 1;
+}
+
 static void endRun(int goHome) {
     const int floor = gp != NULL ? swByteGet(GSW_JON_FLOOR) + 1 : 0;
     const int bottom = gp != NULL && swByteGet(GSW_JON_FLOOR) >= 99;

@@ -1,0 +1,20 @@
+{
+ "desc": "Texture upscaling's look (4x): the prologue's cutscenes (the letter, the boat, Rogueport's harbour) with everything from Paper Mario 64 on, captures along the way; on the virtual clock each frame's end waits for its upscaled textures, so the captures are the same as when the filter ran on the frame's thread",
+ "groups": ["gfx", "pm64", "upscale"],
+ "versions": ["us"],
+ "settings": {
+  "texture_upscale": 2,
+  "pm64_partners": 1, "pm64_story_enemies": 1, "pm64_bosses": 1, "pm64_boss_music": 1, "pm64_badges": 1,
+  "pm64_recipes": 1, "pm64_sfx": 1, "pm64_sfx_general": 1, "pm64_star_spirits": 1
+ },
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EVENT": 0,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "input": ["wait 400", "shot p1", "wait 600", "shot p2", "wait 600", "shot p3", "wait 600", "shot p4", "end"],
+ "timeout": 300,
+ "exit": "any",
+ "log_must": ["^\\[input\\] end$"],
+ "new": true
+}

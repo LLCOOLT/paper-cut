@@ -1,0 +1,10 @@
+# Online, each their own game: a file of another kind refused (port/src/common/statesync_pc.c fileKindRefused), in Español: an English line, then its translation, then a blank line.
+
+Your file is a randomizer, Archipelago or hardcore file and the other player's isn't: play your own files with matching seeds, or play together in co-op.
+Tu archivo es de randomizer, Archipelago o hardcore y el del otro jugador no: jugad cada uno vuestro archivo con la misma semilla, o jugad juntos en cooperativo.
+
+The other player's file is a randomizer, Archipelago or hardcore file and yours isn't: play your own files with matching seeds, or play together in co-op.
+El archivo del otro jugador es de randomizer, Archipelago o hardcore y el tuyo no: jugad cada uno vuestro archivo con la misma semilla, o jugad juntos en cooperativo.
+
+Your files are different randomizer, Archipelago or hardcore files: play your own files with matching seeds, or play together in co-op.
+Vuestros archivos son de randomizer, Archipelago o hardcore distintos: jugad cada uno vuestro archivo con la misma semilla, o jugad juntos en cooperativo.

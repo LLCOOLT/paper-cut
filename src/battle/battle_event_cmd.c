@@ -1508,6 +1508,81 @@ USER_FUNC(btlevtcmd_GetHp) {
     return EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC
+/* the kind's own maximum HP of each unit id, from BtlUnit_Entry (battle_event_cmd.h) */
+static s16 sPortKindHp[64];
+
+void portBtlUnitKindHpSet(s32 id, s32 hp) {
+    if (id >= 0 && id < 64) {
+        sPortKindHp[id] = (s16)hp;
+    }
+}
+
+s32 portBtlUnitKindMaxHp(BattleUnit* unit) {
+    s32 k = unit->unitId >= 0 && unit->unitId < 64 ? sPortKindHp[unit->unitId] : 0;
+    return k > 0 ? k : unit->baseMaxHp;
+}
+
+/* the unit's HP hp in its kind's scale, rounded up (so a threshold T of the kind holds up to T/kind of the max) */
+static s32 portKindHpFromUnit(BattleUnit* unit, s32 hp) {
+    const s32 k = portBtlUnitKindMaxHp(unit);
+    const s32 m = unit->baseMaxHp;
+    if (m <= 0 || k == m || hp <= 0) {
+        return hp;
+    }
+    return (hp * k + m - 1) / m;
+}
+
+/* hp of the kind's scale as the unit's own HP, rounded to the nearest, at least 1 (when hp is) and at most the max */
+static s32 portUnitHpFromKind(BattleUnit* unit, s32 hp) {
+    const s32 k = portBtlUnitKindMaxHp(unit);
+    const s32 m = unit->baseMaxHp;
+    s32 r;
+    if (m <= 0 || k <= 0 || k == m || hp <= 0) {
+        return hp;
+    }
+    r = (hp * m + k / 2) / k;
+    if (r < 1) {
+        r = 1;
+    }
+    return r > unit->maxHp ? unit->maxHp : r;
+}
+
+/** Script (PC port): the HP of the unit args[0] in its kind's own scale, into args[1] (battle_event_cmd.h). */
+USER_FUNC(btlevtcmd_port_GetKindHp) {
+    EvtWord* args = event->args;
+    BattleUnit* unit;
+    s32 id = BattleTransID(event, evtGetValue(event, args[0]));
+
+    if (id == -1) {
+        return EVT_RETURN_DONE;
+    }
+    unit = BattleGetUnitPtr(_battleWorkPointer, id);
+    evtSetValue(event, args[1], portKindHpFromUnit(unit, unit->currentHp));
+    return EVT_RETURN_DONE;
+}
+
+/** Script (PC port): sets the HP of the unit args[0] to args[1] of its kind's own scale (battle_event_cmd.h). */
+USER_FUNC(btlevtcmd_port_SetKindHp) {
+    EvtWord* args = event->args;
+    BattleUnit* unit;
+    f32 ratio;
+    s32 id = BattleTransID(event, evtGetValue(event, args[0]));
+
+    if (id == -1) {
+        return EVT_RETURN_DONE;
+    }
+    unit = BattleGetUnitPtr(_battleWorkPointer, id);
+    unit->currentHp = (s16)portUnitHpFromKind(unit, evtGetValue(event, args[1]));
+    unit->hpGauge.prevHp = unit->currentHp;
+    unit->hpGauge.targetHp = unit->currentHp;
+    ratio = (f32)unit->currentHp / (f32)unit->maxHp;
+    unit->hpGauge.trailRatio = ratio;
+    unit->hpGauge.barRatio = ratio;
+    return EVT_RETURN_DONE;
+}
+#endif
+
 /** s32* battleId, s32* retIndex */
 USER_FUNC(btlevtcmd_GetFp) { // 1:1
     EvtWord* args = event->args;
@@ -6695,6 +6770,7 @@ USER_FUNC(btlevtcmd_WeaponAftereffect) {
     if (portRulesNoStageHazards()) { // player wish: the stage stays as it is
         return EVT_RETURN_DONE;
     }
+    wp->debug.flags |= (s32)portStateSyncBattleStageForce(); // tests: $TTYD_STAGE_FORCE (0 in play)
 #endif
     b = 0;
     a2 = 0;

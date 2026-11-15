@@ -171,7 +171,9 @@ struct Register {
                           0, portRestoreKey(PORT_RESTORE_JP_FLASHES),
                           "flash flashes strobe photosensitive japanese restoration");
     portSettingsAddToggle(kTab, "1000 X-Nauts in the prologue",
-                          "The prologue's crowd of X-Nauts at its Japanese size: 1000, not 400, and more smoke.", 0,
+                          "The prologue's crowd of X-Nauts at its Japanese size: 1000, not 400, and more smoke. "
+                          "From the next room.",
+                          0,
                           portRestoreKey(PORT_RESTORE_XNAUT_CROWD), "x-naut crowd 1000 prologue japanese restoration");
     for (int i = 0; i < PORT_RESTORE_COUNT; i++) {
       portSettingsSetShown(portRestoreKey(i), [] { return isJp() ? 0 : 1; }); // the JP release has them already

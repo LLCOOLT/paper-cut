@@ -83,6 +83,8 @@ void portLuigiRelease(int poseId);
  * "Luigi's Mansion" and the like). The text returned stays valid (a copy kept
  * for as long as the game runs). */
 const char* portLuigiText(const char* msg);
+/* the same for the game's message tag (its own phrases: docs/PLAY_AS.md, Text) */
+const char* portLuigiTextTag(const char* tag, const char* msg);
 
 /* The pick the text names (docs/PLAY_AS.md): the pick, but Mario in a
  * versus battle (always the brothers, Mario against Luigi) and while
@@ -102,6 +104,16 @@ int portPlayAsHasName(const char* text, int chr);
 /* text with Mario's and chr's names swapped both ways, by the game text's
  * rules (portLuigiText), into out (room for twice text and its end) */
 void portPlayAsSwapText(const char* text, char* out, int chr, int enc);
+/* the same in a language of tr.h's (0 English .. 5 Japanese; another: names only): where text names
+ * Mario, his pronouns follow the pick (Peach's are hers; docs/PLAY_AS.md). portPlayAsSwapText takes the
+ * game's language for its messages, the menus' for Paper Cut's own. */
+void portPlayAsSwapTextIn(const char* text, char* out, int chr, int enc, int lang);
+/* $TTYD_PLAY_AS_PRONOUN_TEST=1: the pronouns checked in each language, logged ("[play-as] pronoun ...") */
+void portPlayAsPronounTest(void);
+/* Paper Cut's own text (by its English) keeps Mario's name whoever the pick is (tr.cpp) */
+int portPlayAsKeepsMario(const char* english);
+/* $TTYD_PLAY_AS_TEXT_DUMP=<file>: its texts swapped for each pick into <file>.out (tools/port/playas_text_check.py) */
+void portPlayAsTextDump(const char* path);
 
 /* __psndSFXOn: the sound id (as searchPSSFXList gives it) to play: Luigi's
  * NPC steps, jump and landing for Mario's plain-floor ones while the option

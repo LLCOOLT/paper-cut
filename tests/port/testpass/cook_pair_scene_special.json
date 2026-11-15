@@ -1,0 +1,43 @@
+{
+ "desc": "A double recipe at Zess T.'s with her whole cooking scene (the Cookbook given, nothing cooked before, skip scenes off): an Ultra Shroom and a Fire Flower cook into a Zess Special (fire, smoke and her radiating light for a special dish). No crash; the dish is handed over (a player's report: 0.5.0 crashed on a double recipe)",
+ "groups": [
+  "world",
+  "cooking"
+ ],
+ "versions": [
+  "us",
+  "eu"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_GSWF": "1188,5392",
+  "TTYD_ITEMS": "0x96,0x84",
+  "TTYD_EXIT_FRAMES": 3600,
+  "TTYD_STORY_KICK": "talk:rel_gor__nancy_talk",
+  "TTYD_STORY_KICK_AFTER": "60",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRACE": "3",
+  "TTYD_TRACE_CMD": "cooking_evt",
+  "TTYD_TRACE_BUDGET": "100000"
+ },
+ "settings": {
+  "skip_scenes": 0
+ },
+ "input": [
+  "wait 1500",
+  "shot cooking",
+  "wait 1500",
+  "shot cooked",
+  "end"
+ ],
+ "expect_shots": [
+  "cooked"
+ ],
+ "log_must": [
+  "^\\[items\\] TTYD_ITEMS: ",
+  "^\\[cook\\] Zess T\\. gave dish 0xc2$"
+ ],
+ "timeout": 300
+}

@@ -1,0 +1,42 @@
+{
+ "desc": "Co-op with an idle player in the crowd (players 3 seated, as coop_audience_local): on Mario's turn an audience member winds up a throw (the script's audience_throw) and player 1's X still goes for them; 3P's own seat still emotes (X: clap) and throws after, the crowd's co-op controls as they were",
+ "groups": [
+  "coop",
+  "battles"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "settings": {
+  "second_player": 1,
+  "audience_players": 1
+ },
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_EXIT_FRAMES": 2600,
+  "TTYD_P3_PRESS": "x@1100,a@1160,l@1300+30"
+ },
+ "input": [
+  "wait 60",
+  "stars 0xff",
+  "audience 150",
+  "battle 0",
+  "wait 300",
+  "audience_throw",
+  "wait 4",
+  "press x",
+  "wait 2100",
+  "end"
+ ],
+ "log_must": [
+  "\\[crowd\\] 3P seated",
+  "^\\[input\\] audience_throw: member \\d+$",
+  "^\\[audience\\] X: Mario goes for member \\d+, who wound up a throw$",
+  "\\[crowd\\] 3P emote 2",
+  "\\[crowd\\] 3P emote 0"
+ ],
+ "timeout": 240
+}

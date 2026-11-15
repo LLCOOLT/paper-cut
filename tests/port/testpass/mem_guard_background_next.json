@@ -1,0 +1,25 @@
+{
+ "desc": "An app put away and ended, 2 of 2: the next start finds the record ending in the background, the system's own business: no note",
+ "groups": [
+  "platform",
+  "memory"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_from": "mem_guard_background",
+ "env": {
+  "TTYD_MEM_GUARD": 1,
+  "TTYD_MEM_GUARD_ROOM": 4000,
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "log_must": [
+  "^\\[memory\\] the last run ended in the background \\(the system's own business\\): no note"
+ ],
+ "log_must_not": [
+  "^\\[memory\\] note shown",
+  "^\\[memory\\] record:"
+ ],
+ "timeout": 180
+}

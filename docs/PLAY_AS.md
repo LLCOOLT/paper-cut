@@ -48,7 +48,11 @@ model follows it and is drawn instead.
   its parasol plane, put on the hammer's spin), and Bowser a fireball (see
   [Fire breath](#fire-breath)).
 - Back-facing poses use Peach's back model (`c_peach_r`; ours of it, with
-  her back-facing hammer and jump, first) and Bowser's back view. The disc has
+  her back-facing hammer and jump, first). Bowser is never shown from
+  behind: Mario's back-facing animations play as his front ones of the same
+  name (`M_W_1R` as `M_W_1`, fitted to Mario's length), in the field, co-op
+  and online alike, as his walk away from the camera looked wrong from
+  behind. His back view is still made, for the character export: the disc has
   none of him from behind, so `c_koopa_r_pc` is made at the start from his
   own `c_koopa`: the same parts, placed as he looks from behind and a little
   to his side (his shell over his back as one smooth dome, with more spikes
@@ -96,9 +100,19 @@ model follows it and is drawn instead.
   ("Fire Mario", "Luigi green"), versus (always the brothers: Mario's side
   against Luigi's, and its battles' text too), Brothers mode's texts (it
   turns Play as off while on), and the model files' names. The What's
-  new page is the release notes as written. The swap trades names, not
-  pronouns: "Mario's attack goes up by 2, but he takes double damage" reads
-  "Peach's attack ..., but he ...".
+  new page is the release notes as written.
+- Pronouns follow the pick where the text names Mario: with Peach,
+  "Mario's attack goes up by 2, but he takes double damage" reads "Peach's
+  attack ..., but she ...". From a mention of Mario by name (not one that
+  speaks to him: "Mario, ...", "Thanks, Mario.", "Dear Mario," at the start of
+  its clause; "If you see Mario, thank him" and "This is Mario, and he's..."
+  name him) to the end of its sentence,
+  and into the next one when it starts with one ("His defense drops"), in
+  each language's own words: he, him, his, himself; er, ihn, ihm, sein...;
+  il; él; lui; カレ (the Japanese text's "he": its font has no kanji for it;
+  カノジョ for her). Words that agree with their noun, not their owner (French
+  son, Spanish su), stay; so do Peach's own, made Mario's. Luigi and Bowser
+  are "he" as Mario is.
 - The pause menu's first tab says "Peach" or "Bowser", lettered from the
   game's own tabs as Luigi's is (`peach_tabs.recipe`, `bowser_tabs.recipe`).
   On the JP disc and in the EU disc's Japanese they say ピーチ and クッパ.
@@ -144,6 +158,50 @@ model follows it and is drawn instead.
   (and the European one in Japanese) it reads クッパ: the lettering has no ク
   or パ, so ク is "スターストーン"'s タ without its inner stroke, and パ is
   "バッジ"'s バ with its two dots made a small ring.
+
+## Text: the rules
+
+Every class of text that names or describes the player, and what Play as does
+with it, in every language the discs have (US English; JP Japanese; the
+European disc's English, German, French, Spanish and Italian) and Paper Cut's
+own. The swap is `substitute()` in `port/src/common/luigi_pc.c`; the words
+and phrases are tables in `port/assets/play_as_text.txt` (made into
+`play_as_text_tables.inc` by `tools/port/playas_text_check.py tables`).
+
+| Class | Rule |
+|---|---|
+| The name | Mario and the pick trade names both ways, in every form: possessives ("Mario's", "Mario'll"), German's genitive ("Marios"), a shout drawn out ("MARIOOO!"), capitals, the katakana in Shift-JIS and UTF-8. Not inside another word ("Peachy", スピーチ). |
+| Titles | Keep their names: "Paper Mario", "Mario Bros.", "Super Mario Bros.", the series, マリオストーリー, マリオブラザーズ, "Luigi's Mansion", ルイージマンション; "the Mario brothers" stays the family's name. A real game's "Paper Luigi" (Koopie Koo's) stays; Luigi's own books follow their author (with Luigi the pick, the NPC Mario wrote "Super Mario"). |
+| The fruit | The Peachy Peach and the Peach Tart (Peach-Torte) keep the fruit's name. |
+| The NPC swapped | Who Mario's name now names (the NPC the pick is) keeps everything of theirs but the name: "Princess Mario", her "she", her title and her grammar (la Princesa Mario), Bowser's "Koopa King". Only the player changes. |
+| Ring names | Names the story gives whoever fights (Gonzales, the Great Gonzales, グレートゴンザレス, Bomba) stay. |
+| Misremembered names | A near miss of Mario's name is a near miss of the pick's: the Puni elder's "Marty"/"Marty-o" (Louie, Patty, Bowie), Mariole, Mariano, Marzio, Cabrio, Maribo, マリコ (ルイコ, ピーコ, クッコ); the pig curse's "Marioink" (Luigioink, ...). |
+| Pronouns | Follow the pick where the text names Mario (above); only Peach's differ. A phrase of the tables that names her starts it too ("dem Mario dieser Datei: seinem Level" is hers). |
+| Titles before the name | With Peach, a man's word just before the name is hers: Mr. Ms., Mister Miss, Master Lady; Herr Frau, Lieber Liebe, dieser diese, Kapitän Kapitänin; monsieur madame, M. Mme, Cher Chère, ce cette; señor señora, Querido Querida, ese esa, "ese tal" "esa tal", el la; Signor Signora, Sig. Sig.ra, Caro Cara, quel quella, il la, and the word before those (il Signor: la Signora, mein lieber: meine liebe, Egregio Sig.: Gentile Sig.ra). Japanese's さん, くん, どの, さま stay: the game says くん to women too (クリスチーヌくん). |
+| Agreement after the name | With Peach, the words after her name that agree with her are hers: "est devenu" "est devenue", "s'est débarrassé", "est le champion" "est la championne"; "es atacado" "es atacada", "se ha proclamado campeón" "campeona", "es mi pichoncito"; "è arrivato" "è arrivata", "è un amico" "è un'amica", "si è diretto"; past the game's commands and line breaks between ("Mario\n<wait 250>\nè un cattivo"). German's predicate words don't agree; its "der Richtige", "der Retter" are phrases. |
+| Mustache nicknames | Luigi keeps them (he has the mustache). For Peach they are her crown, for Bowser his horns, in each language's own: Mr. Mustache Miss Crown / Mr. Horns, Captain 'Stache Captain Crown / Captain Horns, the Great Mustache, Cleftor's "Mustache", "mustached", "mustachioed"; Mister Schnauzbart Miss Krönchen / Mister Stachelkopf; Commandant Moustache, moustachu couronnée / cornu (with the words before it: "ton papy moustachu" "ta mamie couronnée"); bigotudo coronada / pinchudo, bigotes; Capitan Baffo Capitan Corona / Capitan Capellone, baffone coroncina / capellone, baffuto; ヒゲ船長 カンムリ船長 / ツノ船長, ヒゲのダンナ, ステキなヒゲのミスター, ヒゲボーイ. |
+| Descriptions of the player | The X-Naut report ("a mustached dude in a red hat and blue overalls": a crowned girl in a pink dress / a horned brute with a spiky green shell) and the fortune-teller's prophecy for Bobbery ("the man with the red 'M' hat": green 'L' for Luigi, the woman with the golden crown, the beast with the spiky shell) in every language. |
+| The plumber | Peach a princess, Bowser a Koopa ("You look like a plumber!", "The Red Raging Plumber"; Klempner, plombier, fontanero, idraulico). |
+| The brothers | With Luigi the pick, the NPC Luigi is Mario, the elder: his "big brother" to the player is "little brother" (にいさん is ルイージ, the books' おにいさん おとうと, grand frère petit frère, fratellone fratellino, "his older brother" "his younger"). "Bro" and "Brother" stay. Lines that are true once swapped stay ("You're Mario's older brother?" asked of the NPC). |
+| Left as they are | Others' mustaches (Bobbery's, General White's, the Bob-omb mayor's, the shop owner Mastro Baffo), Keelhaul Key's rocks Red and Blue 'Stache and their song, Luigi's own ("the green mustache baron"), the brothers both ("the mustached ones"), Spike's pun on トゲ and ヒゲ, idioms (うまのヒゲ, "c'est du Mario tout craché"). |
+| Judgement calls kept | Whole scenes about the player's mustache (General White's and Pennington's readings of it, the fans who want to touch it, the barber's colour question) keep it: the scene is about a mustache. The game speaking to "you" keeps its words: a French, Spanish or Italian "tu es prêt", "estás listo", "sei pronto" to the player stays masculine, as the text can't tell who it speaks to. |
+| Paper Cut's own | The same swap, by its English, but for the texts that keep Mario's name (`portPlayAsKeepsMario` in `luigi_pc.c`): a choice that is a name, Play as's own help, the brothers' looks and colours, versus, Brothers mode, the model files. |
+| Text glyphs | The game's messages draw no face of Mario's (their icons are buttons and items); the faces the HUD and menus draw are the pick's (above). Every Japanese table text is in the JP font's letters (`font_chars.py`). |
+
+`tools/port/playas_text_check.py` checks all of it: it dumps every message of
+the three discs' seven languages and every Paper Cut text, has the game swap
+them for each pick (`$TTYD_PLAY_AS_TEXT_DUMP`, the headless build), and flags by
+class what the rules say shouldn't be there (Mario's name left or the pick's
+lost, by count; a man's pronoun after Peach's name; a man's title before it or
+a man's agreement after it; a mustache nickname for Peach or Bowser; "big
+brother" in Luigi's lines). The findings that are meant are in
+`tools/port/playas_text_allow.txt`, each with its reason; a finding not there,
+an allowed one no longer found, or tables older than `play_as_text.txt` fail
+it. The test pass runs it as `playas_text_dump` then `playas_text_verdict`
+(US headless; the discs read from `orig/`).
+
+    python tools/port/playas_text_check.py run build-pc-us-headless/ttyd-us.exe
+    python tools/port/playas_text_check.py report FILE --class nickname --pick peach --source EU-fr
 
 ## Their new moves
 
@@ -220,7 +278,9 @@ her parasol over her head and sinks slowly under it, both hands up on the
 handle (her own pose, `M_J_1P` and from behind `M_J_1PR` in her packs, played
 in place of Mario's fall while she floats: the handle's end in her near glove
 above her crown, her far hand beside it, the shaft straight up to the canopy) (1 unit a frame; Mario falls up to
-18), drifting no faster than three quarters of her walk, for at most 1.75
+18), drifting no faster than three quarters of her walk, or, out of a running
+jump, as fast as keeps her level with where Mario's same jump would be at
+each height (she never comes down short of where he lands), for at most 1.75
 seconds after the jump's peak. Letting go of A, or the time running out,
 closes it, and she falls as Mario does from there. It never lifts her, and it
 only follows her own jumps: not a fall off a ledge, a spring, a hit, paper or
@@ -233,16 +293,19 @@ Mario would and the spin carries on into the Spring Jump as his does. The
 Spin Jump is untouched: its second press of A starts its own motion. It is part of picking Peach, with no setting
 of its own; it reads only the game's state and the buttons, so it plays the
 same online and in replays, and with anyone else picked nothing changes.
-At the same height it reaches a little farther than Mario's jump (84 units
-against 79: her drift is slower than her run, but she stays up longer), and
-farther across gaps that drop away to a lower floor (165 against 100 over a
-drop of 100); the game's own gaps that need the Spring Jump or a partner stay
-that way. `tools/port/luigi_jump_sweep.py --parasol` checks every map's floors
+At the same height it reaches a little farther than Mario's jump (95 units
+against 79: she stays up longer), and farther across gaps that drop away to a
+lower floor (176 against 100 over a drop of 100); the game's own gaps that
+need the Spring Jump or a partner stay that way. `tools/port/luigi_jump_sweep.py --parasol` checks every map's floors
 for what that reaches and Mario's jump doesn't; from the few take-offs where
-it matters (two pits with no way out, in the Pirate's Grotto and at the
-Palace of Shadow's entrance, the X-Naut Fortress's Card Key floor, ways round
-in the Palace, the Great Tree's entrance, a ledge in western Rogueport and a
-deck at Keelhaul Key) she doesn't open it (`kNoFloat` in `peach_parasol_pc.c`, which
+it matters (three pits with no way out, in the Pirate's Grotto, at the
+Palace of Shadow's entrance and in the Pianta Parlor, the X-Naut Fortress's Card Key floor, ways round
+in the Palace, the Great Tree, the Pirate's Grotto and the sewers, ledges in
+western Rogueport, eastern Rogueport's roofs, the Creepy Steeple's upper
+floor, the Glitz Pit's Dubious Paper floor and Keelhaul Key's decks) the
+parasol still opens and sinks as anywhere, but her move sideways is held level
+with Mario's same jump at every height for the rest of that jump, so she comes
+down no farther than he would (`kMarioReach` in `peach_parasol_pc.c`, which
 the sweep reads, so a re-run proves them closed). What's left is the tops of a
 few blocks. The packs give her models fifteen texture
 slots for it (`luigi_pack.PARASOL_TEXTURES`; `luigi_pack.py repack --char

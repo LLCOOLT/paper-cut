@@ -139,3 +139,8 @@ USER_FUNC(evt_bero_switch_off);
 USER_FUNC(evt_bero_get_number);
 USER_FUNC(evt_bero_case_id_save);
 USER_FUNC(evt_bero_case_id_load);
+
+#ifdef TARGET_PC
+/* PC port: an entrance changed in its table after the room registered it: its exit case made the same */
+void portBeroCaseRefresh(BeroEntry* bero);
+#endif

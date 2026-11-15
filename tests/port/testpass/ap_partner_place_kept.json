@@ -1,0 +1,51 @@
+{
+ "desc": "Archipelago seed with Bobbery (this slot's, game item 0x6F) at Goombella's place, as a multiworld seed that shuffles partners puts it: the apworld points that place at a word in gor_01's christine_nakama, which in the game's own scene is a camera curve (11), and an item id there made the camera call 0x6F as a curve function, a crash right after the opening (0.5.0 report). The word now stays as the game has it (logged), Goombella's joining scene (entering gor_01 from the harbor at story 6) plays through with the camera, and Mario gets control after it; another world's item (player 2, game item 0x71) at the Old Letter's place isn't named as Vivian's open-world token outside the open world",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "user_gen": [
+  {
+   "script": "tests/port/ap_test_seed.py",
+   "args": [
+    "Rogueport Center: Goombella=77772016:1:0",
+    "Rogueport Center: Old Letter=1:2:0"
+   ],
+   "dest": "partner.apttyd"
+  }
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01,s_bero",
+  "TTYD_STORY": "6",
+  "TTYD_AP_SEED": "{out}/user/partner.apttyd",
+  "TTYD_AP_NO_MOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": [
+  "wait 120",
+  "press_until_control a 6000",
+  "wait 60",
+  "where",
+  "where gsw 0",
+  "where have 113 111",
+  "end"
+ ],
+ "log_must": [
+  "archipelago: seed test, Mario \\(3 placements\\)",
+  "archipelago: Rogueport Center: Goombella: gor_01::christine_nakama\\+0x\\w+ holds 11, not an item: left as the game has it",
+  "archipelago: gor: \\d+ placements",
+  "\\[input\\] where have 113 = 0 \\(",
+  "\\[input\\] end"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "\\[input\\] where have 113 = \\d+ \\(name_party5\\)",
+  "\\[input\\] where have 111 = \\d+ \\(name_party1\\)"
+ ],
+ "timeout": 400
+}

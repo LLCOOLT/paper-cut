@@ -10,6 +10,7 @@
 #include "port/paper_box.h"
 
 int gPortPaperBox;
+PortBoxTex gPortPaperBoxRibbonTex;
 
 static int sUnknown;  /* a fan that couldn't be placed: the GX box stands */
 static int sAny;      /* a pixel passed */

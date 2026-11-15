@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/rel_pc.h"
+#include "port/asan_heap.h" /* PORT_SECTION_COPY */
 #ifdef PORT_MODS
 #include "port/mod_host.h"
 #endif
@@ -42,7 +43,7 @@ void portRelInit(const char* exePath) {
         const PortRelStatic* r = &portRelStaticTable[i];
         size_t n = (size_t)(r->dataEnd - r->dataStart);
         sSnapshots[i] = (char*)malloc(n ? n : 1);
-        memcpy(sSnapshots[i], r->dataStart, n);
+        PORT_SECTION_COPY(sSnapshots[i], r->dataStart, n); /* (port/asan_heap.h) */
     }
 }
 
@@ -54,8 +55,8 @@ BOOL portRelLink(const char* areaName) {
     for (i = 0; i < portRelStaticCount; i++) {
         const PortRelStatic* r = &portRelStaticTable[i];
         if (strcmp(r->name, areaName) == 0) {
-            memcpy(r->dataStart, sSnapshots[i], (size_t)(r->dataEnd - r->dataStart));
-            memset(r->bssStart, 0, (size_t)(r->bssEnd - r->bssStart));
+            PORT_SECTION_COPY(r->dataStart, sSnapshots[i], (size_t)(r->dataEnd - r->dataStart));
+            PORT_SECTION_ZERO(r->bssStart, (size_t)(r->bssEnd - r->bssStart));
             sCurrent = r;
             if (getenv("TTYD_TRACE") != NULL) {
                 printf("[trace] REL %s linked\n", r->name);

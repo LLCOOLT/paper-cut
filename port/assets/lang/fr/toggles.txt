@@ -1,10 +1,10 @@
 # Level sync, fun toggles, chaos mode, room transitions and battery saver (port/settings/features/toggles.cpp), en français : an English line, then its translation, then a blank line.
 
-Level sync
-Niveau synchronisé
+Enemies match your level
+Ennemis à votre niveau
 
-Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
-Les ennemis d'un niveau inférieur à celui de Mario sont mis à son niveau : plus de PC, des coups plus durs et des Points Étoile comme pour un combat équilibré. Après le jeu et New Game+ : après le générique, ou tant que Mario dépasse de loin le niveau habituel du chapitre.
+Enemies weaker than Mario are raised to his level, so fights stay a challenge and pay full Star Points. Post-game and New Game+: only after the credits or when Mario is far ahead of the chapter.
+Les ennemis plus faibles que Mario sont mis à son niveau : les combats restent un défi et rapportent tous leurs Points Étoile. Après le jeu et New Game+ : seulement après le générique ou quand Mario a une grande avance sur le chapitre.
 
 Post-game and New Game+
 Après le jeu et New Game+
@@ -45,8 +45,8 @@ Tout le monde tourne sur lui-même.
 Chaos mode
 Mode chaos
 
-Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online the same for everyone (the host's setting); not in replays.
-Toutes les 30 secondes, il se passe quelque chose : Mario géant ou minuscule, commandes inversées, caméra à l'envers, pluie de pièces, un Bob-omb, et en combat les tours du public. En ligne, le même pour tout le monde (le réglage de l'hôte) ; pas dans les enregistrements.
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online, the same for everyone (the host's setting).
+Toutes les 30 secondes, il se passe quelque chose : Mario géant ou minuscule, commandes inversées, caméra à l'envers, pluie de pièces, un Bob-omb, et en combat les tours du public. En ligne, le même pour tout le monde (le réglage de l'hôte).
 
 Chaos:
 Chaos :
@@ -111,14 +111,14 @@ Papier plié
 Battery saver
 Économie de batterie
 
-Draws 30 frames a second (the game still runs at 60), at half the internal resolution and without in-between frames. Online and in replays every frame is still drawn.
-Affiche 30 images par seconde (le jeu tourne toujours à 60), à la moitié de la résolution interne et sans images intermédiaires. En ligne et dans les enregistrements, chaque image est toujours affichée.
+Saves battery: 30 frames a second at half resolution, while the game keeps its full speed. Not while playing online.
+Économise la batterie : 30 images par seconde en demi-résolution, le jeu gardant toute sa vitesse. Pas en ligne.
 
 On battery
 Sur batterie
 
-Keep game speed when the GPU falls behind
-Garder la vitesse du jeu quand le GPU ne suit pas
+Keep game speed when graphics lag
+Garder la vitesse quand les graphismes rament
 
-When the graphics card can't draw every frame in time (ray-traced lighting at a high frame rate, say), the game still runs at its real speed and only the picture is less smooth. Off, the whole game slows down instead. Replays, ghost races and console-accurate mode always draw every frame.
-Quand la carte graphique ne peut pas afficher chaque image à temps (l'éclairage par lancer de rayons à une fréquence élevée, par exemple), le jeu garde sa vraie vitesse et seule l'image est moins fluide. Désactivé, c'est tout le jeu qui ralentit. Les enregistrements, les courses de fantôme et le mode fidèle à la console affichent toujours chaque image.
+When the graphics card can't keep up, the game keeps its real speed and only the picture gets less smooth. Off: the whole game slows down instead. Console-accurate mode always slows down.
+Quand la carte graphique ne suit pas, le jeu garde sa vraie vitesse et seule l'image est moins fluide. Désactivé : c'est tout le jeu qui ralentit. Le mode fidèle à la console ralentit toujours.

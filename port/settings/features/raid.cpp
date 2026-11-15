@@ -358,7 +358,7 @@ const char* formAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return "Not on the second screen: use the game's Start menu.";
+    return portPauseSecondScreenAct(id, dir);
   }
   const char* why = nullptr;
   return portRaidStart(&why) ? "The raid begins once the menu is closed." : why;
@@ -383,6 +383,9 @@ void frame(void*) {
   if (st->phase != sShownPhase) {
     sShownPhase = st->phase;
     sBannerUntil = sTick + 180;
+  }
+  if (portBattleBubbleUp()) {
+    return; // (hidden while a battle's speech bubble is up: never across its words)
   }
   // a bar across the top: the boss's HP with the phases' lines, its name and phase, what to do now
   // under the battle HUD: its rows as drawn (the Star Power gauge too, which a fixed y 64 sat on;

@@ -80,7 +80,7 @@ static void setStandInTexts(void) {
     wrap(msgTr("A Paper Mario badge. Link your Paper Mario ROM again to see it as it is."), wrapped, sizeof(wrapped),
          30);
     for (i = 0; i < portPm64BadgeCount(); i++) {
-        const int id = PORT_PM64_BADGE_MIN + i;
+        const int id = portPm64BadgeId(i);
         portModsSetMessage(itemDataTable[id].name, portPm64BadgeEnglish(id));
         portModsSetMessage(itemDataTable[id].description, wrapped);
     }
@@ -88,16 +88,28 @@ static void setStandInTexts(void) {
     portModsSetMessage("pc_pm64_dizzy_stomp_desc", wrapped);
 }
 
+/* a text on one line, for the log */
+static const char* oneLine(const char* s) {
+    static char out[256];
+    size_t n;
+    for (n = 0; s[n] != '\0' && n + 1 < sizeof(out); n++) {
+        out[n] = s[n] == '\n' ? ' ' : s[n];
+    }
+    out[n] = '\0';
+    return out;
+}
+
 static void setTexts(void) {
     char name[64], desc[256], wrapped[300];
     int i;
     Pm64Move m;
     for (i = 0; i < portPm64BadgeCount(); i++) {
-        const int id = PORT_PM64_BADGE_MIN + i;
+        const int id = portPm64BadgeId(i);
         if (!portPm64BadgeText(id, name, sizeof(name), desc, sizeof(desc))) {
             snprintf(name, sizeof(name), "%s", portPm64BadgeEnglish(id));
             desc[0] = '\0';
         }
+        printf("[pm64] badge %03x: %s | %s\n", id, name, oneLine(desc)); /* (tests/port/testpass/pm64_badge_names.json) */
         wrap(desc, wrapped, sizeof(wrapped), 30);
         portModsSetMessage(itemDataTable[id].name, name);
         portModsSetMessage(itemDataTable[id].description, wrapped);
@@ -162,9 +174,9 @@ USER_FUNC(evt_pc_rowf_list) {
 }
 
 USER_FUNC(evt_pc_rowf_stock) {
-    int stock[PORT_PM64_BADGE_COUNT + PORT_PM64_FOOD_COUNT];
+    int stock[PORT_PM64_BADGE_COUNT + PORT_PM64_BADGE2_COUNT + PORT_PM64_FOOD_COUNT];
     (void)isFirstCall;
-    evtSetValue(event, event->args[0], portPm64MerchantStock(stock, PORT_PM64_BADGE_COUNT + PORT_PM64_FOOD_COUNT));
+    evtSetValue(event, event->args[0], portPm64MerchantStock(stock, PORT_PM64_BADGE_COUNT + PORT_PM64_BADGE2_COUNT + PORT_PM64_FOOD_COUNT));
     return EVT_RETURN_DONE;
 }
 

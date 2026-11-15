@@ -1,0 +1,59 @@
+{
+ "desc": "Paper notes: your own note taken back from its balloon (TTYD_NOTES_TEST, no relay; Rogueport's harbour): Mario stands by his own note (blue), the notes' button (the game's L) opens it, and the balloon offers Take back and Close (no rating: it's yours), the arrow at Close; left then A takes it back: the balloon says so and offers Close alone, notes.txt forgets it, and once closed it is no longer drawn",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "35 0 15 3 3 1 m;170 0 -40 10 32 0",
+  "TTYD_EXIT_FRAMES": 1000,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press l",
+  "wait 20",
+  "shot opened",
+  "press left",
+  "wait 10",
+  "shot take_chosen",
+  "press a",
+  "wait 20",
+  "shot taken",
+  "press a",
+  "wait 30",
+  "shot closed",
+  "end"
+ ],
+ "expect_shots": [
+  "opened",
+  "take_chosen",
+  "taken",
+  "closed"
+ ],
+ "timeout": 220,
+ "log_must": [
+  "^\\[notes\\] test: t0 at .* \\(mine\\)$",
+  "^\\[notes\\] open t0 \\(\\+1, yours\\)$",
+  "^\\[notes\\] drawn: .*opened t0; text 'Treasure here!'; text '\\+1'; text 'yours'; text 'Take back'; arrow; text 'Close'",
+  "^\\[notes\\] drawn: .*opened t0; text 'Treasure here!'; text '\\+1'; text 'yours'; arrow; text 'Take back'; text 'Close'",
+  "^\\[notes\\] take back t0$",
+  "^\\[notes\\] forgot t0 \\(notes\\.txt: 0 of yours\\)$",
+  "^\\[notes\\] test: take gor_00 t0: Your note is taken back\\.$",
+  "^\\[notes\\] taking back t0: Your note is taken back\\.$",
+  "^\\[notes\\] drawn: .*opened t0; text 'Treasure here!'; text '\\+1'; text 'Your note is taken back\\.'; arrow; text 'Close'",
+  "^\\[notes\\] closed t0 \\(A\\)$"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] drawn: .*'Rate up'",
+  "^\\[notes\\] closed t0 \\(A\\)\\n(?:.*\\n)*?\\[notes\\] drawn: .*sheet t0",
+  "^\\[notes\\] A by t0 was the game's"
+ ],
+ "new": true
+}

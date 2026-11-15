@@ -1,0 +1,62 @@
+{
+ "desc": "The remake's pipe room, each pipe locked till its chapter is over: tik_16 at story 64 (chapter 1's star not yet at the door) has neither pipe; tik_17 at story 221 (chapter 4's not yet) has neither; at 380 (chapter 7's not yet) only Twilight Town's. Standing where a locked pipe would be, Mario is on the floor (y 0)",
+ "groups": [
+  "world",
+  "maps_remake",
+  "pipe_room"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tik_16",
+  "TTYD_STORY": "64",
+  "TTYD_EXIT_FRAMES": 5000
+ },
+ "settings": {
+  "remake_pipe_room": 1
+ },
+ "input": [
+  "wait 60",
+  "goto 200 45 -30",
+  "wait 60",
+  "where",
+  "shot tik16_ch1_locked",
+  "story 221",
+  "practice warp tik_17 e_bero_2",
+  "wait_map tik_17 600",
+  "wait 120",
+  "goto 200 45 -30",
+  "wait 60",
+  "where",
+  "shot tik17_ch4_locked",
+  "story 380",
+  "practice warp tik_18 e_bero_2",
+  "wait_map tik_18 600",
+  "wait 60",
+  "practice warp tik_17 e_bero_2",
+  "wait_map tik_17 600",
+  "wait 120",
+  "goto -200 45 -30",
+  "wait 60",
+  "where",
+  "shot tik17_ch7_locked",
+  "end"
+ ],
+ "expect_shots": [
+  "tik16_ch1_locked",
+  "tik17_ch4_locked",
+  "tik17_ch7_locked"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[input\\] where: map 'tik_16', Mario at 200 0 -30,",
+  "\\[input\\] where: map 'tik_17', Mario at 200 0 -30,",
+  "\\[map edits\\] tik_17: pipe to usu_00",
+  "\\[input\\] where: map 'tik_17', Mario at -200 0 -30,"
+ ],
+ "log_must_not": [
+  "\\[map edits\\] tik_16: pipe",
+  "\\[map edits\\] tik_17: pipe to bom_00"
+ ]
+}

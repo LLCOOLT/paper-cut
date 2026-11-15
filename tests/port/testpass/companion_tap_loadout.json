@@ -1,0 +1,39 @@
+{
+ "desc": "Badge loadouts from the second screen's Start menu (TTYD_COMPANION_WINDOW, Settings, Enhancements, Items and badges): Store worn (A: an empty loadout asks nothing first) and Wear go to the game as taps (the form's rows); the game stores them and answers Wear (no badges worn, so the loadout stays empty: its refusal said over the picture) as the Start menu's rows do, at the point its own menu could open",
+ "groups": ["menus", "companion"],
+ "versions": ["us"],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_DUMP": 1,
+  "TTYD_COMPANION_TAB": 7,
+  "TTYD_PAUSE_ROW": "Enhancements/Items and badges/Store worn",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "settings": {"badge_loadouts": 1},
+ "input": [
+  "wait 200",
+  "companion button a",
+  "wait 150",
+  "companion shot c00_store",
+  "companion button a",
+  "wait 200",
+  "companion button up",
+  "wait 60",
+  "companion button a",
+  "wait 200",
+  "companion shot c01_worn",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[pause\\] Loadouts: Sent to the game",
+  "\\[companion\\] form Loadouts, row 1 \\(0\\): Stored: the badges worn now\\.",
+  "\\[companion\\] form Loadouts, row 0 \\(0\\)"
+ ],
+ "log_must_not": [
+  "\\[companion\\] tap refused"
+ ],
+ "new": true
+}

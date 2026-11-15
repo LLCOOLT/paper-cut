@@ -167,6 +167,26 @@ void writeTarget(const TtydApTarget& t, int value) {
   }
 }
 
+// Whether a target may take an item: a script word only when the game's own script has an item
+// there (ttyd_rando::scriptWordIsItem). The apworld points some places at words the TTYD AP mod's
+// reworked scenes read; in the game's own script they are something else (Goombella's joining
+// scene's camera curve: an item id there made the camera call it as a function, a crash right after
+// the opening). Those stay as the disc has them; the server still sends their items.
+bool takesItem(const TtydApLocation& loc, const TtydApTarget& t) {
+  if (t.kind != TTYD_AP_SCRIPT || t.price || t.name[0] == '\0') return true;
+  std::string why;
+  const uint8_t* base = static_cast<const uint8_t*>(portModsGameAddress(t.name, why));
+  if (base == nullptr) return true; // (writeTarget logs it)
+  const long long now = (long long)*reinterpret_cast<const intptr_t*>(base + t.offset);
+  if (ttyd_rando::scriptWordIsItem(loc, now)) return true;
+  static std::set<std::string> told;
+  if (told.insert(loc.name).second) {
+    SDL_Log("archipelago: %s: %s+0x%X holds %lld, not an item: left as the game has it", loc.name, t.name,
+            unsigned(t.offset), now);
+  }
+  return false;
+}
+
 // The seed's items in an area's data (nullptr: the DOL's, at start)
 void place(const char* area) {
   int written = 0;
@@ -187,6 +207,7 @@ void place(const char* area) {
     for (int i = loc->first; i < loc->first + loc->count; i++) {
       const TtydApTarget& t = kTtydApTargets[i];
       if (area == nullptr ? t.area[0] != '\0' : strcmp(t.area, area) != 0) continue;
+      if (!takesItem(*loc, t)) continue;
       writeTarget(t, t.price ? (rom == kRemoteItem ? 20 : price) : rom);
       written++;
     }
@@ -198,6 +219,7 @@ void place(const char* area) {
     for (int i = loc->first; i < loc->first + loc->count; i++) {
       const TtydApTarget& t = kTtydApTargets[i];
       if (t.price || (area == nullptr ? t.area[0] != '\0' : strcmp(t.area, area) != 0)) continue;
+      if (!takesItem(*loc, t)) continue;
       writeTarget(t, it->romId);
       written++;
     }
@@ -402,6 +424,14 @@ struct Session {
   bool goalSent = false, deathFromServer = false;
   std::string status = "off";
 } sSession;
+
+// The game's side of a session is the TTYD AP mod (a code mod): without it nothing gives the
+// received items or says a file is loaded, so nothing is ever sent or received. Said plainly on the
+// status line and in the log, not left to look like a working connection.
+constexpr const char* kNoModText =
+    "no enabled code mod looks like the TTYD AP mod (Mods tab): it gives the items and runs the checks, "
+    "so nothing is sent or received without it";
+bool modSide() { return getenv("TTYD_AP_NO_MOD") != nullptr || portRandoApModFound() != 0; }
 
 // a file is being played: the mod says so (0x3228); for tests without the
 // mod, TTYD_AP_NO_MOD: whenever the game's sequence is a file's
@@ -654,6 +684,9 @@ void portApConnect(const char* server, const char* slot, const char* password) {
     sSession.sent = checked;
     sSession.pushedFlags.clear();
     sSession.goalSent = false;
+    if (!modSide()) {
+      SDL_Log("archipelago: %s", kNoModText);
+    }
     // remote items, then: the server sends this slot's own finds too
     if (const Json* r = data.get("remote_items"); r != nullptr && r->n != 0) {
       // (items_handling is fixed at connect: 0b111 covers both)
@@ -708,6 +741,9 @@ const char* portApStatus(void) {
     text = "seed " + sSeed.seedName + " (" + sSeed.playerName + "), not connected";
   } else {
     text = sSession.client->message();
+    if (!modSide()) {
+      text += std::string(" - ") + kNoModText;
+    }
   }
   return text.c_str();
 }

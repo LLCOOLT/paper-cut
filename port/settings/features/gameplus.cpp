@@ -73,7 +73,6 @@ void journal(int) {
 }
 
 // The Start menu's forms (port/include/port/pause_forms.h): the hubs, and the file's progress
-constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 // why a hub can't be travelled to now (fast travel's rules, port/include/port/fast_travel.h)
 const char* travelWhyNot(int) {
@@ -104,7 +103,7 @@ const char* travelAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   if (!portFastTravelUnlocked(id)) {
     return travelWhyNot(id);
@@ -201,27 +200,22 @@ struct Register {
                           "heal_all_partners", "heal item partner mushroom hp");
     static const char* const kSkip[] = {"Off", "Seen only", "Always"};
     portSettingsAddChoice(kTab, "Skip scenes",
-                          "These scenes go faster or straight to their end: the Crystal Star fanfare and map "
-                          "reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets, "
-                          "inn rests, Merlon's upgrades, Merlee's charms, Cortez's ship, the Excess Express trips, "
-                          "the prologue, the Palace of Shadow's key stands and globe, and a boss's intro after a "
-                          "Game Over (played fast). Seen only: once seen on this file (the prologue and the "
-                          "palace: on any file). Always: the first time too. What a scene gives is still given, "
-                          "and where to go next is still said.",
+                          "Long repeated scenes go fast or straight to their end: Crystal Star fanfares, cooking, "
+                          "Glitz Pit matches, tickets, inn rests, upgrades, ship and train trips and more. Seen "
+                          "only: once you've seen them on this file. Always: the first time too. You still get "
+                          "everything they give.",
                           0, "skip_scenes", kSkip, 3,
                           "skip cutscene scene crystal star cooking zess inn charm ship train boss prologue always");
     static const char* const kRogueport[] = {"Off", "Offer", "Always"};
     portSettingsAddChoice(kTab, "Start in Rogueport",
-                          "A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the "
-                          "harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the "
-                          "file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new "
-                          "files start in Rogueport. Not in Console-accurate mode.",
+                          "Skip the opening: a new file starts in Rogueport's plaza with Goombella and everything "
+                          "the opening gives. Offer: the file menu asks ({A} for the beginning, {Y} for Rogueport). "
+                          "Always: every new file. Not in Console-accurate mode.",
                           0, "rogueport_start", kRogueport, 3,
                           "start new file rogueport skip opening prologue intro goombella quick start");
     portSettingsAddToggle(kTab, "Fast travel",
-                          "In the Journal's map, {A} on a place travels to a room Mario has been in, by a way "
-                          "in he has used; or to a town from Travel to. Only trips he could make on foot now: "
-                          "never out of a stretch the story keeps him in.", kPlay,
+                          "From the Journal's map, {A} takes Mario to any room he has already reached on foot, or to "
+                          "a town from Travel to. Never out of a part of the story that keeps him in place.", kPlay,
                           "fast_travel", "fast travel warp hub teleport");
     portSettingsAddToggle(kTab, "Faster battle menus", "The battle command wheel opens and turns twice as fast.",
                           0, "fast_battle_menus", "battle menu speed wheel fast");
@@ -244,7 +238,7 @@ struct Register {
                           kPlay, "remake_balance", "remake balance star power power bounce first attack hammer throw");
     portSettingsAddToggle(kTab, "Pit of 100 Trials extras",
                           "Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor "
-                          "once floor 50 has been cleared.",
+                          "once floor 50 has been cleared. The Mover from the next floor.",
                           kPlay, "pit_plus", "pit 100 trials coins mover");
     portSettingsAddToggle(kTab, "Glitz Pit kindness",
                           "A lost match costs no rank, and a match's bonus condition stays at the top of the screen.",
@@ -268,7 +262,8 @@ struct Register {
                           "A new file starts with what you choose here, taken from the file New Game+ from file "
                           "names. Choose before starting the new file.",
                           kPlay, "new_game_plus", kNewGamePlus, 4, "new game plus ng+ carry level badges tattle");
-    portSettingsAddSlider(kTab, "New Game+ from file", nullptr, kPlay, "new_game_plus_from", 1, 4, "File %d",
+    portSettingsAddSlider(kTab, "New Game+ from file", "The save file New Game+ copies from.", kPlay,
+                          "new_game_plus_from", 1, 4, "File %d",
                           "new game plus file");
     portSettingsAddSection(kTab, "Travel to", nullptr, PORT_SETTING_IN_GAME, fastTravel, "fast travel warp hub");
     portSettingsAddSection(kTab, "Journal", "This file's progress.", PORT_SETTING_IN_GAME, journal,
@@ -279,17 +274,20 @@ struct Register {
     static const char* const kDifficulty[] = {"Original", "Easy (enemy HP 75 %, attacks 50 %)",
                                               "Hard (enemy HP 150 %, attacks 150 %)", "Custom"};
     portSettingsAddChoice("Gameplay", "Difficulty",
-                          "Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy "
-                          "attack (custom).", kPlay,
+                          "How much HP enemies have and how hard they hit. Custom uses the two sliders below. HP "
+                          "changes from the next battle.", kPlay,
                           "difficulty", kDifficulty, 4, "difficulty easy hard enemy hp attack damage");
-    portSettingsAddSlider("Gameplay", "Enemy HP (custom)", nullptr, kPlay, "difficulty_enemy_hp", 25, 300,
-                          "%d %%", "difficulty enemy hp custom");
-    portSettingsAddSlider("Gameplay", "Enemy attack (custom)", nullptr, kPlay, "difficulty_enemy_attack", 25,
-                          300, "%d %%", "difficulty enemy attack damage custom");
+    portSettingsAddSlider("Gameplay", "Enemy HP (custom)", "Enemy HP when Difficulty is Custom; 100 is the original.",
+                          kPlay, "difficulty_enemy_hp", 25, 300, "%d %%", "difficulty enemy hp custom");
+    portSettingsAddSlider("Gameplay", "Enemy attack (custom)",
+                          "Enemy damage when Difficulty is Custom; 100 is the original.", kPlay,
+                          "difficulty_enemy_attack", 25, 300, "%d %%", "difficulty enemy attack damage custom");
     // (By command type: Timing assist by command type below, port/settings/features/dojo.cpp)
     static const char* const kAssist[] = {"Off", "Wider windows", "Automatic", "By command type"};
     portSettingsAddChoice("Accessibility", "Action commands: attacks",
-                          "Wider timing for attack commands, or all done for you.", kPlay,
+                          "Easier attack timing: wider windows, done for you, or set per command type (Timing "
+                          "assist by command type).",
+                          kPlay,
                           "ac_attack_assist", kAssist, 4, "action command assist timing auto attack");
     portSettingsAddChoice("Accessibility", "Action commands: guards",
                           "Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is "

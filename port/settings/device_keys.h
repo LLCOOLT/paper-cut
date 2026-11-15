@@ -20,6 +20,7 @@ constexpr const char* kKeys[] = {
     "companion", "custom_music", "settings_hint", "online", "crowd_", "jukebox", "game_sound_mode", "speakers",
     "discord_status", "rewind_key", "rewind_pad", "bind_", "mouse_camera", "dualsense", "update_auto",
     "save_library", "whats_new", "battery_saver", "keep_game_speed", "restart_handoff", "system_bars", "tip_",
+    "safe_graphics", "gfx_backend", // (Safe graphics and the graphics API: this device's, safe_graphics.cpp)
     "preset_", // (the first-run picker answered, an older release's settings looked at: enhancement_presets.cpp)
 };
 

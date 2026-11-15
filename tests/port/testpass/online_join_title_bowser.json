@@ -1,0 +1,65 @@
+{
+ "desc": "Discord, Nov 12 (joiners saw only black, the host playing as Bowser), the way in from the title: the guest's game links as it boots (the launcher's Join) and is on the title, the Multiplayer page up; the host, playing as Bowser, is in the plaza with the adventure picked. The guest is taken off the title into the host's game, and its screen in the plaza is live (the 3D camera and the map drawn, the fades done), the host drawn as Bowser; and, as a guest that joined from its own field, it walks the host's partner (Goombella) in its own game (test matrix B4, l3-007: a guest from the title had no partner out, partner 0)",
+ "groups": [
+  "online",
+  "online_aurora"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "ui_shots": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop 12000",
+     "wait_peer room 8000",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SET_playable_luigi": 3,
+     "TTYD_SYNC_PICK": 1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_seq 2 12000",
+     "wait_map gor_01 8000",
+     "wait 300",
+     "where screen",
+     "where coop 300",
+     "shot 10_guest_in_host_game",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_MAP": null,
+     "TTYD_TITLE_MENU": 1
+    },
+    "log_must": [
+     "off the title for the host's pick \\(into the host's game\\)",
+     "co-op: this game's screen in gor_01: live",
+     "\\[input\\] where screen: live \\(Start menu closed",
+     "ghost: other \\d's pick's model c_koopa",
+     "\\[mp\\] where: .* guest 1 .* partner 1 "
+    ],
+    "log_must_not": [
+     "screen in gor_01: (black|covered)",
+     "where screen: (black|covered)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 600
+}

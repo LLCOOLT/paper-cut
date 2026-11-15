@@ -1,0 +1,92 @@
+{
+ "desc": "Direct connection with four players in one relay room: the host finds each of its three players over UDP (one try each, its own key's packets), then the four-Goomba battle goes direct for all of them",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 6600,
+  "TTYD_SYNC_DIRECT": "force",
+  "TTYD_SYNC_STUN": "none"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here3 6000",
+     "wait_peer field3 4000",
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait 5300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "direct connection to player 2 up",
+     "direct connection to player 3 up",
+     "direct connection to player 4 up"
+    ],
+    "log_must_not": [
+     "WIRE:",
+     "went \\("
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ],
+    "log_must": [
+     "direct connection to player 1 up"
+    ],
+    "log_must_not": [
+     "WIRE:"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ],
+    "log_must": [
+     "direct connection to player 1 up"
+    ],
+    "log_must_not": [
+     "WIRE:"
+    ]
+   },
+   {
+    "role": "guest3",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ],
+    "log_must": [
+     "direct connection to player 1 up"
+    ],
+    "log_must_not": [
+     "WIRE:"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "battle_ended": true
+  },
+  "pace": 60
+ },
+ "timeout": 600
+}

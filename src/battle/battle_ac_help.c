@@ -7,6 +7,9 @@
 #include "driver/msgdrv.h"
 #include "driver/windowdrv.h"
 #include "manager/fontmgr.h"
+#ifdef TARGET_PC
+#include "port/menu_tap.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_ac_help.h"
 #endif
@@ -40,6 +43,11 @@ void PORT_HOOKABLE(BattleAcHelpMain)(void) {
     s32* type = &wp->acHelpDispType;
     if (wp->acHelpMsg && *type && !(wp->flags & BATTLE_FLAG_FIRST_ATTACK)) {
         dispEntry(CAMERA_2D, 498.0f, 1, _ac_help_disp, NULL);
+#ifdef TARGET_PC
+        /* its buttons are the action command's, pressed once the menu has closed, where the field has them: its
+         * pictures the field's though a menu is still up (port/include/port/menu_buttons.h) */
+        portMenuMarkFieldPictures(0xF);
+#endif
     }
     if (_ac_help_disp) {
     }

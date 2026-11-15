@@ -1,0 +1,30 @@
+{
+ "desc": "An app put away and ended, 1 of 2: the memory guard on, the run gone to the background and ended at frame 600 as a phone's system does ($TTYD_MEM_GUARD_KILL_BG); the record's last sample says in the background",
+ "groups": [
+  "platform",
+  "memory"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MEM_GUARD": 1,
+  "TTYD_MEM_GUARD_ROOM": 4000,
+  "TTYD_MAP": "gor_01",
+  "TTYD_MEM_GUARD_KILL_AT": 600,
+  "TTYD_MEM_GUARD_KILL_BG": 1,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "log_must": [
+  "^\\[memory\\] test: ended at frame 600 as the system would, in the background"
+ ],
+ "file_must": {
+  "user/memory_record.txt": [
+   "in the background: \\d+ MB in use"
+  ]
+ },
+ "exit": [
+  9
+ ],
+ "timeout": 180
+}

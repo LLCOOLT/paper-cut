@@ -1,0 +1,70 @@
+{
+ "desc": "A watcher whose own file is a randomizer (TTYD_OPEN_SEED) watches a co-op room on plain files: a watcher plays no file of its own in the session, so it is never turned away for its file's kind and stays (0.5.1 before: told \"Your file is a randomizer ... file and the other player's isn't\" and left, nm51f l51-017/033/075)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop 3000",
+     "wait 1800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "session with player 2 \\(they joined",
+     "session with player 3 \\(they joined"
+    ],
+    "log_must_not": [
+     "refused:",
+     "Player 3 left"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 3000",
+     "wait 1800"
+    ],
+    "log_must_not": [
+     "refused:"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here 3000",
+     "wait 1800"
+    ],
+    "env": {
+     "TTYD_SYNC_WATCH": 1,
+     "TTYD_OPEN_SEED": "WATCHKIND1"
+    },
+    "log_must_not": [
+     "refused:",
+     "is another kind"
+    ],
+    "log_must": [
+     "watch: this game's screen in gor_01: live"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 300
+}

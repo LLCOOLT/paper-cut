@@ -1,0 +1,389 @@
+#start map=rsh_06_a story=331 party=6,1,2,3,4,5 level=20 hp=40 fp=35 coins=200 maxsp=600 stars=63 items=ITEM_HAMMER,ITEM_SUPER_HAMMER,ITEM_BOOTS,ITEM_SUPER_BOOTS,ITEM_ULTRA_BOOTS,ITEM_MAGICAL_MAP,ITEM_PAPER_CURSE,ITEM_TUBE_CURSE,ITEM_PLANE_CURSE,ITEM_BOAT_CURSE,ITEM_DIAMOND_STAR,ITEM_EMERALD_STAR,ITEM_GOLD_STAR,ITEM_RUBY_STAR,ITEM_SAPPHIRE_STAR flags=@rogueport_open,@ch2_sewers_cleared,@ch2_great_tree_done
+#end story=340 map=aji_16
+#env TTYD_GOD_POWER=2
+#gap the baggage car's climb to the roof (rsh_05_a's west door, 60 up) from a generated save
+wait_seq 2 3000
+press_until_control a 6000
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+where
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+where
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+where
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+where
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+where
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+where
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+where
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+press b
+wait 12
+stick 127 0 14
+where
+press_until_story a 332 30000
+press_until_control a 20000
+where
+press_until_story a 334 20000
+press_until_control a 20000
+where
+walk_to a_tobira_5_heya stop 300
+walk_to -220 -40 8
+press a
+wait 30
+press_until_control a 600
+on_map rsh_02_a walk_to 370 0 900
+on_map rsh_02_a walk_to 380 -100 300
+on_map rsh_02_a stick 127 0 30
+on_map rsh_02_a press a
+on_map rsh_02_a press_until_control a 3000
+on_map rsh_02_a walk_to -370 0 300
+on_map rsh_02_a walk_to 370 0 900
+on_map rsh_02_a walk_to 380 -100 300
+on_map rsh_02_a stick 127 0 30
+on_map rsh_02_a press a
+on_map rsh_02_a press_until_control a 3000
+walk_to 100 25 600
+walk_to 220 30 300
+walk_to 220 52 120
+walk_to 220 90 6
+press a
+press_until_control a 6000
+where
+walk_to se_bero 1500
+press_until_control a 3000
+where
+walk_to se_bero 1500
+press_until_control a 3000
+where
+walk_to a_harigami stop 1500
+where
+press a
+press_until_story a 335 3000
+press_until_control a 3000
+where
+walk_to n_bero 1500
+press_until_story a 336 6000
+press_until_control a 6000
+where
+# SHORTCUT the blue switch up on the sanctum's third tier (-300 330 -975): its event run as a hit would
+mobj_event sw
+press_until_story a 337 3000
+press_until_control a 3000
+walk_to 0 0 900
+walk_to -150 -800 900
+walk_to -166 -970 900
+stick 0 127 10 a
+stick 0 127 4
+wait 15
+walk_to -166 -1010 60
+where
+hold down 30
+wait 60
+press_until_control a 3000
+where
+walk_to h_bero 900
+press_until_map a pik_03 3000
+press_until_control a 3000
+where
+walk_to 0 -930 2500
+walk_to 0 -945 60
+press a
+press_until_story a 338 6000
+press_until_control a 6000
+where
+walk_to s_bero 2500
+press a
+press_until_map a pik_02 3000
+press_until_control a 3000
+where
+walk_to h_dokan stop 900
+hold down 30
+press_until_story a 339 6000
+press_until_control a 6000
+where
+walk_to s_bero 2500
+press_until_story a 340 6000
+press_until_control a 6000
+where
+save
+end

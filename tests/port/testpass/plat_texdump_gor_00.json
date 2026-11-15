@@ -1,0 +1,34 @@
+{
+ "desc": "Texture packs, step 1 for the harbour: Rogueport's harbour at the prologue's arrival with TTYD_DUMP_TEXTURES (the dumps land in the run's cache/texture_dumps; crump_harbour_wide_texpack makes its test pack from their names: texpack_from)",
+ "groups": [
+  "platform-tex",
+  "crump"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 1600,
+  "TTYD_DUMP_TEXTURES": 1,
+  "TTYD_CACHE_DIR": "{out}/cache"
+ },
+ "input": [
+  "press_until_control a 3000",
+  "walk_to -220 200 300",
+  "walk_to -220 -130 400",
+  "wait 60",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[warp\\] frame \\d+: to gor_00\\b",
+  "^\\[input\\] end$"
+ ],
+ "file_must": {
+  "cache/texture_dumps": []
+ }
+}

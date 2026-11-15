@@ -1,0 +1,58 @@
+{
+ "desc": "at 120 Hz with the interpolation audit (TTYD_INTERP_AUDIT=1; then tools/port/interp_audit_check.py over the run): the full run's segment 07_kroop from its checkpoint (one frame in 4 audited): Petal Meadows' first level-up (the picked stat's blink stepped in the draw)",
+ "groups": [
+  "interp_audit"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_INTERP_AUDIT": "4"
+ },
+ "settings": {
+  "framerate": "120"
+ },
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "07_kroop"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "07_kroop"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "input": "tests/port/full_run/07_kroop.txt",
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 2400,
+ "log_must": [
+  "^\\[input\\] save: slot \\d+, map 'hei_03'.*, story 29\\b",
+  "^\\[input\\] end",
+  "^\\[interp\\] 2 frames per game frame",
+  "^\\[interp-audit\\] net "
+ ],
+ "log_must_not": [
+  "^\\[interp-audit\\] net writer (_lvup_select_object_disp)\\b",
+  "^\\[interp-audit\\] net check incomplete",
+  "\\*\\*\\* crash",
+  "^\\[interp-audit\\] net writer (?:(?:mem\\w*|PSMTX\\w*|PSVEC\\w*|MTX\\w*|C_MTX\\w*|GX\\w*|qqsort|str\\w*|\\w*printf\\w*|0[0-9a-f]+)(?:__body)?(?:\\+0x[0-9a-f]+)?(?: \\([^)]*\\))? <- )*+(?!(?:(?s:shadowCharShadowDisp_Collision)|(?s:btlUnitPartsDisp)|(?s:disp_texture)|(?s:imgDisp)|(?s:windowDispGX.*)|(?s:_windowDispGX_Message)|(?s:smartTexObj)|(?s:winHelpDisp)|(?s:animSetMaterial_ChangeTexture)|(?s:extDraw)|(?s:puniDraw)|(?s:puniLoadTexture)|(?s:demo_img)|(?s:msgWindow_Disp)|(?s:disp_3D)|(?s:effFireDisp3)|(?s:BattleAudienceDispAudience)|(?s:dispProc)|(?s:screen_capture)|(?s:gans_tex)|(?s:monitor_tev)|(?s:effSnowfallDisp)|(?s:effSplashGetCol)|(?s:btl_camera_set_mode)|(?s:camDispOff)|(?s:winRootBgCaptureDisp)|(?s:BattleAudience_GetItemOn)|(?s:offscreenDisp)|(?s:offscreenAddBoundingBox)|(?s:`anonymous\\ namespace'::init_texobj_common)|(?s:effFlameDisp)|(?s:effPokopiThunderDisp)|(?s:select_disp3.*)|(?s:menuDisp)|(?s:animPoseMain)|(?s:dispEntry)|(?s:qqsort)|(?s:portInterpDraw))(?:__body)?(?:\\+0x[0-9a-f]+)?(?: \\(| <- |$))",
+  "^\\[interp-audit\\] net global (?!(?:(?s:currentWorkPtr)|(?s:current_mp)|(?s:g_modeling_mtx.*)|(?s:fontColor)|(?s:fontAlpha)|(?s:fontScale)|(?s:winTexTpl)|(?s:char_shadow_work)|(?s:shadowConfig)|(?s:tmp0)|(?s:tmp1)|(?s:tmp2)|(?s:disableMapDraw)|(?s:projTexObj)|(?s:winZenkakuStrPad_buf)|(?s:col_normal)|(?s:col_poison)|(?s:a)|(?s:buttons)|(?s:canvas)|(?s:edge)|(?s:face)|(?s:mtx)|(?s:pixels)|(?s:shadow)|(?s:sqlite3Prng)|(?s:kpa_stage_clear)|(?s:vcd)|(?s:every)|(?s:depth_shadow_work)|(?s:rampTex16)|(?s:kiss_col)|(?s:partysDt)|(?s:funemizu_color0_tbl)|(?s:gor_fune_color0_tbl)|(?s:text)|(?s:idxBuf)|(?s:s[A-Z].*)|(?s:`anonymous\\ namespace'::.*)|(?s:aurora::.*)|(?s:_Init_global_epoch)|(?s:sqlite3Stat)|(?s:winMutex_.*)|(?s:time)|(?s:warned)|(?s:comp)|(?s:cache)|(?s:next)|(?s:work))$)"
+ ]
+}

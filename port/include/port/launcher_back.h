@@ -47,6 +47,12 @@ int portLauncherBackBusy(void);
 /* A game runs (not the launcher, not before the game's start, not a replay's
  * playback): it can be asked. */
 int portLauncherBackAvailable(void);
+/* The Start menu's Settings tab's front page has the row too (General's row's A, the same question in the
+ * game's window): asks, or says why not (English); port/settings/features/launcher_back.cpp. */
+const char* portLauncherBackAskStartMenu(void);
+/* The second screen's menu asked and the player confirmed there: done by the game, at the point its own
+ * Start menu could open (port/companion.h, PORT_COMPANION_ASK_LAUNCHER), as the Start menu's A does. */
+void portLauncherBackSecondScreen(void);
 /* Between two of the game's frames (vi_aurora.c's retrace, the frame shown and
  * the next not begun): the steps above; on iOS and Android the launcher
  * itself. */

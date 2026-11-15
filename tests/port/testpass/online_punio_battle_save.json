@@ -1,0 +1,173 @@
+{
+ "desc": "GitHub #59: from the full run's real save (23_great_tree: win_06, story 71, Punio following), the host walks to win_00 (the Shadow Sirens' scene) and into the first Pale Piranha: the enemy's first strike, shared online with a guest on its own settings (host Enhanced, guest defaults) and undrawn frames as on a phone (TTYD_TEST_UNDRAWN=3); both back in the field after",
+ "groups": [
+  "online",
+  "together",
+  "issue59"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_EXIT_FRAMES": 14000,
+  "TTYD_SYNC_BATTLE_LOG": 1,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_STORY_WATCH": 300,
+  "TTYD_TEST_UNDRAWN": 3
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait_seq 2 3000",
+     "press_until_control a 3000",
+     "walk_to e_bero 1800",
+     "press_until_story a 72 9000",
+     "press_until_control a 3000",
+     "walk_to npc 4 900",
+     "hold right 60",
+     "wait_seq 4 900",
+     "wait_seq 2 12000",
+     "press_until_control a 6000",
+     "wait 300",
+     "where"
+    ],
+    "log_must": [
+     "battle \\d+: both games load the battle",
+     "battle \\d+: this game's follower \\(10\\) out, kept"
+    ],
+    "settings": {
+     "quick_swap": 1,
+     "save_no_prompt": 1,
+     "levelup_dpad": 1,
+     "skip_scenes": 1,
+     "skip_any_scene": 1,
+     "text_hold_skip": 1,
+     "rogueport_start": 1,
+     "fast_battle_menus": 1,
+     "battle_popups": 1,
+     "fast_field_text": 1,
+     "partner_hint": 1,
+     "talk_prompts": 1,
+     "mail_no_stop": 1,
+     "list_lr_scroll": 1,
+     "shop_plus": 1,
+     "save_file_details": 1,
+     "battle_fp_preview": 1,
+     "battle_sp_grey": 1,
+     "remake_balance": 1,
+     "bigger_bag": 1,
+     "full_bag_use": 1,
+     "coin_cap": 1,
+     "levelup_heal_party": 1,
+     "bowser_retry": 1,
+     "jukebox_unlock": 1,
+     "coin_hints": 1,
+     "remake_notice_range": 1,
+     "remake_projectile_hurt": 1,
+     "remake_pipe_a": 1,
+     "remake_field_hammer": 1,
+     "remake_koops_aim": 1,
+     "remake_plane_steady": 1,
+     "remake_yoshi": 1,
+     "remake_teeter": 1,
+     "remake_guard_stance": 1,
+     "remake_warp_pipes": 1,
+     "remake_shortcut_pipes": 1,
+     "remake_express_skip": 1,
+     "remake_chapter_shortcuts": 1,
+     "remake_keelhaul": 1,
+     "remake_steeple_stairs": 1,
+     "remake_twilight": 1,
+     "remake_blocks": 1,
+     "remake_ambushes": 1,
+     "remake_merchants": 1,
+     "rules_sleepy_sheep": 1,
+     "rules_power_lift": 1,
+     "rules_sweet_treat": 1,
+     "rules_mystery_box": 1,
+     "rules_lottery": 1,
+     "rules_pit_shop": 1,
+     "rules_trouble_coins": 1,
+     "rules_boss_coins": 1,
+     "rules_flee_coins": 1,
+     "rules_hazard_pierce": 1,
+     "rules_deep_sleep": 1,
+     "rules_bomb_no_sp": 1,
+     "rules_buzzy_blast": 1,
+     "rules_flower_fuzzy": 1,
+     "rules_bandit_returns": 1,
+     "rules_spider_strike": 1,
+     "rules_retattle": 1,
+     "spring_jump_cue": 1,
+     "rules_swoopula_swoop": 1,
+     "rules_chomp_still": 1,
+     "battle_immune_cross": 1,
+     "rules_audience_pause": 1,
+     "rules_sp_fill_wait": 1,
+     "rules_doopliss": 1,
+     "rules_doopliss_shed": 1,
+     "rules_glitz_conditions": 1,
+     "rules_tremor_stagehand": 1,
+     "heal_all_partners": 1,
+     "partner_revive": 1,
+     "fast_travel": 1,
+     "storage_anywhere": 1,
+     "walk_boost": 1,
+     "free_tattle": 1,
+     "gameover_retry": 1,
+     "sell_helper": 1,
+     "jukebox": 1
+    }
+   },
+   {
+    "role": "guest",
+    "env": {},
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait_peer battle 9000",
+     "wait_peer field 12000",
+     "wait 200",
+     "where"
+    ],
+    "log_must": [
+     "battle \\d+: both games load the battle",
+     "battle \\d+: this game's follower \\(10\\) out, kept",
+     "battle \\d+: \\d+ settings as the host's / the other player's for the battle"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "battle_ended": true
+  }
+ },
+ "log_must_not": [
+  "the battle didn't start here",
+  "the start never came",
+  "never reached the battle's start"
+ ],
+ "timeout": 900,
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "23_great_tree"
+   ],
+   "dest": "start.gci"
+  }
+ ]
+}

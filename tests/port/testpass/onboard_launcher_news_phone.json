@@ -1,5 +1,5 @@
 {
- "desc": "onboard_launcher_news on a phone held upright (touch sizes, 540x1170): the lines wrap, their buttons under them, the card scrolls",
+ "desc": "onboard_launcher_news on a phone held upright (touch sizes, 540x1170): this version's highlights wrap, their buttons under them, the card scrolls",
  "groups": ["menus", "onboard"],
  "versions": ["us"],
  "library": ["us"],

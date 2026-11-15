@@ -1,0 +1,46 @@
+{
+ "desc": "Spin Dash in Brothers mode (#51): player 2 spins Luigi right, then up into the back of Rogueport's plaza, then left with a jump in it, the stick held through each; each spin ends as Mario's does, his paper turned round to face the way he went (his paper was eased back toward left or right by the partner's own turn each frame: it hardly turned, and a spin to the right or up never reached its end, running on to its longest at a crawl)",
+ "groups": [
+  "pm64",
+  "pm64_spin",
+  "coop"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "30",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_SET_second_player": "1",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_P2_PRESS": "right@260+10,right+l@270+2,right@272+80,up@360+10,up+l@370+2,up@372+100,left@500+2,left+l@502+2,left@504+10,a+left@514+4,left@518+60"
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 200",
+  "goto -300 0 200",
+  "wait 450",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[brothers\\] Luigi spins at .* toward 90: 48 frames",
+  "\\[brothers\\] Luigi's spin ends after 5\\d frames at \\(-\\d+, 0, 181\\)",
+  "\\[brothers\\] Luigi spins at .* toward 0: 48 frames",
+  "\\[brothers\\] Luigi's spin ends after 5\\d frames at \\(-\\d+, 0, -?\\d\\)",
+  "\\[brothers\\] Luigi's spin ends after 1\\d frames"
+ ],
+ "log_must_not": [
+  "Luigi's spin ends after [6-9]\\d frames",
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 150
+}

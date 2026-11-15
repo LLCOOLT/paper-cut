@@ -1,0 +1,104 @@
+{
+ "desc": "Play as Peach's parasol float on a running jump (docs/PLAY_AS.md): full-run segment 05_blooper's way to tik_02's first floating island, the script's running jump onto it with A held past the top. The float never brakes below the move she had as it opened, so she lands on the island as Mario does (braked to 0.75 of her walk she fell short into the water); [parasol] lines show it opened",
+ "groups": [
+  "t_parasol"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "playable_luigi": 2
+ },
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "05_blooper"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "05_blooper"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_AUTO_CHOICE": "mac_0_121_02_yesno:1",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_PARASOL_TRACE": "1"
+ },
+ "input": [
+  "wait_seq 2 3000",
+  "press_until_control a 3000",
+  "walk_to A_ie_02_doa02 stop 600",
+  "hold down 8",
+  "press a",
+  "press_until_story a 20 6000",
+  "press_until_control a 6000",
+  "where",
+  "walk_to -250 200 900",
+  "walk_to -250 345 600",
+  "walk_to -232 340 300",
+  "hold a+right 6",
+  "stick 100 26 14",
+  "wait 20",
+  "walk_to -190 329 120",
+  "hold down 30",
+  "press_until_map a tik_01 900",
+  "press_until_control a 3000",
+  "where",
+  "walk_to -330 0 300",
+  "walk_to 0 0 900",
+  "walk_to 20 0 600",
+  "walk_to 60 0 300",
+  "walk_to 200 100 600",
+  "walk_to 250 100 200",
+  "wait 20",
+  "press y",
+  "wait 60",
+  "hold left 30",
+  "wait 30",
+  "hold left 30",
+  "wait 30",
+  "hold left 30",
+  "wait 30",
+  "hold left 30",
+  "wait 30",
+  "wait 90",
+  "where",
+  "walk_to e_bero_1 900",
+  "press_until_control a 3000",
+  "where",
+  "walk_to -490 0 600",
+  "where",
+  "press b",
+  "press_until_story a 21 30000",
+  "press_until_control a 6000",
+  "where",
+  "walk_to -415 0 300",
+  "wait_hit a_ugo_yuka_1 x <= -305",
+  "stick 127 0 18 a",
+  "wait 30",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[parasol\\] air \\d+ peak \\d+ mot \\d+ A 1 .* float 1",
+  "^\\[input\\] where hits: on 'a_ugo_yuka_1'",
+  "^\\[input\\] end"
+ ],
+ "timeout": 600,
+ "allow_failures": [
+  "input",
+  "stuck"
+ ]
+}

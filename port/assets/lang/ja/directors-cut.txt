@@ -3,8 +3,8 @@
 Director's Cut
 ディレクターズカット
 
-Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
-ゲームのコードに残っているのに使われていない内容を復活させます：キラロが売るカットされたバッジ、何も始めない敵とバトル、アカメット一家、レベルアップの確認、地下の消えた3つの部屋。それぞれ下のディレクターズカット日誌にページがあります。
+Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below. Its enemies and battles from the next room.
+ゲームのコードに残っているのに使われていない内容を復活させます：キラロが売るカットされたバッジ、何も始めない敵とバトル、アカメット一家、レベルアップの確認、地下の消えた3つの部屋。それぞれ下のディレクターズカット日誌にページがあります。敵とバトルは次の部屋から。
 
 Director's Cut journal
 ディレクターズカット日誌

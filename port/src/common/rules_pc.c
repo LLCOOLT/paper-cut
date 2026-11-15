@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "port/rules.h"
+#include "port/crowd.h"
+#include <dolphin/pad.h>
 #include "port/gameplus.h"
 #include "port/settings.h"
 #include "port/practice_more.h"
@@ -91,6 +93,7 @@ static const struct {
     {"no_stage_hazards", 0, 0, 1},   /* attacks never bring the scenery down or set off the stage's jets */
     {"no_audience_throws", 0, 0, 1}, /* the audience never throws anything */
     {"less_shake", 0, 0, 1},         /* screen shakes at a third of their size */
+    {"spring_jump_standing", 0, 0, 1}, /* the Spring Jump only from standing, not out of a landing */
     {"auto_win_weak", 0, 0, 1},      /* touching a field enemy 10 levels below Mario wins at once */
 };
 
@@ -484,8 +487,56 @@ int portRulesNoAudienceThrows(void) {
     return 1;
 }
 
+int portRulesNoAudienceStageActs(int reaction) {
+    /* a shared online battle: the crowd's acts on the battle itself are off on every screen, as its throws are.
+     * Each game's crowd is its own (who sits where, who comes and goes, its rolls every frame), so a Boo turning
+     * a unit invisible or a Shy Guy running on to drop a stage prop or fire the nozzles (their decisions and
+     * their picks the crowd's) came on one screen only, or on another unit. The crowd's own shows (the Koopas'
+     * shells, the Punies, a Dayzee's song, a Bulky Bob-omb, a Piranha Plant) stay: they touch only the crowd */
+    if (!portStateSyncSharedBattle()) {
+        return 0;
+    }
+    {
+        static int told;
+        if (told < 3) {
+            told++;
+            printf("[rules] shared battle: the crowd's %s left out\n", reaction == 4 ? "Boo" : "Shy Guy run");
+            fflush(stdout);
+        }
+    }
+    return 1;
+}
+
 float portRulesShakeScale(void) {
     return on("less_shake") ? 0.33f : 1.0f;
+}
+
+/* The Ultra Boots' quick Spring Jump: A held and the stick turned as Mario comes down from a jump
+ * springs him up the moment he lands (marioFall). With this setting on he lands as from any jump
+ * and springs only from standing: A held and a full turn of the stick. */
+int portRulesSpringStanding(void) {
+    return on("spring_jump_standing");
+}
+
+/* tests: TTYD_JUMP_LOG=1 also logs each Spin Jump and Spring Jump the field starts (luigi_jump_pc.c logs
+ * the plain jumps' tops) */
+void portRulesJumpLog(const char* what) {
+    static int sLog = -1;
+    if (sLog < 0) {
+        const char* v = getenv("TTYD_JUMP_LOG");
+        sLog = v != NULL && v[0] == '1';
+    }
+    if (sLog) {
+        printf("[jump] %s\n", what);
+        fflush(stdout);
+    }
+}
+
+int portRulesSpringLanding(void) {
+    const int standing = portRulesSpringStanding();
+    portRulesJumpLog(standing ? "no Spring Jump out of the landing (from standing only)"
+                              : "a Spring Jump out of the landing");
+    return !standing;
 }
 
 /* --- Battle screen information --- */
@@ -662,9 +713,12 @@ void portRulesCommandInputPre(void) {
     }
     for (i = 0; i < AUDIENCE_ITEM_MAX; i++) {
         if (aud->items[i].flags & AUDIENCE_ITEM_FLAG_ACTIVE) {
-            /* this frame's presses dropped: the menu waits for the throw */
-            wp->padWork[0].buttonsPressedHistory[0] = 0;
-            wp->padWork[0].buttonsRepeatHistory[0] = 0;
+            /* this frame's presses dropped: the menu waits for the throw; but X, while the thrower can still be
+               stopped (the game's own way to stop a throw, BattleCommandAttackAudienceCheck: dropped too, it
+               couldn't be stopped at all) */
+            const u32 keep = portAudienceThrowPending() ? PAD_BUTTON_X : 0u;
+            wp->padWork[0].buttonsPressedHistory[0] &= keep;
+            wp->padWork[0].buttonsRepeatHistory[0] &= keep;
             return;
         }
     }

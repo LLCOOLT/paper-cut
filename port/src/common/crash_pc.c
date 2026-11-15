@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <string.h>
 #include "port/platform.h"
+#include "port/low_address.h"
+#include "port/soft_crash.h"
+#include "port/gpu_start.h"
 
 /* The crash report file (portCrashSetReportPath): what is printed for a
  * crash or stall also goes there, after a header with the build and where
@@ -69,6 +72,33 @@ const char* portCrashGpu(void) {
     return sGpu;
 }
 
+/* the graphics API starting now (port/include/port/gpu_start.h): the report says so, and on Windows the process
+ * ends with PORT_EXIT_GPU_START, so Paper Cut.exe starts the game again without it */
+static char sGpuStarting[48];
+
+void portCrashSetGpuStarting(const char* api) {
+    snprintf(sGpuStarting, sizeof(sGpuStarting), "%s", api != NULL ? api : "");
+}
+
+/* this run's last log lines, oldest first, a line each (port/include/port/soft_crash.h: Report a problem) */
+size_t portCrashLogTail(char* out, size_t size) {
+    const unsigned next = __atomic_load_n(&sLogNext, __ATOMIC_RELAXED);
+    unsigned i, first = next > LOG_LINES ? next - LOG_LINES : 0;
+    size_t n = 0;
+    if (out == NULL || size == 0) {
+        return 0;
+    }
+    out[0] = '\0';
+    for (i = first; i < next && n + 1 < size; i++) {
+        const int w = snprintf(out + n, size - n, "%s\n", sLog[i % LOG_LINES]);
+        if (w < 0) {
+            break;
+        }
+        n = n + (size_t)w >= size ? size - 1 : n + (size_t)w;
+    }
+    return n;
+}
+
 /* the ring's lines, oldest first, through put */
 static void logTail(void (*put)(const char* line)) {
     unsigned i, first = sLogNext > LOG_LINES ? sLogNext - LOG_LINES : 0;
@@ -82,17 +112,21 @@ static void logTail(void (*put)(const char* line)) {
     }
 }
 
-/* Sound-name words (include/sfx_name_word.h) tell ids from name pointers as
- * GameCube does: a word that is non-negative as an s32 is an id (ids carry
- * flag bits up to 0x6000000). That needs every host address the game hands
- * over as a name to be 2 GiB or higher; 64-bit Windows, Linux and macOS
- * place images, heaps and stacks there, but check rather than assume. */
+/* Sound-name words (include/sfx_name_word.h) and crowd NPCs' names tell
+ * numbers from name pointers as GameCube does, by the 0x80000000 address
+ * bit; 64-bit hosts normally place images, heaps and stacks above it. Not
+ * always: with Windows' bottom-up or high-entropy ASLR off (Exploit
+ * Protection) the heap and the stacks lie near the bottom. That once stopped
+ * the game and the launcher at start (an abort here); now such memory is
+ * noted, and those words are then told apart by what they point at
+ * (port/include/port/low_address.h). */
 void portCheckHostAddress(const void* p, const char* what) {
     if ((uintptr_t)p < 0x80000000u) {
-        fprintf(stderr, "fatal: %s at %p is below 2 GiB; sound names would read as ids "
-                "(include/sfx_name_word.h)\n", what, p);
-        fflush(stderr);
-        abort();
+        printf("[memory] %s at %p is under 2 GiB: names are told from numbers by their text\n", what, p);
+        fflush(stdout);
+        gPortLowAddresses = 1;
+    } else if (getenv("TTYD_TRACE")) {
+        printf("[trace] %s at %p\n", what, p);
     }
 }
 
@@ -115,6 +149,15 @@ static void checkAddressSpace(void) {
     portCheckHostAddress(image, "the executable image");
     portCheckHostAddress(&stack, "the stack");
     portCheckHostAddress(heap, "the C heap");
+    if (portLowAddressesAslrOff()) {
+        printf("[memory] TTYD_LOW_ADDRESSES: started with bottom-up and high-entropy ASLR off; stack %p, heap %p\n",
+               (void*)&stack, heap);
+        fflush(stdout);
+    } else if (portLowAddressesReservedMiB() > 0) {
+        printf("[memory] TTYD_LOW_ADDRESSES: %llu MiB from 4 GiB up reserved; stack %p, heap %p\n",
+               portLowAddressesReservedMiB(), (void*)&stack, heap);
+        fflush(stdout);
+    }
     if (getenv("TTYD_TRACE")) {
         printf("[trace] image %p stack %p heap %p\n", (const void*)image, (void*)&stack, heap);
     }
@@ -185,11 +228,14 @@ static void reportBegin(const char* what) {
         return;
     }
     sReported = 1;
-    n = snprintf(buf, sizeof(buf), "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s%s%s%simage: %p\n",
-                 what, PORT_REGION_SHORT " (" PORT_GAME_ID ")", __DATE__, __TIME__,
-                 sContext[0] != '\0' ? sContext : "?", sGpu[0] != '\0' ? "gpu: " : "", sGpu,
-                 sGpu[0] != '\0' ? "\n" : "", sMessage[0] != '\0' ? "message: " : "", sMessage,
-                 sMessage[0] != '\0' ? "\n" : "", (void*)GetModuleHandleA(NULL));
+    n = snprintf(buf, sizeof(buf),
+                 "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s%s%s%s%s%s%simage: %p\n", what,
+                 PORT_REGION_SHORT " (" PORT_GAME_ID ")", __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?",
+                 sGpu[0] != '\0' ? "gpu: " : "", sGpu, sGpu[0] != '\0' ? "\n" : "",
+                 sGpuStarting[0] != '\0' ? "while starting the graphics API: " : "", sGpuStarting,
+                 sGpuStarting[0] != '\0' ? " (the next start passes it over)\n" : "",
+                 sMessage[0] != '\0' ? "message: " : "", sMessage, sMessage[0] != '\0' ? "\n" : "",
+                 (void*)GetModuleHandleA(NULL));
     writeRaw(sReport, buf, n > 0 && n < (int)sizeof(buf) ? (size_t)n : 0);
 }
 
@@ -311,6 +357,9 @@ static LONG WINAPI onException(EXCEPTION_POINTERS* info) {
         }
     }
     reportException(info->ExceptionRecord, info->ContextRecord, GetCurrentThread());
+    if (sGpuStarting[0] != '\0') {
+        TerminateProcess(proc, PORT_EXIT_GPU_START); /* (Paper Cut.exe starts the game again without that API) */
+    }
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -338,6 +387,9 @@ static void onAbort(int sig) {
         printFrame(proc, (DWORD64)(uintptr_t)frames[i]);
     }
     reportEnd();
+    if (sGpuStarting[0] != '\0') {
+        TerminateProcess(proc, PORT_EXIT_GPU_START); /* (Paper Cut.exe starts the game again without that API) */
+    }
 }
 
 /* The C runtime reports invalid arguments (e.g. a bad printf format pointer)
@@ -415,7 +467,12 @@ static DWORD WINAPI watchdog(void* arg) {
 }
 
 /* Integer division by zero: the PowerPC result, as the GameCube computes it
- * (divzero_pc.c). First in line, before any crash report. */
+ * (divzero_pc.c). First in line, before any crash report. Unchecked by AddressSanitizer: first in line, it
+ * also sees the faults that build's own handler, after it, answers by mapping its shadow memory, and a checked
+ * read here would fault again and again. */
+#if defined(__clang__)
+__attribute__((no_sanitize("address")))
+#endif
 static LONG WINAPI onIntDivide(EXCEPTION_POINTERS* info) {
     DWORD code = info->ExceptionRecord->ExceptionCode;
     CONTEXT* ctx = info->ContextRecord;
@@ -570,11 +627,13 @@ static void reportBegin(const char* what) {
     {
         /* write() to the file only: stderr gets the usual lines */
         const int fd = sReportFd;
-        char buf[1024];
-        int n = snprintf(buf, sizeof(buf), "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s%s%s%s",
+        char buf[1400];
+        int n = snprintf(buf, sizeof(buf), "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s%s%s%s%s%s%s",
                          what, PORT_REGION_SHORT " (" PORT_GAME_ID ")",
                          __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?", sGpu[0] != '\0' ? "gpu: " : "",
                          sGpu, sGpu[0] != '\0' ? "\n" : "",
+                         sGpuStarting[0] != '\0' ? "while starting the graphics API: " : "", sGpuStarting,
+                         sGpuStarting[0] != '\0' ? " (the next start passes it over)\n" : "",
                          sMessage[0] != '\0' ? "message: " : "", sMessage, sMessage[0] != '\0' ? "\n" : "");
         ssize_t w = write(fd, buf, (size_t)(n > 0 && n < (int)sizeof(buf) ? n : 0));
 #if defined(__APPLE__)

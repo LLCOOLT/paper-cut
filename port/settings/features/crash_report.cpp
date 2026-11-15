@@ -452,6 +452,13 @@ void saveWork() {
 
 } // namespace
 
+// (Report a problem's: port/settings/features/report_problem.cpp)
+std::string portCrashSystemText() { return systemText(); }
+std::string portCrashSettingsText() { return settingsText(); }
+std::string portCrashReportText() { return reportText(); }
+std::string portUrlEncode(const std::string& text) { return urlEncode(text); }
+std::string portZipStored(const std::vector<std::pair<std::string, std::string>>& files) { return zip(files); }
+
 #if defined(__ANDROID__)
 #define CRASH_NO_FOLDERS 1 // (no folder picker on Android: the GitHub page, or Copy; iOS: the document picker's)
 #endif
@@ -534,6 +541,13 @@ PortRecoveryResume portRecoveryResume(const char* gameId) {
   SDL_PathInfo info;
   if (gameId == nullptr || gameId[0] == '\0') {
     return r;
+  }
+  // the crash-safe snapshots of the run that crashed (soft_crash.cpp), and why there were none lately
+  {
+    const long long ended = portLastRunEndedAt();
+    r.gameId = gameId;
+    r.snaps = portCrashSafeSnaps(gameId, ended);
+    r.paused = portCrashSafePaused(gameId, ended);
   }
   portResumePath(path, sizeof(path), gameId, 0);
   if (!SDL_GetPathInfo(path, &info) || info.type != SDL_PATHTYPE_FILE) {
@@ -628,6 +642,60 @@ std::string crashLine(const std::string& report) {
 
 } // namespace
 
+// The crash-safe snapshots' rows (soft_crash.h): newest first, each where and how long before it closed, and
+// its button; then why there were none lately, if so. The one picked (0 newest), -1 none.
+int portCrashSafeRows(const PortRecoveryResume& r, bool focus) {
+  int pick = -1;
+  for (size_t i = 0; i < r.snaps.size(); i++) {
+    const PortRecoverySnap& s = r.snaps[i];
+    const std::string where = s.area.empty() || !fontHas(s.area) ? s.map : s.area;
+    std::string when;
+    if (s.before >= 0) {
+      when = beforeText(s.before);
+    } else {
+      char clock[16] = "";
+      const std::time_t t = static_cast<std::time_t>(s.made);
+      const std::tm* tm = std::localtime(&t);
+      if (tm != nullptr) {
+        std::strftime(clock, sizeof(clock), "%H:%M", tm);
+      }
+      char text[64];
+      std::snprintf(text, sizeof(text), portTr("at %s"), clock);
+      when = text;
+    }
+    ImGui::TextWrapped(portTr(i == 0 ? "Continue from a few minutes ago: %s, %s." : "An earlier snapshot: %s, %s."),
+                       where.c_str(), when.c_str());
+    ImGui::PushID(static_cast<int>(i));
+    if (ImGui::Button(portTrLabel(i == 0 ? "Continue from a few minutes ago##snap" : "Continue from the earlier one##snap"))) {
+      pick = static_cast<int>(i);
+    }
+    if (focus && i == 0) {
+      ImGui::SetItemDefaultFocus();
+    }
+    ImGui::PopID();
+  }
+  if (!r.paused.empty()) {
+    const char* why = r.paused == "online"        ? "No snapshots were made while playing online: the world was the "
+                                                    "host's, not yours to come back to alone."
+                      : r.paused == "replay"      ? "No snapshots were made during a replay or a ghost race: it plays "
+                                                    "from its own start."
+                      : r.paused == "leaderboard" ? "No snapshots were made during a leaderboard run: its replay is "
+                                                    "what counts."
+                      : r.paused == "daily"       ? "No snapshots were made on the daily seed: its clock is a race "
+                                                    "against everyone's."
+                      : r.paused == "bingo"       ? "No snapshots were made in a bingo lockout room: it is a race "
+                                                    "against the others."
+                      : r.paused == "hardcore"    ? "No snapshots were made on a hardcore file: it has one life."
+                                                  : nullptr;
+    if (why != nullptr) {
+      ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+      ImGui::TextWrapped("%s", portTr(why));
+      ImGui::PopStyleColor();
+    }
+  }
+  return pick;
+}
+
 int portRecoveryDraw(const PortRecoveryResume& r, float scale, bool modal, void (*inside)()) {
   portCrashReportTest(); // ($TTYD_CRASH_REPORT_TEST, once)
   static std::string sReport;
@@ -639,7 +707,10 @@ int portRecoveryDraw(const PortRecoveryResume& r, float scale, bool modal, void 
     sReport = reportText();
     if (const char* test = SDL_getenv("TTYD_RECOVERY_TEST")) {
       const char* colon = std::strchr(test, ':');
-      sTestPress = std::strncmp(test, "continue", 8) == 0 ? 1 : std::strncmp(test, "dismiss", 7) == 0 ? 2 : 0;
+      sTestPress = std::strncmp(test, "continue", 8) == 0  ? 1
+                   : std::strncmp(test, "dismiss", 7) == 0 ? 2
+                   : std::strncmp(test, "snap", 4) == 0    ? 3
+                                                           : 0;
       sTestAt = colon != nullptr ? std::atoi(colon + 1) : 60;
     }
   }
@@ -653,6 +724,14 @@ int portRecoveryDraw(const PortRecoveryResume& r, float scale, bool modal, void 
     } else {
       std::printf("[recovery] shown: %s; continue: none\n", crashLine(sReport).c_str());
     }
+    for (const PortRecoverySnap& snap : r.snaps) {
+      std::printf("[recovery] snapshot: %s (map %s, file %d, %lld s before it closed)\n",
+                  snap.path.substr(snap.path.find_last_of("/\\") + 1).c_str(), snap.map.c_str(), snap.slot + 1,
+                  snap.before);
+    }
+    if (!r.paused.empty()) {
+      std::printf("[recovery] no snapshots lately: %s\n", r.paused.c_str());
+    }
     std::fflush(stdout);
   }
   const ImVec2 display = ImGui::GetIO().DisplaySize;
@@ -661,6 +740,8 @@ int portRecoveryDraw(const PortRecoveryResume& r, float scale, bool modal, void 
                                  ImGuiWindowFlags_NoSavedSettings;
   ImGui::SetNextWindowPos(ImVec2(display.x * 0.5f, display.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
   ImGui::SetNextWindowSize(ImVec2((std::min)(display.x - 32.f, 600.f * scale), 0.f), ImGuiCond_Always);
+  // (never taller than the screen: a phone's, with Report a problem's list open, scrolls)
+  ImGui::SetNextWindowSizeConstraints(ImVec2(0.f, 0.f), ImVec2(display.x, (std::max)(120.f, display.y - 32.f)));
   bool open;
   if (modal) {
     if (!ImGui::IsPopupOpen(id.c_str())) {
@@ -678,13 +759,14 @@ int portRecoveryDraw(const PortRecoveryResume& r, float scale, bool modal, void 
     if (inside != nullptr) {
       inside();
     }
+    portSettingsUndoRows(); // "Paper Cut closed after you changed ...": the one window for it (soft_crash.cpp)
     if (r.have && !where.empty() && r.before >= 0) {
       ImGui::TextWrapped(portTr("Continue where you were: %s, %s."), where.c_str(), beforeText(r.before).c_str());
     } else if (r.have && !where.empty()) {
       ImGui::TextWrapped(portTr("Continue where you were: %s."), where.c_str());
     } else if (r.have) {
       ImGui::TextWrapped("%s", portTr("Continue where you were, from quick resume's save."));
-    } else {
+    } else if (r.snaps.empty()) {
       ImGui::TextWrapped("%s", portTr("There is no quick resume save to continue from."));
     }
     if (r.have) {
@@ -694,12 +776,15 @@ int portRecoveryDraw(const PortRecoveryResume& r, float scale, bool modal, void 
       if (sFrames == 0) {
         ImGui::SetItemDefaultFocus();
       }
-      ImGui::SameLine();
     }
-    if (ImGui::Button(portTrLabel("Dismiss##recovery"))) {
+    // the crash-safe snapshots, newest first: a few minutes earlier, in case where it was is what crashed
+    if (const int pick = portCrashSafeRows(r, !r.have && sFrames == 0); pick >= 0) {
+      result = 3 + pick;
+    }
+    if (ImGui::Button(portTrLabel("Load your save as usual##recovery"))) {
       result = 2;
     }
-    if (!r.have && sFrames == 0) {
+    if (!r.have && r.snaps.empty() && sFrames == 0) {
       ImGui::SetItemDefaultFocus(); // (a controller's and the keyboard's first place: no Continue)
     }
     ImGui::Separator();
@@ -738,9 +823,10 @@ int portRecoveryDraw(const PortRecoveryResume& r, float scale, bool modal, void 
     if (!sOpenSaid.empty()) {
       ImGui::TextWrapped("%s", sOpenSaid.c_str()); // (a folder or link the system didn't open: where it is)
     }
+    portReportProblemSection("recovery"); // the zip of all that helps, its contents shown first (report_problem.cpp)
     sFrames++;
     if (sTestPress != 0 && sFrames >= sTestAt && result == 0) {
-      result = sTestPress == 1 && r.have ? 1 : 2;
+      result = sTestPress == 1 && r.have ? 1 : sTestPress == 3 && !r.snaps.empty() ? 3 : 2;
       sTestPress = 0;
     }
     // the way back (B, Escape, Android's back, the mouse's back): the safe answer, Dismiss
@@ -765,6 +851,11 @@ int portRecoveryDraw(const PortRecoveryResume& r, float scale, bool modal, void 
     std::fflush(stdout);
   } else if (result == 2) {
     std::printf("[recovery] dismissed\n");
+    std::fflush(stdout);
+  } else if (result >= 3 && result - 3 < int(r.snaps.size())) {
+    const PortRecoverySnap& snap = r.snaps[size_t(result - 3)];
+    std::printf("[recovery] continue from a snapshot: %s as file %d\n",
+                snap.path.substr(snap.path.find_last_of("/\\") + 1).c_str(), snap.slot + 1);
     std::fflush(stdout);
   }
   return result;

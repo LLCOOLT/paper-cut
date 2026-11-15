@@ -41,6 +41,8 @@ EM_JS(int, webWsOpen, (const char* url), {
     ws.sock.onclose = (ev) => {
         ws.state = 3;
         if (!ws.error || ev.reason) ws.error = ev.reason || (ev.code === 1000 ? "" : "The relay's connection closed.");
+        /* (a restart, a deploy, the 6-hour cut: back at once, PORT_WS_RESTARTED's words) */
+        if ([1001, 1009, 1011, 1012, 1013].includes(ev.code)) ws.error = "The relay restarted the connection.";
     };
     return 1;
 });
@@ -188,7 +190,7 @@ void portCrashThreadInit(void);
 #include "online_roots.inc"
 
 #define MAX_FRAME (2u << 20) /* the relay passes up to 1 MB */
-#define TEXTS 8
+#define TEXTS 64 /* the relay's words not yet read (a host's welcome alone is up to ten) */
 
 typedef struct {
     unsigned char* p;
@@ -613,6 +615,12 @@ static int upgrade(Conn* c) {
             setError("That room has as many players as it can: watch it instead.");
         } else if (status == 409) {
             setError("That room code is taken.");
+        } else if (status == 403 && strstr(line, "removed") != NULL) {
+            /* (0.5.1's relay: this game's ticket, which the host had it take out of the room) */
+            setError("Removed: the host removed you from the room.");
+        } else if (status == 403 && (strstr(line, "slow") != NULL || strstr(line, "blocked") != NULL)) {
+            /* (0.5.1's relay: too many tries from this address lately, or kept out of that room a while) */
+            setError("The relay is holding this network's tries back a moment: it tries again by itself.");
         } else {
             setError("The relay refused the connection.");
         }
@@ -705,8 +713,10 @@ static int handleFrames(Conn* c) {
             SDL_UnlockMutex(sLock);
         } else if (opcode == 1) {
             Link* L = c->link;
+            int full;
             SDL_LockMutex(sLock);
-            if (L->textCount < TEXTS) {
+            full = L->textCount >= TEXTS;
+            if (!full) {
                 const size_t m = len < sizeof(L->texts[0]) - 1 ? len : sizeof(L->texts[0]) - 1;
                 char* t = L->texts[(L->textHead + L->textCount) % TEXTS];
                 memcpy(t, p, m);
@@ -714,14 +724,34 @@ static int handleFrames(Conn* c) {
                 L->textCount++;
             }
             SDL_UnlockMutex(sLock);
+            if (full) {
+                /* (a word with no room: never let go of quietly, as up to 0.5.0 (a host's welcome with
+                   players 3 and 4 there, "busy" and a watcher filled the eight there were, and the guest's
+                   "peer" was lost). The connection again instead: the relay's welcome says it all anew) */
+                SDL_Log("online: relay: too many words unread: connecting again");
+                setError("The connection to the relay was lost.");
+                return 0;
+            }
         } else if (opcode == 9) {
             Buf pong = {0};
             frame(&pong, 10, p, len, &c->maskSeed);
             writeAll(c, pong.p, pong.len);
             free(pong.p);
         } else if (opcode == 8) {
+            /* its code: a restart, a deploy, the old relay's 6-hour cut or its own error is "come back now"
+               (PORT_WS_RESTARTED: the game connects again at once, no loss); 0.5.1's relay takes a game out for
+               its host with 4001 (no more tries) and closes a connection that sends far too much with 1008 (an
+               error); anything else the room closed */
+            const int code = len >= 2 ? ((int)p[0] << 8) | p[1] : 1005;
             bufTake(&c->rx, n + len);
-            setError("The relay closed the room.");
+            if (code == 1001 || code == 1009 || code == 1011 || code == 1012 || code == 1013) {
+                SDL_Log("online: relay: closed with %d: connecting again", code);
+                setError(PORT_WS_RESTARTED);
+            } else {
+                setError(code == 4001   ? "Removed: the host removed you from the room."
+                         : code == 1008 ? "The relay closed the connection: this game sent too much at once."
+                                        : "The relay closed the room.");
+            }
             return 0;
         }
         bufTake(&c->rx, n + len);
@@ -732,6 +762,7 @@ static int SDLCALL run(void* data) {
     Conn* c = (Conn*)data;
     Link* L = c->link;
     int ok;
+    Uint64 lastOut = 0; /* when something last went to the relay (the keep-alive ping below) */
     portCrashThreadInit(); /* (a stack overflow here reported too) */
     ok = connectTcp(c) && !stopped(c) && (!c->tls || startTls(c)) && !stopped(c) && upgrade(c) &&
          handleFrames(c);
@@ -754,6 +785,24 @@ static int SDLCALL run(void* data) {
         if (out.len > 0 && !writeAll(c, out.p, out.len)) {
             setError("The connection to the relay was lost.");
             ok = 0;
+        }
+        {
+            /* nothing written for 20 s (the room's games play direct, port/online_ice.h): a WebSocket
+               ping, which the relay's runtime answers without waking the room (no request of its day),
+               keeps the connection and the networks' mappings on the way alive, and finds a dead one */
+            const Uint64 t = SDL_GetTicks();
+            if (out.len > 0 || lastOut == 0) {
+                lastOut = t;
+            } else if (ok && !stop && t - lastOut > 20000) {
+                Buf ping = {0};
+                lastOut = t;
+                frame(&ping, 9, "pc", 2, &c->maskSeed);
+                if (!writeAll(c, ping.p, ping.len)) {
+                    setError("The connection to the relay was lost.");
+                    ok = 0;
+                }
+                free(ping.p);
+            }
         }
         SDL_LockMutex(sLock);
         L->writing = 0;

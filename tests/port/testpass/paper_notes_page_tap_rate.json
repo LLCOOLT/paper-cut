@@ -1,0 +1,58 @@
+{
+ "desc": "The Paper notes page rated by a tap (a phone's touch screen; TTYD_NOTES_PAGE, TTYD_NOTES_TEST: no relay): the chosen note's score sits between the game's left and right arrows, as the Phrase row's value, and a tap on the right one rates it up (0.5.0 only said 'Right rates this note up' to a tap: a touch screen with no stick couldn't rate). At 4:3, the nearest note's row chosen with the stick, then the tap on its right arrow (x 230, its row's middle y -62 in the menus' units)",
+ "groups": [
+  "notes",
+  "menus",
+  "touch"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "40 0 15 8 5 4;-110 0 30 3 3 1 m;170 0 -40 10 32 0",
+  "TTYD_NOTES_PAGE": "1",
+  "TTYD_EXIT_FRAMES": 1200,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "settings": {
+  "paper_notes": 1,
+  "widescreen": 0
+ },
+ "input": [
+  "wait 380",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 20",
+  "shot arrows",
+  "tap 0.8783 0.6292",
+  "wait 30",
+  "shot rated",
+  "end"
+ ],
+ "expect_shots": [
+  "arrows",
+  "rated"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[notes\\] test: 3 notes placed in gor_00",
+  "^\\[menu\\] tap at 230, -62$",
+  "^\\[notes\\] test: rate gor_00 t\\d+ 1: Rated: thank you\\."
+ ],
+ "new": true
+}

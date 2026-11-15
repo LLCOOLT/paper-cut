@@ -91,8 +91,8 @@ int formRows(PortPauseRow* out, int max) {
   if (max < 2) {
     return 0;
   }
-  const char* key = portBindingsKeyName(PORT_BIND_REWIND);
-  const char* pad = portBindingsPadName(PORT_BIND_REWIND);
+  const char* key = portBindingsKeyNameGame(PORT_BIND_REWIND); // (the game's font: its encoding)
+  const char* pad = portBindingsPadNameGame(PORT_BIND_REWIND);
   const char* note = portRewindSupported() ? "Change them under Controls, Bindings." : "Not in online co-op.";
   out[0] = portPauseRow("Rewind key", note, key[0] != '\0' ? nullptr : "(none)", 0);
   std::snprintf(out[0].value, sizeof(out[0].value), "%s", key);

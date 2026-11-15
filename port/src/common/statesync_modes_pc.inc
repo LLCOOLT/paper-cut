@@ -19,6 +19,7 @@ enum {
     M_PARTY_PRESS,              /* a guest: u8 game, u16 buttons pressed this frame */
     M_RAID_START,               /* the host: s32 week, s32 players */
     M_TOGETHER,                 /* the host: u32 kind (PORT_TOGETHER_*), u32 the tower's seed */
+    M_PARTY_LEAVE,              /* a guest: u8 game: its player left the host's party game */
 };
 
 #define PARTY_STATE_MAX 8192
@@ -29,6 +30,7 @@ static struct {
     uint8_t data[PARTY_STATE_MAX];
     unsigned version;                       /* (each new state +1) */
     unsigned short pressed[SS_PLAYERS + 1]; /* the host: each player's buttons, not yet taken */
+    unsigned left[3];                       /* the host: by game (PORT_PARTY_*), the players who left, not yet taken */
 } sParty;
 
 int portStateSyncPartyRole(void) {
@@ -88,6 +90,25 @@ unsigned short portStateSyncPartyPressed(int player) {
     return b;
 }
 
+void portStateSyncPartyLeave(int game) {
+    uint8_t m = (uint8_t)game;
+    if (portStateSyncPartyRole() != 2) {
+        return;
+    }
+    ssNetSendRelTo(1, M_PARTY_LEAVE, &m, 1);
+    ssLog("party: this player left the host's party game %d", game);
+}
+
+unsigned portStateSyncPartyLeft(int game) {
+    unsigned b;
+    if (game < 1 || game > 2) {
+        return 0;
+    }
+    b = sParty.left[game];
+    sParty.left[game] = 0;
+    return b;
+}
+
 /* ---- the raid boss: the host's start is everyone's ---- */
 
 static struct {
@@ -120,6 +141,15 @@ int portStateSyncPlayersLinked(void) {
         }
     }
     return n;
+}
+
+int portStateSyncPlayerInRoom(int player) {
+    if (!portStateSyncLinked() || player < 1 || player > SS_PLAYERS) {
+        return 0;
+    }
+    /* (still linked, heard from lately or not: a game held still by a party game may say little for a while) */
+    return player == ssNetMe() ||
+           (G.pl[player].info.valid && (ssNetIsHost() || player == 1 ? ssNetLinked(player) : ssNetLinked(1)));
 }
 
 int portStateSyncPlayerHere(int player) {
@@ -176,6 +206,7 @@ int portStateSyncRaidTake(int* week, int* players) {
 #else
 #define towerOn() 0
 #define towerFloor() 0
+#define PORT_TOWER_FLOORS 0 /* (no tower here: no floor of it followed) */
 #endif
 
 static struct {
@@ -250,13 +281,25 @@ int portStateSyncTogether(int kind, const char** why) {
     return 1;
 }
 
+/* another player's floor, fit to follow (their word is another program's): the Pit's 1..100 in one of its
+   rooms (a map of this game's world, "jon"), the tower's 1..PORT_TOWER_FLOORS */
+static int peerFloorOk(const SsPeer* o) {
+    const int kind = o->modeFloor / 1000, floor = o->modeFloor % 1000;
+    if (kind == 1) {
+        return floor >= 1 && floor <= 100 && !strncmp(o->map, "jon", 3) && ssMapNameOk(o->map, sizeof(o->map));
+    }
+    return kind == 2 && floor >= 1 && floor <= PORT_TOWER_FLOORS;
+}
+
 static void modesFrame(void) {
     const int mine = myModeFloor();
     int p, best = 0, who = 0;
     if (gp == NULL || !portStateSyncLinked()) {
         return;
     }
-    if (sTogether.pending && G.seq == SEQ_GAME && !seqCheckSeq() && !gp->inBattle && marioChkKey()) {
+    /* (never under this game's open Start menu: a map change there wiped it with the field still hidden behind
+       its backdrop, followHeld) */
+    if (sTogether.pending && G.seq == SEQ_GAME && !seqCheckSeq() && !gp->inBattle && marioChkKey() && !winCheck()) {
         const char* why = NULL;
         sTogether.pending = 0;
         if (startTogether(sTogether.kind, sTogether.seed, &why)) {
@@ -268,14 +311,14 @@ static void modesFrame(void) {
         }
     }
     /* another player gone on to a higher floor of the same: followed once this player is free */
-    if (mine == 0 || G.watch || G.seq != SEQ_GAME || seqCheckSeq() || gp->inBattle || !marioChkKey() ||
+    if (mine == 0 || G.watch || G.seq != SEQ_GAME || seqCheckSeq() || gp->inBattle || !marioChkKey() || winCheck() ||
         ssBattleHeld() || G.frame - sTogether.followAt < 60) {
         return;
     }
     for (p = 1; p <= SS_PLAYERS; p++) {
         const SsPeer* o = &G.pl[p].info;
         if (p != ssNetMe() && present(p) && !o->watch && o->seq == SEQ_GAME && o->modeFloor / 1000 == mine / 1000 &&
-            o->modeFloor > best) {
+            o->modeFloor > best && peerFloorOk(o)) {
             best = o->modeFloor;
             who = p;
         }
@@ -285,12 +328,11 @@ static void modesFrame(void) {
     }
     sTogether.followAt = G.frame;
     if (mine / 1000 == 1) {
-        if (strncmp(G.pl[who].info.map, "jon", 3) != 0) {
-            return;
-        }
-        swByteSet(GSW_JON_FLOOR, best % 1000 - 1);
-        ssLog("pit: player %d is on floor %d: after them to %s", who, best % 1000, G.pl[who].info.map);
-        seqSetSeq(SEQ_MAP_CHANGE, G.pl[who].info.map, "dokan_2");
+        static char sMap[sizeof(G.pl[0].info.map)]; /* (this game's copy: seqSetSeq keeps the pointer) */
+        snprintf(sMap, sizeof(sMap), "%s", G.pl[who].info.map);
+        swByteSet(GSW_JON_FLOOR, best % 1000 - 1); /* (1..100: peerFloorOk) */
+        ssLog("pit: player %d is on floor %d: after them to %s", who, best % 1000, sMap);
+        seqSetSeq(SEQ_MAP_CHANGE, sMap, "dokan_2");
     } else {
 #ifdef TTYD_BACKEND_AURORA
         ssLog("tower: player %d is on floor %d: after them", who, best % 1000);
@@ -322,6 +364,10 @@ void ssModesRel(int from, int type, const uint8_t* p, size_t n) {
             }
             memcpy(&sTogether.kind, p, 4);
             memcpy(&sTogether.seed, p + 4, 4);
+            if (sTogether.kind != PORT_TOGETHER_PIT && sTogether.kind != PORT_TOGETHER_TOWER) {
+                ssLog("together: the host's start of kind %u: not one this game knows", sTogether.kind);
+                return;
+            }
             sTogether.pending = 1;
             ssLog("together: the host started %u (seed %u): starting it here", sTogether.kind, sTogether.seed);
             break;
@@ -341,6 +387,14 @@ void ssModesRel(int from, int type, const uint8_t* p, size_t n) {
             }
             break;
         }
+        case M_PARTY_LEAVE:
+            if (!ssNetIsHost() || from < 2 || from > SS_PLAYERS || n < 1 || p[0] < 1 || p[0] > 2) {
+                return;
+            }
+            sParty.left[p[0]] |= 1u << from;
+            sParty.pressed[from] = 0; /* (its last presses aren't its answer any more) */
+            ssLog("party: player %d left party game %d", from, p[0]);
+            break;
         case M_RAID_START: {
             int32_t m[2];
             if (from != 1 || ssNetIsHost() || n < sizeof(m)) {

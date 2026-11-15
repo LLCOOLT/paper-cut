@@ -1,0 +1,15 @@
+# Fast-forward keeps Mario's and the partner's pace (GitHub #63; tests/port/testpass/gh63_ff_walk*.json).
+# Rogueport's plaza (gor_01), Goombella out: Mario stands, then walks left and runs right for 60 game frames
+# each, his place logged ("where") after each. gh63_ff_walk_held_back runs it with $TTYD_FF_TEST_DRAW=4 (a
+# frame shown of every 4 game frames, as a screen that holds fast-forward's frames to its refresh at 4x):
+# Mario and Goombella must be at the same places after the same game frames as in gh63_ff_walk, so in 4
+# times fewer frames shown. Before the fix the game ran a frame per frame shown there, and Mario 1x.
+wait 120
+where
+stick -60 0 60
+where
+stick 127 0 60
+where
+wait 30
+where
+end

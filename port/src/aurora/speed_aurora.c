@@ -15,12 +15,18 @@
  * frames, paced on it, come that much later: the game sees the same frames,
  * only later. With $TTYD_FAST's virtual clock (tests) the frames are paced
  * on the wall clock instead (portSpeedPercent, vi_aurora.c). Not online (both
- * games keep the same pace), not while fast-forwarding. The audio device
+ * games keep the same pace: portStateSyncOn), not while fast-forwarding. The audio device
  * keeps real time, as with fast-forward: the music and sounds stay smooth.
  *
  * Faster battles (port/include/port/battle_speed.h) set a battle's speed
  * the same way, 1.5x or 2x while the player isn't acting; fast-forward held
- * on top of it wins. */
+ * on top of it wins.
+ *
+ * A screen that shows frames only at its refresh (the Steam Deck's
+ * compositor, forced vsync) can't take the faster frames: those due already
+ * run undrawn then, so everything stepped once a frame (Mario's walking)
+ * keeps the clock's pace as the timed animations do (vi_aurora.c
+ * portPacingFastBehind, GitHub #63). Not online (portStateSyncOn). */
 #include <aurora/aurora.h>
 #include <aurora/gfx.h>
 #include <stdio.h>
@@ -60,8 +66,8 @@ static int slowWanted(void) {
         sChoice = portSettingsFind("slow_speed"); /* 0 off, 1-5: 90 % down to 50 % */
         sBattleOnly = portSettingsFind("slow_speed_battle");
     }
-    if (sChoice == NULL || *sChoice <= 0 || portStateSyncSharedBattle()) {
-        return 100;
+    if (sChoice == NULL || *sChoice <= 0 || portStateSyncSharedBattle() || portStateSyncOn()) {
+        return 100; /* (online: as its text says, both games keep the same pace) */
     }
     if (sBattleOnly != NULL && *sBattleOnly && seqGetSeq() != SEQ_BATTLE) {
         return 100;
@@ -122,7 +128,18 @@ void portSpeedFrame(void) {
         /* $TTYD_FF_TEST (tests): fast-forward held from the start */
         sTest = getenv("TTYD_FF_TEST") != NULL;
     }
-    if (sTest || (portSettings()->ffToggle ? sToggled : sHeld)) {
+    if (portStateSyncOn()) {
+        /* Online (sync what matters): no fast-forward, as docs/STATE_SYNC.md says. Each game runs its own
+         * world, so it couldn't put the games out of step, but a co-op host's faster world was everyone's
+         * (the guests' characters are played in it) and a guest's ran ahead of the host's it follows */
+        static int sTold;
+        if ((sHeld || sToggled) && !sTold) {
+            sTold = 1;
+            printf("[speed] fast-forward: not while playing online\n");
+            fflush(stdout);
+        }
+        sToggled = 0;
+    } else if (sTest || (portSettings()->ffToggle ? sToggled : sHeld)) {
         speed = portSettings()->ffSpeed;
     }
     if (gPortIntroFrames > 0 && gPortSkipIntro && speed < INTRO_SPEED) {

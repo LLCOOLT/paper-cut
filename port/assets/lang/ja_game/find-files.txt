@@ -1,0 +1,10 @@
+# find-files: see tools/port/gen_lang.py (the mods and spoiler logs folders, the About page's Discord)
+
+Open the spoiler logs folder
+スポイラーログの　フォルダを　ひらく
+
+Shows the randomizer folder in the user folder, where each start's spoiler log is written: the system's folder for app data, or User beside the program with portable.txt.
+ユーザーフォルダの　randomizerフォルダを　ひらきます　スポイラーログは　ここに　かかれます　portable.txtが　あれば　プログラムの　となりの　Userフォルダです
+
+The folder didn't open: it is the randomizer folder in the user folder.
+フォルダが　ひらけませんでした　ユーザーフォルダの　randomizerフォルダです

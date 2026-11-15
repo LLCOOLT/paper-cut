@@ -1,0 +1,30 @@
+{
+ "desc": "Controller parity (TTYD_BINDINGS_PARITY): every one of Paper Cut's actions has a controller binding by default or a menu way (the settings page, the Start menu, a touch button), listed once at start; the same check as testpass lint's (tools/port/pad_parity.py), here on the built table",
+ "groups": [
+  "menus",
+  "bindings"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_BINDINGS_PARITY": 1,
+  "TTYD_EXIT_FRAMES": 200
+ },
+ "input": [
+  "wait 150",
+  "end"
+ ],
+ "log_must": [
+  "^\\[bindings\\] parity: launcher \\| F2 \\| View \\+ Menu \\| ",
+  "^\\[bindings\\] parity: screenshot \\| F12 \\| View \\+ Y \\| ",
+  "^\\[bindings\\] parity: \\d+ actions, 0 without a controller way$"
+ ],
+ "log_must_not": [
+  "has no controller way"
+ ],
+ "new": true,
+ "timeout": 90
+}

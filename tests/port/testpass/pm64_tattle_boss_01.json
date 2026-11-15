@@ -1,5 +1,5 @@
 {
- "desc": "Paper Mario 64 bosses: Goombella Tattles the boss rush's Jr. Troopa (step 17) in each of his three forms (each its own unit): each Tattle card's picture is the boss's sprite from the ROM (not its stand-in unit's model, Whacka (c_koburon)), centred and filling the picture, captured ($TTYD_TATTLE_SHOT) and checked neither empty nor garbage (tattle_check)",
+ "desc": "Paper Mario 64 bosses: Goombella Tattles the boss rush's Jr. Troopa (step 17): one Tattle for all three of his forms, as in Paper Mario 64 (one actor; since 0.5.1 his winged and mage forms are tattled with the first, pm64_bosses_aurora.c), so one card: its picture is his sprite from the ROM (not the stand-in unit's model, Whacka (c_koburon)), centred and filling the picture, captured ($TTYD_TATTLE_SHOT) and checked neither empty nor garbage (tattle_check); the fight goes on through his winged and mage forms",
  "groups": [
   "pm64",
   "pm64_bosses",
@@ -35,15 +35,15 @@
  "tattle_check": {
   "min": 0.04,
   "max": 0.9,
-  "count": 3
+  "count": 1
  },
  "log_must": [
   "\\[pm64\\] boss: Jr\\. Troopa",
   "\\[story\\] tattle: kind",
   "\\[pm64\\] tattle card: kind \\d+ drawn as sprite \\d+ row \\d+ \\(a boss",
   "\\[pm64\\] tattle card: kind \\d+ drawn as sprite 32 row",
-  "\\[pm64\\] tattle card: kind \\d+ drawn as sprite 34 row",
-  "\\[pm64\\] tattle card: kind \\d+ drawn as sprite 35 row"
+  "\\[pm64\\] boss tattle: Jr\\. Troopa marked \\(its own entry\\)",
+  "\\[versus\\] the computer's target: kind 174 \\(hp (?!45/45|40/45)\\d+/45\\)"
  ],
  "timeout": 2400
 }

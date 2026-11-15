@@ -48,8 +48,8 @@ Nicht, während ein anderer Modus läuft.
 Remix: enemies
 Remix: Gegner
 
-The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
-Der Kampf hinter jedem Gegner im Feld wird aus allen Kämpfen seines Gebiets gezogen (ohne Bosse), gleich für einen Raum und einen Seed. Ab dem nächsten Raum.
+Each field enemy leads to a random fight from its area (never a boss), the same every time for a room and seed. From the next room.
+Jeder Gegner im Feld führt zu einem zufälligen Kampf seines Gebiets (nie einem Bosskampf), für einen Raum und Seed immer derselbe. Ab dem nächsten Raum.
 
 Remix: badge draft
 Remix: Orden-Auswahl
@@ -60,8 +60,8 @@ Bei jeder Kapitel-Titelkarte drei Orden, von denen du einen wählst: links und r
 Remix seed
 Remix-Seed
 
-Same seed, same remix: share it with a challenge code.
-Ein Seed, ein Remix: teile ihn per Herausforderungscode.
+Same seed, same remix: share it with a challenge code. From the next room.
+Ein Seed, ein Remix: teile ihn per Herausforderungscode. Ab dem nächsten Raum.
 
 Hardcore
 Hardcore

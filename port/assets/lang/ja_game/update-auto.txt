@@ -3,5 +3,5 @@
 Install updates automatically
 アップデートを　じどうで　いれる
 
-A new version found at start is downloaded in the background, checked against the release's checksum, and put in place the next time the game starts. Never during online play or a replay.
-あたらしい　バージョンが　あれば　うらで　ダウンロードして　つぎに　ゲームを　はじめた　ときに　いれかえます　オンラインや　リプレイの　あいだは　しません
+A new version found at start downloads in the background, is checked, and is put in place the next time the game starts. Never while playing online.
+あたらしい　バージョンが　あれば　うらで　ダウンロードして　つぎに　ゲームを　はじめた　ときに　いれかえます　オンラインの　あいだは　しません

@@ -15,15 +15,27 @@ extern "C" {
 
 /* --- Paper Mario 64's badges (port/src/common/pm64_badges_pc.c): items PORT_PM64_BADGE_MIN + i
  * (port/include/port/battlex.h), their icons PORT_ICON_PM64_BASE + i (icondrv.c draws a badge's frame,
- * portIconTexOverride their picture). Setting "pm64_badges". */
+ * portIconTexOverride their picture). Setting "pm64_badges". Past the first PORT_PM64_BADGE_COUNT, badge i is
+ * item PORT_PM64_BADGE2_MIN + (i - PORT_PM64_BADGE_COUNT), its icon PORT_ICON_PM64_BADGE2_BASE + the same
+ * (portPm64BadgeId, portPm64BadgeIndex). */
 #define PORT_ICON_PM64_BASE 0x7E00
+#define PORT_ICON_PM64_BADGE2_BASE (PORT_ICON_PM64_BASE + 0x30) /* (past the recipes' icons) */
 enum {
     PORT_PM64_BADGE_DIZZY_STOMP = 0x1A0 + 5,
     PORT_PM64_BADGE_PEEKABOO = 0x1A0 + 12,
     PORT_PM64_BADGE_PAY_OFF = 0x1A0 + 13,
+    /* the spin badges (0.5.1): the Spin Dash's (port/include/port/pm64_spin.h) */
+    PORT_PM64_BADGE_SPEEDY_SPIN = 0x1A0 + 14,
+    PORT_PM64_BADGE_SPIN_ATTACK = 0x1A0 + 15,
+    PORT_PM64_BADGE_DIZZY_ATTACK = 0x19C, /* (PORT_PM64_BADGE2_MIN) */
+    /* the badges before the spin ones (indices 0..13): Rowf's always, the "Rowf's Best Customer" achievement's */
+    PORT_PM64_BADGES_BEFORE_SPIN = 14,
 };
 int portPm64BadgesActive(void);
 int portPm64BadgeCount(void);
+/* badge i's item (i < portPm64BadgeCount()); an item's badge index, -1 when it isn't one of these */
+int portPm64BadgeId(int i);
+int portPm64BadgeIndex(int id);
 int portPm64BadgeGrants(int id, const short** grants);
 const char* portPm64BadgeEnglish(int id);
 int portPm64BadgeText(int id, char* name, size_t nameSize, char* desc, size_t descSize);
@@ -128,6 +140,21 @@ int portPm64MarioLookOn(void);
 void portPm64MarioLookSet(int on);
 /* TTYD Mario's animation name to Mario1's animation */
 int portPm64MarioAnim(const char* ttyd);
+/* The player sprites the look draws from (indices into portPm64PlayerSprite) */
+#define PM64_PLAYER_MARIO1 0
+#define PM64_PLAYER_MARIOB1 2 /* battle: the hammer's swings (Smash1..3), Stomp */
+#define PM64_PLAYER_MARIOB2 3 /* battle: Spin Smash, Hammer Throw */
+#define PM64_PLAYER_MARIOW1 5 /* field: the hammer's swings (Smash1..3 Miss / Hit), carrying, pushing */
+#define PM64_PLAYER_MARIOW2 7 /* field: riding */
+/* Mario1's spins (player_sprite_names.yaml; src/world/action/spin.c plays them): the field's Spin Dash */
+#define PM64_MARIO1_SPIN 16
+#define PM64_MARIO1_SPEEDY_SPIN 17
+#define PM64_MARIO1_SPIN_ATTACK 18
+/* TTYD Mario's animation name (M_H_1A, M_S_1...) in the field or in battle, played for frames so far, as the
+ * player sprite and its animation the look draws it with: the hammer's moves PM64's own swings with the hammer in
+ * his hands, at the hammer's level (TTYD's Hammer, Super, Ultra as PM64's Smash1, 2, 3) and PM64's own steps and
+ * timing (pm64_player_pc.c); the rest Mario1's (portPm64MarioAnim) */
+int portPm64MarioLookAnim(const char* ttyd, int battle, int frames, int* sprite);
 
 /* --- drawing (Aurora): an RGBA8 GX texture made from the ROM, on the 2D camera,
  * centred at (x, y), w x h; u, v the part of the texture used (its size over the

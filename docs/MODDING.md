@@ -10,6 +10,9 @@ The port loads mods from the **mods folder** in the user folder (next to `settin
 | Linux | `~/.local/share/ttyd/mods` |
 | iOS | Files > TTYD > Saves > mods |
 | Android | the app's internal storage: **Add a mod...** on the launcher's Mods tab installs a file from the phone |
+| Portable mode | `User/mods` beside the program, when a `portable.txt` is there ([PORTABLE.md](PORTABLE.md)) |
+
+On a computer, **Open the mods folder** (the Mods tab, or Settings > Mods in the Start menu) opens it, and the Mods tab shows its path.
 
 The easiest way in is the **mod manager** (below): drop a mod on Paper Cut's window. The order and switches are kept in `mods/mods.txt`.
 
@@ -313,8 +316,9 @@ The Practice Codes as ported locally: the menu, its pages and the displays work;
 [Archipelago](https://archipelago.gg) is a multiworld randomizer; TTYD's part is the [TTYD apworld](https://github.com/jamesbrq/ArchipelagoTTYD) (seeds, logic, the client) and the [TTYD AP mod](https://github.com/jamesbrq/TTYDAP) (the game side). On the GameCube its patcher writes a seed into a disc image and its client reads and writes Dolphin's memory. The US build does both itself (Windows, macOS, Linux, Android; iOS has no file chooser yet):
 
 - **The seed** (the `.apttyd` file the apworld generates for a slot) is applied at the game's start, as the patcher applies it to a disc: each location's item goes into the script, table or shop that gives it (721 places; local CI checks the 629 in RELs against the disc), shop prices and sell prices, the seed's options in the low memory the mod reads, and its files (`enemies.bin`, `bosses.bin`, `tracker.bin`, `msg/US/desc.txt`) over the disc's. The mod's own messages (`msg/US/mod.txt`) come from the installed `ttyd.apworld`: `$TTYD_APWORLD_FILE`, beside the seed, or Archipelago's `custom_worlds` folder.
-- **The server.** A built-in client (WebSocket: `ws://` everywhere, `wss://` on Windows) connects to a room: items the slot receives go to the game, a location's check goes out when its flag is set, the goal and DeathLink both ways, and the current room for trackers.
-- **The game side** is the TTYD AP mod, ported as a code mod ([above](#porting-a-gamecube-mod)): it gives the received items, shows who sent them and runs the seed's options. It's GPL, so it isn't part of this repository; build it from its source with the porting tools and add it to the mods folder.
+- **The server.** A built-in client (WebSocket, `ws://` and `wss://`: WinHTTP on Windows, Mbed TLS elsewhere; an address without either, such as `archipelago.gg:38281`, tries `wss://` first) connects to a room: items the slot receives go to the game, a location's check goes out when its flag is set, the goal and DeathLink both ways, and the current room for trackers.
+- **The game side** is the TTYD AP mod, ported as a code mod ([above](#porting-a-gamecube-mod)): it gives the received items, shows who sent them and runs the seed's options. It's GPL, so it isn't part of this repository; build it from its source with the porting tools and add it to the mods folder. Without it the client still connects, but nothing is sent or received; the Archipelago tab's status says so.
+- **Places that aren't items in the game's own script.** The apworld points a few places at words the mod's reworked scenes read: the partners' joining scenes, troubles that pay coins, the black chests, Whacka and the Excess Express madam. In the game's own script those words are something else (in Goombella's scene, a camera curve), so a seed's item is written only where the word is an item; the others stay as the disc has them, and the log names each.
 
 For a single-player game without a server, the built-in randomizer makes a seed itself and applies it through the same machinery ([RANDOMIZER.md](RANDOMIZER.md)).
 

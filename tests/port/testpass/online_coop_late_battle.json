@@ -1,0 +1,86 @@
+{
+ "desc": "Playing together, the only guest's link drops once its join is through and the relay forgets its ticket a moment (relay --kill and --forget 2 s, from the guest's \"join: done\": relay_go); the host, seeing it gone, starts a script battle (hei_03's Paragoombas, the auto battler) and fights it as its own. The guest comes back while that battle is under way: a late join needs a shared battle, so it waits in the field (never pulled into the battle, never fighting a copy alone; its where during the battle shows it in the field) and, once the host's battle ends, follows it again: both settled in the same place, the battle's progress the same (drift check), no merge (nm51f l51-057's outcome, locked in)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_EXIT_FRAMES": 16000,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--kill",
+   "guest:0",
+   "--forget",
+   "guest:0:2"
+  ],
+  "relay_go": {
+   "role": "guest",
+   "log": "join: done after"
+  },
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 6000",
+     "wait_peer !here 30000",
+     "give 148",
+     "battle 4",
+     "wait_seq 4 3000",
+     "wait_peer here 60000",
+     "wait_seq 2 12000",
+     "wait 300",
+     "where coop 2400",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_AUTO_BATTLE": 1,
+     "TTYD_SYNC_BATTLE_LOG": 1
+    },
+    "log_must": [
+     "co-op: player 2 is back: seat 2 again"
+    ],
+    "log_must_not": [
+     "the shared battle begins"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 60000",
+     "where coop 0",
+     "wait_peer !battle 60000",
+     "wait 300",
+     "where coop 2400",
+     "wait 900"
+    ],
+    "log_must": [
+     "co-op: the host's game is gone: waiting",
+     "join: done after",
+     "co-op: the host's game is back after"
+    ],
+    "log_must_not": [
+     "the shared battle begins",
+     "this battle alone",
+     "merge: joined the other game's progress",
+     "NOT SETTLED: joining the room"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true,
+   "drift": true,
+   "same_where": true
+  }
+ },
+ "timeout": 500
+}

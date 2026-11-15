@@ -168,7 +168,7 @@ static void say(int p, const char* what, int a, int b) {
 static int settingOn(void) {
     static int* sOn;
     if (sOn == NULL) {
-        sOn = portSettingsDeclare("audience_players", 1, 0, 1);
+        sOn = portSettingsDeclare("audience_players", PORT_AUDIENCE_PLAYERS_DEFAULT, 0, 1);
     }
     return *sOn;
 }

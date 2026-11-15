@@ -6,6 +6,7 @@
 #ifdef TARGET_PC
 #include "port/scene_skip.h"
 #include "port/menu_tap.h"
+#include "port/statesync.h"
 #endif
 #include "dolphin/mtx.h"
 #include "dolphin/gx.h"
@@ -503,6 +504,33 @@ USER_FUNC(evt_tou_set_rule_result) {
  * Then every visible fighter's points change by a random -3..+3,
  * the opponent id is saved in GSW_TOU_LAST_OPPONENT_ID, and the ranking is re-sorted with rankingControll.
  */
+#ifdef TARGET_PC
+/* PC port: online co-op, tou_03's draws (a match's jitter, the next rule) from the board itself, the same in every
+ * game holding the same board, not this game's rand(), as tou.c's: each game drew its own, and the guests' ranking
+ * words differed from the host's after every match (netmatrix s51-001/006/013/015, a DRIFT) */
+static u32 sPortRankSeed;
+static void portRankSeed(u32 salt) {
+    s32 i;
+    sPortRankSeed = 0x9E3779B9u ^ salt;
+    for (i = 0; i < rank_wp->count; i++) {
+        sPortRankSeed = sPortRankSeed * 16777619u ^ (u32)(u16)rank_wp->entries[i].points.total ^
+                        ((u32)rank_wp->entries[i].flags << 16);
+    }
+    if (sPortRankSeed == 0) {
+        sPortRankSeed = 1;
+    }
+}
+static int portRankRand(void) {
+    if (!portStateSyncCoopOn()) {
+        return rand();
+    }
+    sPortRankSeed ^= sPortRankSeed << 13;
+    sPortRankSeed ^= sPortRankSeed >> 17;
+    sPortRankSeed ^= sPortRankSeed << 5;
+    return (int)(sPortRankSeed & 0x7FFF);
+}
+#define rand portRankRand
+#endif
 USER_FUNC(evt_tou_set_ranking_win_lose) {
     EvtWord* args = event->args;
     s32 lose = evtGetValue(event, args[0]);
@@ -511,6 +539,13 @@ USER_FUNC(evt_tou_set_ranking_win_lose) {
     s16 max;
     s32 i;
 
+#ifdef TARGET_PC
+    if (portStateSyncCoopGuest()) {
+        /* (an online co-op guest: the board from the saved ranking, the host's, as the host's board is) */
+        _mapFree(rank_wp->entries);
+        rankingInit();
+    }
+#endif
     if (lose == 0) {
         for (i = 0; i < rank_wp->count; i++) {
             if (id == rank_wp->entries[i].id) {
@@ -529,6 +564,9 @@ USER_FUNC(evt_tou_set_ranking_win_lose) {
         swClear(GSWF_TOU_LAST_MATCH_WON);
     }
 
+#ifdef TARGET_PC
+    portRankSeed((u32)(id * 31 + lose));
+#endif
     min = 1000;
     max = -1000;
     for (i = 0; i < rank_wp->count; i++) {
@@ -549,6 +587,24 @@ USER_FUNC(evt_tou_set_ranking_win_lose) {
     swByteSet(GSW_TOU_LAST_OPPONENT_ID, id);
     swSet(GSWF_TOU_LAST_OPPONENT_VALID);
     rankingControll();
+#ifdef TARGET_PC
+    if (portStateSyncCoopHost()) {
+        /* (online co-op, the host: the board saved now, as rankingExit saves it, not only when the area is left: the
+           guests build theirs from the saved ranking at the next match, as tou.c's) */
+        RankEntry* entry = rank_wp->entries;
+        s32 j;
+        for (i = 0; i < rank_wp->count; i++, entry++) {
+            if (entry->flags & RANK_BELOW) {
+                swSet(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE);
+            } else {
+                swClear(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE);
+            }
+            for (j = 0; j < 2; j++) {
+                swByteSet(2 * entry->id + GSW_TOU_FIGHTER_POINTS_BASE + j, entry->points.bytes[j]);
+            }
+        }
+    }
+#endif
     return EVT_RETURN_DONE;
 }
 
@@ -653,6 +709,9 @@ static USER_FUNC(evt_tou_get_rule_info) {
         rules = ruleDt_re;
         num = 14;
     }
+#ifdef TARGET_PC
+    portRankSeed(0x52554C45u ^ (u32)type ^ ((u32)evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) << 8)); /* (the rule) */
+#endif
     if (type == 0) {
         for (i = 0; i < num; i++) {
             if (rules[i].id == 6) {
@@ -675,6 +734,9 @@ static USER_FUNC(evt_tou_get_rule_info) {
     evtSetValue(event, args[4], rules[i].param2);
     return EVT_RETURN_DONE;
 }
+#ifdef TARGET_PC
+#undef rand
+#endif
 
 /**
  * Script helper: arg0 = fighter id, arg1 = index of the enemy inside that fighter's battle group.
@@ -1162,6 +1224,15 @@ static void rankingExit(void) {
     s32 j;
     RankEntry* entry;
 
+#ifdef TARGET_PC
+    if (portStateSyncCoopGuest()) {
+        /* PC port: an online co-op guest's saved ranking is the host's (its changes come over), as tou.c's
+           rankingExit: this game's board, built as the area was entered, may be older than them, and written back
+           as the guest left tou_03 it undid them (a DRIFT after each match, netmatrix s51-006) */
+        _mapFree(rank_wp->entries);
+        return;
+    }
+#endif
     for (i = 0, entry = rank_wp->entries; i < rank_wp->count; i++, entry++) {
         if (entry->flags & RANK_BELOW) {
             swSet(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE);

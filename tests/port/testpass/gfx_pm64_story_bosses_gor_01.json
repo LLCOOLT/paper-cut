@@ -1,0 +1,47 @@
+{
+ "desc": "The 0.5.0 iPhone kill (1 fps, then signal 9): Rogueport's plaza after the credits with the Paper Mario 64 partners and bosses on (Jr. Troopa, the Koopa Bros.' rematch, Crystal King and Kammy Koopa in it, their story-boss badges) and textures upscaled 4x: the room draws more than Aurora's 128 MB content cache, which evicted what the frame was still to draw and made it again, frame after frame (500 uploads, 24 MB and as many buffers of their own a frame). Aurora's resources logged every 2 frames: after the room's first textures, the uploads stay under 100 a frame, the textures alive under 200 MB and the cached texture objects under 1000",
+ "groups": ["bugs", "gfx", "pm64", "pm64_story"],
+ "versions": ["us"],
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1,
+  "texture_upscale": 2
+ },
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1,2,3,4,5,6,7",
+  "TTYD_GFX_STATS": 2,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 240",
+  "goto -300 0 430",
+  "hold down 4",
+  "wait 300",
+  "goto 380 0 410",
+  "hold down 4",
+  "wait 300",
+  "goto 0 0 200",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "timeout": 600,
+ "log_must": [
+  "\\[pm64\\] story bosses in gor_01: Jr\\. Troopa; Koopa Bros\\. \\(rematch\\); Crystal King; Kammy Koopa;",
+  "\\[pm64\\] story boss badges drawn: [1-9]",
+  "^\\[gfxstats\\] frame (7\\d\\d|[89]\\d\\d|\\d{4,}): draws [1-9]\\d* ",
+  "where: map 'gor_01'"
+ ],
+ "log_must_not": [
+  "^\\[gfx\\] guard",
+  "^\\[gfxstats\\] frame (7\\d\\d|[89]\\d\\d|\\d{4,}): .* uploads \\d{3,} ",
+  "^\\[gfxstats\\] frame \\d+: .* textures \\d+ \\(([2-9]\\d\\d|\\d{4,}) MB\\)",
+  "^\\[gfxstats\\] peak: .* texture objects \\d{4,} "
+ ],
+ "new": true
+}

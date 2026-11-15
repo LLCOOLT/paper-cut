@@ -51,8 +51,8 @@ New mail is a notice in the corner and a chime: Mario walks on. The first mails 
 In shops, how many of the item you hold and your shop points under its name; selling, storing and taking out go straight back to the list; selling from storage too; a storage box at the Howz of Badges; a notice when the Rogueport shop has new stock.
 お店ではアイテム名の下に持っている数とポイントを表示。売る・預ける・引き出すとすぐリストに戻ります。預けたアイテムも売れます。バッジ屋に預かり箱。ゴロツキタウンのお店に新しい品が入るとお知らせ。
 
-The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks, and near someone Goombella has not Tattled yet.
-マリオの上の「！」が、ゲームが印をつけた所だけでなくAボタンが使えるすべての所と、クリスチーヌがまだ調べていない人の近くにも出ます。
+The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks.
+マリオの上の「！」が、ゲームが印をつけた所だけでなくAボタンが使えるすべての所に出ます。
 
 The file screen shows each file's partner and the date it was saved, a colour per file, and a gold star on a finished story.
 ファイル画面に各ファイルの仲間とセーブした日付、ファイルごとの色、クリアしたファイルには金の星を表示します。
@@ -60,8 +60,8 @@ The file screen shows each file's partner and the date it was saved, a colour pe
 In the Start menu's items and badges, Left and Right turn the page (past the edge of the items' two columns).
 スタートメニューのアイテムとバッジで、左右でページをめくります（アイテムの2列の端から先）。
 
-In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins).
-クッパの横スクロールステージで、ポーズ画面のYでステージを最初からやり直します（開始時のセーブステート）。
+In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins). From the next stage.
+クッパの横スクロールステージで、ポーズ画面のYでステージを最初からやり直します（開始時のセーブステート）。次のステージから。
 
 Which tracks the Jukebox lists: those heard on this file; also a share of the list for each Shine Sprite found (all with the last); or every track.
 ジュークボックスの曲：このファイルで聞いた曲、さらにシャインスプライトを見つけるごとにリストの一部（最後の1つで全部）、またはすべての曲。
@@ -69,8 +69,8 @@ Which tracks the Jukebox lists: those heard on this file; also a share of the li
 The Journal sells a hint for 10 coins: where a Star Piece or Shine Sprite is still hidden, in this area first.
 きろくで10コインのヒントを買えます：まだ隠れているスターのかけらかシャインスプライトの場所。まずこのエリアから。
 
-Glitz Pit and chapter 6 pace trims
-とうぎ場と6章の時間短縮
+Shorter Glitz Pit and train trips
+とうぎ場と列車の移動を短く
 
 After your first Glitz Pit match, no guard walks you to the ring: straight there. Every Excess Express trip after chapter 6 goes straight to the other station. Not online.
 とうぎ場の最初の試合のあとは、ガードマンの案内なしでリングに直行。6章のあとのエクセレント号の旅はすべて向こうの駅に直行します。オンラインでは無効。

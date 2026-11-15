@@ -1,0 +1,42 @@
+{
+ "desc": "A choice TTYD_AUTO_CHOICE names is the auto's alone: Frankly's two badge-lesson choices (gor_02, story 19) answered no while the input script mashes A through the scene; the lesson skipped and story 20 reached every time (the script's A once picked yes first, mp_online_blooper3's 1-in-6 hang)",
+ "groups": [
+  "story"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "05_blooper"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "05_blooper"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_AUTO_CHOICE": "mac_0_121_02_yesno:1",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+ },
+ "input": "tests/port/input/choice_auto_owned.txt",
+ "log_must": [
+  "^\\[story\\] frame \\d+: choice 'mac_0_121_02_yesno' .*: option 1 of 2",
+  "^\\[input\\] frame \\d+: reached",
+  "^\\[input\\] end"
+ ],
+ "timeout": 600
+}

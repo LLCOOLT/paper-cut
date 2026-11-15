@@ -8,8 +8,11 @@
 #include "port/gameplus.h"
 #include "port/platform.h"
 #include "port/players.h"
+#include "port/prompt_check.h"
 #include "port/replay.h"
+#include "port/special_places.h"
 #include "port/statesync.h"
+#include "data/mapdata.h"
 #include "driver/seqdrv.h"
 #include "driver/swdrv.h"
 #include "evt/evt_story.h"
@@ -144,12 +147,16 @@ static int vehicleWay(int exit) {
 /* the room's first way in (the list's safe spawn), or -1 */
 static int firstWay(int room) {
     int i;
-    for (i = 0; i < portAreaExitCount; i++) {
+    for (i = 0; room >= 0 && i < portAreaExitCount; i++) {
         if (portAreaExits[i].room == room && portAreaExits[i].hit != NULL && !vehicleWay(i)) {
             return i;
         }
     }
     return -1;
+}
+
+int portTravelFirstWay(int room) {
+    return firstWay(room);
 }
 
 static int seeded(int room) {
@@ -214,13 +221,13 @@ const char* portTravelDepartRefusal(void) {
         return "Not now: the story keeps Mario here.";
     }
     room = portAreaRoomFind(gp->currentMapName);
-    if (room < 0) {
+    if (room < 0 && !portSpecialRoom(gp->currentMapName)) { /* (Mario's house: a special place, port/special_places.h) */
         return "Not from here: walk to a room on the map first.";
     }
     if (follower()) {
         return "Not while someone is following Mario.";
     }
-    for (i = 0; i < STORY_ROWS; i++) {
+    for (i = 0; room >= 0 && i < STORY_ROWS; i++) {
         if (rowMatches(i, room) && s >= kStory[i].departFrom && s < kStory[i].departTo) {
             return "Not now: the story keeps Mario here.";
         }
@@ -319,6 +326,7 @@ static void sweepFrame(void);
 
 void portTravelFrame(void) {
     sweepFrame();
+    portSpecialFrame(); /* (the special places' trips: port/special_places.h) */
     if (!sAsked) {
         return;
     }
@@ -347,6 +355,7 @@ void portTravelFrame(void) {
     printf("[travel] trip: %s %s\n", sMap, sHit);
     fflush(stdout);
     portAreaMapsJumped();
+    portSpecialLeaving(); /* (from a special place: this trip, not the way back) */
     seqSetSeq(SEQ_MAP_CHANGE, sMap, sHit);
 }
 
@@ -362,6 +371,8 @@ static int sTrips, sRefused;
 static int sWays;                /* $TTYD_TRAVEL_SWEEP=ways: every way into every room, not only the first */
 static int sStuck, sRescue, sFought, sLost; /* trips that stuck (each noted, then on from home), a rescue on
                                               * its way, a fight on this trip, a Game Over after one */
+static char sArea[4];            /* $TTYD_TRAVEL_SWEEP_AREA=<area>: only that area's rooms */
+static int sHub, sHomeTrip;      /* $TTYD_TRAVEL_SWEEP_HUB=1: home between trips (each room from home and back) */
 
 static int fieldFree(void) {
     return seqGetSeq() == SEQ_GAME && !seqCheckSeq() && marioStGetSystemLevel() == 0 && marioChkKey() &&
@@ -409,9 +420,25 @@ static int reached(int room) {
 
 /* asks for the trip to room through way (its first way in when -1); 1 when on its way */
 static int sweepAsk(int room, int way) {
-    const char* why = reached(room) ? portTravelArriveRefusal(room) : "not reached yet";
+    const char* why;
+    if (sArea[0] != '\0' && room != sHome && strcmp(portAreaRooms[room].area, sArea) != 0) {
+        return 0; /* (another area's: not this sweep's) */
+    }
+    if (mapDataPtr(portAreaRooms[room].map) == NULL) {
+        /* (a room this build hasn't: Director's Cut's sewer rooms come with the Aurora build's) */
+        printf("[travel] sweep %s: not in this build\n", portAreaRooms[room].map);
+        return 0;
+    }
+    why = reached(room) ? portTravelArriveRefusal(room) : "not reached yet";
     if (way < 0) {
         way = firstWay(room);
+    }
+    if (reached(room) && (way < 0 || (why != NULL && strncmp(why, "No way in", 9) == 0))) {
+        /* every way counted as Mario's, and still none: the room has no way in on the tables (hei_10's,
+         * issue #61: its BeroEntry table went unread, so it could never be travelled to) */
+        printf("[travel] sweep %s: NO WAY IN (the tables have none)\n", portAreaRooms[room].map);
+        sStuck++;
+        return 0;
     }
     if (why == NULL) {
         why = way >= 0 ? portTravelRequest(way) : "no way in";
@@ -454,6 +481,10 @@ static void sweepFrame(void) {
             }
         }
         sHome = portAreaRoomFind(gp->currentMapName);
+        snprintf(sArea, sizeof(sArea), "%.3s",
+                 getenv("TTYD_TRAVEL_SWEEP_AREA") != NULL ? getenv("TTYD_TRAVEL_SWEEP_AREA") : "");
+        sHub = getenv("TTYD_TRAVEL_SWEEP_HUB") != NULL && atoi(getenv("TTYD_TRAVEL_SWEEP_HUB")) != 0 && sHome >= 0;
+        sHomeTrip = 1; /* (at home now) */
         printf("[travel] sweep from %s, story %d: %s\n", gp->currentMapName, story(),
                portTravelDepartRefusal() != NULL ? portTravelDepartRefusal() : "may leave");
         fflush(stdout);
@@ -498,7 +529,7 @@ static void sweepFrame(void) {
             }
             return;
         }
-        if (++sSettle < 30) {
+        if (portPromptAuditBusy() || ++sSettle < 30) { /* (a prompt audit there first) */
             return;
         }
         sWait = 0;
@@ -520,6 +551,14 @@ static void sweepFrame(void) {
         }
         fflush(stdout);
     }
+    if (sHub && !sHomeTrip) { /* back home before the next room */
+        sHomeTrip = 1;
+        printf("[travel] sweep back home:\n");
+        if (sweepAsk(sHome, -1)) {
+            return;
+        }
+    }
+    sHomeTrip = 0;
     if (sWays) { /* every way in, each its own trip */
         while (sNext < portAreaExitCount) {
             const int way = sNext++;

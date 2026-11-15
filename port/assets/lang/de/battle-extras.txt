@@ -9,8 +9,8 @@ Jeder gewonnene Kampf bekommt eine Note von D bis S für seine Tricks, Konter, d
 Paper Cut badge set
 Paper-Cut-Ordenset
 
-Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
-Zwölf neue Orden, jeder aus zwei oder drei Orden des Spiels gefaltet, verkauft von einem Toad-Händler auf dem Platz von Rohlingen, sobald der Prolog vorbei ist. Eine Datei, die sie enthält, ist nicht mehr für das GameCube-Spiel.
+Twelve new badges, each mixing two or three of the game's, sold by a Toad in Rogueport's plaza after the prologue. A save holding them no longer works on a GameCube.
+Zwölf neue Orden, jeder aus zwei oder drei Orden des Spiels gemischt, verkauft von einem Toad auf dem Platz von Rohlingen nach dem Prolog. Ein Spielstand mit ihnen läuft nicht mehr auf einem GameCube.
 
 Paper Cut badges
 Paper-Cut-Orden

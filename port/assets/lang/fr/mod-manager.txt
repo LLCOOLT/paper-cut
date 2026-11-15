@@ -249,8 +249,8 @@ Recharger les mods
 Reads the mods folder again: a mod added or changed.
 Relit le dossier des mods : un mod ajouté ou changé.
 
-Shows the mods folder on the desktop.
-Montre le dossier des mods sur le bureau.
+Shows the mods folder, in the user folder: the system's folder for app data, or User beside the program with portable.txt. The full page shows its path.
+Montre le dossier des mods, dans le dossier utilisateur : le dossier du système pour les données d'applis, ou User à côté du programme avec portable.txt. La page complète montre son chemin.
 
 Its code follows at the next start.
 Son code suit au prochain démarrage.

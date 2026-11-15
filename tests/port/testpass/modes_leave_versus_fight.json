@@ -1,0 +1,44 @@
+{
+ "desc": "Leaving a versus fight against the computer while Mario's side waits in its command menu (TTYD_VERSUS_TEST=1, no auto battle; the leave as the Settings tab's Leave button does it, TTYD_MODERUN_LEAVE): the battle ends at once as run away (before the fix only marked as run away, read after an action, so the fight waiting in the menu played on for good), the file's pouch goes back and Mario is in Rogueport again",
+ "groups": [
+  "modes"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "user_files": [
+  "tests/port/testpass/moderun/versus_fight.txt>versus.txt"
+ ],
+ "settings": {
+  "skip_scenes": 1,
+  "skip_any_scene": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_VERSUS_TEST": "1",
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 8000,
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_LEAVE": "900",
+  "TTYD_MODERUN_EXIT": "60"
+ },
+ "input": [
+  "wait 6000",
+  "end"
+ ],
+ "log_must": [
+  "\\[versus\\] the fight starts: ",
+  "\\[moderun\\] leave asked \\(in a battle\\)",
+  "\\[versus\\] taken back: its battle ends as run away",
+  "\\[versus\\] the file's own pouch back",
+  "\\[moderun\\] Versus over after",
+  "\\[moderun\\] check after Versus: stats same, partners same, badges same, items same"
+ ],
+ "log_must_not": [
+  "\\[versus\\] test not started",
+  "\\[moderun\\] leave refused"
+ ],
+ "timeout": 400
+}

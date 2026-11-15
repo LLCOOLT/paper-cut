@@ -483,6 +483,7 @@ void PORT_HOOKABLE(marioStDisp)(void) {
     camDraw();
 #ifdef TARGET_PC
     portInterpSceneDrawn();
+    portMemDeferredFreesFlush(); /* frees held in frames drawn between the game's: its own draw is done */
 #endif
     g_bFirstSmartAlloc = FALSE;
 }

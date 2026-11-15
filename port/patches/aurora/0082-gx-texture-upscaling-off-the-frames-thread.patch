@@ -1,0 +1,846 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Fri, 13 Nov 2026 22:00:00 -0500
+Subject: [PATCH] gx: texture upscaling off the frame's thread
+
+A player (RTX 4090) saw the game chug with Texture upscaling, mostly in
+cutscenes with a Paper Mario 64 ROM linked. Each texture missing from the
+content cache was decoded, upscaled (the application's filter: 5-300 ms a
+texture at 4x), given its levels and uploaded on the frame's thread, so a scene
+that loads a cast of textures at once (a cutscene's, Paper Mario 64's sprite
+rasters as their animations reach new frames) stalled for frames on end: the
+prologue at 4x spent 9.6 s of its frames upscaling, one frame 2.1 s. At 4x the
+128 MiB content cache also held a fraction of a room's textures, so they were
+evicted and upscaled again as it played (Rogueport's plaza with the Paper
+Mario 64 bosses: 378 of 688 upscales the same picture again).
+
+- A texture missing from the content cache is uploaded as it is, at once, and
+  drawn so until its upscaled picture is in. Its bytes (and its palette's) go
+  to Aurora's upscale workers (a quarter of the CPU's threads, 1 to 4, low
+  priority), which decode, upscale and make the levels there.
+- Results go in at a frame's end (the FIFO drained): the texture made (one a
+  frame) and uploaded a megabyte a frame at most within 1.5 ms, then put in the
+  content cache under the same key and in each texture object that held the
+  picture drawn meanwhile, the bindings invalidated. A picture is upscaled once.
+  One not drawn in the last 2 frames is kept back until it is drawn again.
+- A source (its address, palette, size and format) whose picture changed 3
+  times, each within 30 frames of the last, is taken as drawn into for 600
+  frames: its new pictures are not given to the workers; one of them seen again
+  (a content cache hit) is then. So is one put off while the workers had 512
+  pictures or 32 MiB waiting.
+- The content cache's budget is its own (halved when video memory runs out)
+  times the upscaling's factor; the memory guards step the upscaling down, and
+  this with it, when memory runs short.
+- A change of the factor or the filter drops what the workers were given.
+- AuroraSetTextureUpscaleWait(1) (tests on a virtual clock): each texture is
+  upscaled on the frame's thread where it is first drawn, as before, and a
+  frame's end waits for anything the workers still have, so captures are the
+  same whatever the machine's speed (the prologue's at 4x: the same pixels).
+- AuroraGetTextureUpscaleStats: the last frame's work (time on the frame's
+  thread, handed out, put in, waiting, sources taken as changing).
+- One thread (the browser without threads): upscaled where it is asked for, put
+  in at the frame's end as the workers' are.
+- LruCache::peek: a value and how long since it was used, without touching it.
+---
+ include/aurora/upscale.h |  25 ++
+ lib/gfx/lru_cache.hpp    |  12 +
+ lib/gx/texture.cpp       | 583 ++++++++++++++++++++++++++++++++++++++++++++---
+ 3 files changed, 589 insertions(+), 31 deletions(-)
+
+diff --git a/include/aurora/upscale.h b/include/aurora/upscale.h
+index 054995a..e1745cf 100644
+--- a/include/aurora/upscale.h
++++ b/include/aurora/upscale.h
+@@ -13,11 +13,36 @@ extern "C" {
+  * times larger: its first level decoded to RGBA8 and given to upscaler (out: factor*width x factor*height
+  * RGBA8), the smaller levels averaged down from the result. factor 1 or upscaler NULL: off. Applies to
+  * textures loaded after the call.
++ *
++ * The upscaler runs on worker threads of Aurora's own (several at once: it must be reentrant), never on the
++ * frame's: a texture is drawn as it is until its upscaled picture is ready, which goes in at a frame's end
++ * (a few each frame, within a time budget), once per picture (textures are kept by their content). A texture
++ * whose picture keeps changing (one drawn into each frame) is drawn as it is; each of its pictures that comes
++ * back is upscaled then.
+  */
+ typedef void (*AuroraTextureUpscaler)(const unsigned char* rgba, unsigned width, unsigned height, unsigned factor,
+                                       unsigned char* out);
+ void AuroraSetTextureUpscale(unsigned factor, AuroraTextureUpscaler upscaler);
+ 
++/**
++ * wait 1 (tests on a virtual clock: the same pictures whatever the machine's speed): each texture upscaled on the
++ * frame's thread where it is first drawn, and drawn so from its first frame, as before the workers; a frame's end
++ * also waits for anything the workers still have. 0 (the default): never waits.
++ */
++void AuroraSetTextureUpscaleWait(int wait);
++
++/** The upscaling's work in the last frame (tests and the performance log). */
++typedef struct AuroraTextureUpscaleStats {
++  unsigned syncMicros;               // time the frame's own thread spent on it (decoding, handing out, putting in)
++  unsigned queued;                   // textures given to the upscaling workers
++  unsigned published;                // upscaled textures put in place of the ones drawn meanwhile
++  unsigned long long publishedBytes; // their size
++  unsigned waiting;                  // given to the workers and not in yet (as the frame ended)
++  unsigned dynamicSkips;             // textures drawn as they are: their picture keeps changing (drawn into)
++  unsigned deferred;                 // pictures drawn as they are until they are drawn again (all in all)
++} AuroraTextureUpscaleStats;
++void AuroraGetTextureUpscaleStats(AuroraTextureUpscaleStats* out);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/lib/gfx/lru_cache.hpp b/lib/gfx/lru_cache.hpp
+index 42e26de..0ba267c 100644
+--- a/lib/gfx/lru_cache.hpp
++++ b/lib/gfx/lru_cache.hpp
+@@ -60,6 +60,18 @@ public:
+     return &it->second->value;
+   }
+ 
++  // without touching it: its value and how many frames ago it was last used (nullptr: not cached)
++  Value* peek(const Key& key, uint64_t* framesUnused = nullptr) {
++    const auto it = m_entries.find(key);
++    if (it == m_entries.end()) {
++      return nullptr;
++    }
++    if (framesUnused != nullptr) {
++      *framesUnused = m_frame - it->second->lastUsedFrame;
++    }
++    return &it->second->value;
++  }
++
+   Value* pin(const Key& key) {
+     const auto it = m_entries.find(key);
+     if (it == m_entries.end()) {
+diff --git a/lib/gx/texture.cpp b/lib/gx/texture.cpp
+index cbdab83..895d944 100644
+--- a/lib/gx/texture.cpp
++++ b/lib/gx/texture.cpp
+@@ -6,6 +6,7 @@
+ #include "../gfx/tex_palette_conv.hpp"
+ #include "../gfx/texture_convert.hpp"
+ #include "../gfx/texture_replacement.hpp"
++#include "../thread.hpp"
+ #include "../webgpu/gpu.hpp"
+ #include "shader_info.hpp"
+ 
+@@ -16,10 +17,15 @@
+ 
+ #include <algorithm>
+ #include <atomic>
++#include <chrono>
++#include <condition_variable>
+ #include <cstddef>
+ #include <cstdint>
+ #include <cstring>
++#include <deque>
++#include <mutex>
+ #include <optional>
++#include <thread>
+ #include <utility>
+ #include <vector>
+ 
+@@ -30,18 +36,43 @@ namespace aurora::gx {
+ namespace {
+ constexpr Module Log{"aurora::gx::texture"};
+ 
+-// AuroraSetTextureUpscale: the application's filter and its factor (1: off)
+-unsigned s_upscaleFactor = 1;
+-AuroraTextureUpscaler s_upscaler = nullptr;
++// AuroraSetTextureUpscale: the application's filter and its factor (1: off), and their generation (a change
++// drops what the workers were given before it)
++std::atomic<unsigned> s_upscaleFactor{1};
++std::atomic<AuroraTextureUpscaler> s_upscaler{nullptr};
++std::atomic<uint64_t> s_upscaleGeneration{1};
+ 
+-// A texture's first level (RGBA8, w x h) uploaded factor times larger by the application's filter, with as
+-// many smaller levels as the game's had (and the ones the factor adds), each averaged down from the one above;
+-// an empty handle when upscaling is off or doesn't apply.
+-gfx::TextureHandle upscaled_texture(const uint8_t* rgba, uint32_t w, uint32_t h, uint32_t mips, const char* name) {
+-  const uint32_t f = s_upscaleFactor;
+-  if (f < 2 || s_upscaler == nullptr || rgba == nullptr || w == 0 || h == 0 || w > 512 || h > 512) {
+-    return {};
++// AuroraGetTextureUpscaleStats: this frame's (the frame's thread), and the last frame's
++AuroraTextureUpscaleStats s_upscaleStats{};
++std::mutex s_upscaleStatsMutex;
++AuroraTextureUpscaleStats s_upscaleLastStats{};
++
++// the frame's thread's time on the upscaling, into this frame's stats
++struct UpscaleTimer {
++  std::chrono::steady_clock::time_point from = std::chrono::steady_clock::now();
++  ~UpscaleTimer() {
++    s_upscaleStats.syncMicros += static_cast<unsigned>(
++        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - from).count());
+   }
++};
++
++// whether a texture of this size is upscaled (as the setting is now)
++bool upscale_applies(uint32_t w, uint32_t h) noexcept {
++  return s_upscaleFactor.load(std::memory_order_relaxed) > 1 && s_upscaler.load(std::memory_order_relaxed) != nullptr &&
++         w != 0 && h != 0 && w <= 512 && h <= 512;
++}
++
++struct UpscaledLevels {
++  std::vector<uint8_t> data; // RGBA8, the levels one after another
++  uint32_t width = 0;
++  uint32_t height = 0;
++  uint32_t levels = 0;
++};
++
++// A texture's first level (RGBA8, w x h) made f times larger by the application's filter, with as many smaller
++// levels as the game's had (and the ones the factor adds), each averaged down from the one above (a worker's)
++UpscaledLevels upscale_levels(const uint8_t* rgba, uint32_t w, uint32_t h, uint32_t mips, uint32_t f,
++                              AuroraTextureUpscaler upscaler) {
+   const uint32_t W = w * f, H = h * f;
+   uint32_t levels = mips + (f >= 4 ? 2 : 1);
+   uint32_t maxLevels = 1;
+@@ -54,7 +85,7 @@ gfx::TextureHandle upscaled_texture(const uint8_t* rgba, uint32_t w, uint32_t h,
+     total += static_cast<size_t>(std::max(1u, W >> i)) * std::max(1u, H >> i) * 4;
+   }
+   std::vector<uint8_t> out(total);
+-  s_upscaler(rgba, w, h, f, out.data());
++  upscaler(rgba, w, h, f, out.data());
+   size_t at = 0;
+   for (uint32_t i = 1; i < levels; ++i) {
+     const uint32_t pw = std::max(1u, W >> (i - 1)), ph = std::max(1u, H >> (i - 1));
+@@ -74,7 +105,7 @@ gfx::TextureHandle upscaled_texture(const uint8_t* rgba, uint32_t w, uint32_t h,
+     }
+     at += static_cast<size_t>(pw) * ph * 4;
+   }
+-  return gfx::new_static_texture_2d(W, H, levels, GX_TF_RGBA8_PC, {out.data(), out.size()}, false, name);
++  return {.data = std::move(out), .width = W, .height = H, .levels = levels};
+ }
+ 
+ struct DynamicPaletteKey {
+@@ -189,6 +220,14 @@ gfx::LruCache<TextureContentKey, gfx::TextureHandle> s_contentCache{
+     {.bytes = texture::ContentCacheBudgetBytes, .workingSetFrames = texture::ContentCacheWorkingSetFrames},
+     [](const gfx::TextureHandle&) { ++s_stats.evictions; },
+ };
++// The content cache's budget: this (halved when video memory runs out) times the upscaling's factor, as upscaled
++// textures are factor^2 times larger: 4x let 128 MiB hold a fraction of a room's textures, evicted and upscaled
++// again while it played (Rogueport's plaza with the Paper Mario 64 bosses: 378 of 688 upscales the same picture
++// again). The memory guards step the upscaling down (and so this) when memory runs short.
++uint64_t s_contentBudgetBase = texture::ContentCacheBudgetBytes;
++uint64_t content_cache_budget() noexcept {
++  return s_contentBudgetBase * std::max(1u, s_upscaleFactor.load(std::memory_order_relaxed));
++}
+ void retire_copy_texture(const GXState::CopyTextureRef& copy);
+ // GXAliasCopyTex destinations whose source was not copied yet (dest -> src)
+ absl::flat_hash_map<const void*, const void*> s_copyAliases;
+@@ -625,6 +664,455 @@ GXTlutObj_ snapshot_tlut(const GXTlutObj_& tlut) {
+   copy.data = s_snapshot.tlut.data();
+   return copy;
+ }
++
++// --- Texture upscaling, off the frame's thread ---
++// (The filter took 5-40 ms a texture at 4x on the frame's thread, so a scene loading a few dozen textures at once
++// (a cutscene's cast, Paper Mario 64's sprites) stalled for frames on end.) A texture missing from the content
++// cache is uploaded as it is, at once, and its picture given to the workers; their results go in at a frame's
++// end (upscale_publish), in the content cache under the same key and in each texture object that holds the
++// picture drawn meanwhile, so it's upscaled once per picture. A source whose picture keeps changing (drawn into
++// each frame: a sprite rasterised again, a movie) is not given to them; a picture of it seen again is then.
++
++constexpr size_t UpscaleMaxWaiting = 512;                      // pictures given and not in yet: past it, deferred
++constexpr uint64_t UpscaleMaxWaitingBytes = 32ull << 20;       // their RGBA bytes (before upscaling)
++constexpr auto UpscalePublishBudget = std::chrono::microseconds{1500}; // a frame's end puts in at most this much
++constexpr uint64_t UpscaleUploadBytesPerFrame = 1ull << 20;    //   and uploads at most this many bytes
++constexpr uint64_t UpscaleDrawnWithinFrames = 2;               // a result whose picture wasn't drawn since: deferred
++constexpr uint32_t UpscaleChangingAfter = 3;                   // pictures of one source, each this soon after the last:
++constexpr uint64_t UpscaleChangeGapFrames = 30;                //   the source keeps changing
++constexpr uint64_t UpscaleChangingHoldFrames = 600;            //   and is taken as changing this long after
++constexpr size_t UpscaleMaxTracked = 16384;                    // sources and deferred pictures remembered at most
++
++// A picture for the workers: the texture's bytes as the game has them (and its palette's), decoded there too
++struct UpscaleJob {
++  TextureContentKey key;
++  std::vector<uint8_t> texture;
++  std::vector<uint8_t> tlut; // empty: not a palette texture
++  u32 format = 0;
++  GXTlutFmt tlutFormat = GX_TL_IA8;
++  u16 tlutEntries = 0;
++  uint32_t width = 0;
++  uint32_t height = 0;
++  uint32_t mips = 0;
++  uint32_t factor = 0;
++  AuroraTextureUpscaler upscaler = nullptr;
++  uint64_t generation = 0;
++  const char* name = nullptr;
++};
++
++struct UpscaleResult {
++  TextureContentKey key;
++  UpscaledLevels levels; // empty: the upscaling doesn't apply to it (it stays as it is)
++  uint64_t generation = 0;
++  const char* name = nullptr;
++};
++
++std::mutex s_upscaleMutex;
++std::condition_variable s_upscaleJobCv;  // a job for the workers, or a stop
++std::condition_variable s_upscaleDoneCv; // a result (upscale_publish waiting for all)
++std::deque<UpscaleJob> s_upscaleJobs;
++std::deque<UpscaleResult> s_upscaleResults;
++uint32_t s_upscaleBusy = 0;           // jobs a worker is on
++uint64_t s_upscaleWaitingBytes = 0;   // the bytes of the jobs not done
++std::vector<thread::Thread> s_upscaleWorkers;
++std::atomic<bool> s_upscaleWaitForAll{false}; // AuroraSetTextureUpscaleWait
++bool s_upscaleStarted = false;                // (the frame's thread's) a picture given to the workers this run
++
++// the frame's thread's (the FIFO's while a frame is drawn, end_frame's after it drained)
++absl::flat_hash_set<TextureContentKey> s_upscaleGiven;    // given to the workers, not in yet
++absl::flat_hash_set<TextureContentKey> s_upscaleDeferred; // drawn as they are; given when drawn again
++
++struct UpscaleSourceKey {
++  const void* data = nullptr;
++  const void* tlut = nullptr;
++  u32 width = 0;
++  u32 height = 0;
++  u32 format = 0;
++
++  bool operator==(const UpscaleSourceKey& rhs) const = default;
++  template <typename H>
++  friend H AbslHashValue(H h, const UpscaleSourceKey& key) {
++    return H::combine(std::move(h), key.data, key.tlut, key.width, key.height, key.format);
++  }
++};
++
++struct UpscaleSource {
++  uint64_t picture = 0; // its last picture (a digest of its content key)
++  uint64_t lastFrame = 0;
++  uint32_t changes = 0;
++  uint64_t changingUntil = 0;
++};
++absl::flat_hash_map<UpscaleSourceKey, UpscaleSource> s_upscaleSources;
++
++// A job's picture decoded to RGBA8 and upscaled with its levels (a worker's); empty where the upscaling doesn't
++// apply: a format decoded to something else, smaller levels that are pictures of their own (distance fades,
++// effects: those keep the game's levels, as upscale_levels makes each from the one above)
++UpscaledLevels upscale_job(const UpscaleJob& job) {
++  gfx::ConvertedTexture converted;
++  if (!job.tlut.empty()) {
++    converted = gfx::convert_texture_palette(job.format, job.width, job.height, job.mips,
++                                             {job.texture.data(), job.texture.size()}, job.tlutFormat, job.tlutEntries,
++                                             {job.tlut.data(), job.tlut.size()});
++  } else {
++    converted = gfx::convert_texture(job.format, job.width, job.height, job.mips,
++                                     {job.texture.data(), job.texture.size()});
++    if (converted.format != wgpu::TextureFormat::RGBA8Unorm) {
++      return {};
++    }
++  }
++  if (converted.data.empty() || converted.hasArbitraryMips ||
++      converted.data.size() < static_cast<size_t>(job.width) * job.height * 4) {
++    return {};
++  }
++  return upscale_levels(converted.data.data(), job.width, job.height, job.mips, job.factor, job.upscaler);
++}
++
++void upscale_worker(std::stop_token token) {
++  std::stop_callback notifyOnStop{token, [] { s_upscaleJobCv.notify_all(); }};
++  while (true) {
++    UpscaleJob job;
++    {
++      std::unique_lock lock{s_upscaleMutex};
++      s_upscaleJobCv.wait(lock, [&] { return token.stop_requested() || !s_upscaleJobs.empty(); });
++      if (token.stop_requested()) {
++        return;
++      }
++      job = std::move(s_upscaleJobs.front());
++      s_upscaleJobs.pop_front();
++      ++s_upscaleBusy;
++    }
++    UpscaleResult result{
++        .key = job.key,
++        .levels = upscale_job(job),
++        .generation = job.generation,
++        .name = job.name,
++    };
++    {
++      std::lock_guard lock{s_upscaleMutex};
++      --s_upscaleBusy;
++      s_upscaleWaitingBytes -= job.texture.size() + job.tlut.size();
++      s_upscaleResults.push_back(std::move(result));
++    }
++    s_upscaleDoneCv.notify_all();
++  }
++}
++
++void start_upscale_workers() {
++  if (!texture::AsyncTextureReplacements || !s_upscaleWorkers.empty()) {
++    return;
++  }
++  // a quarter of the machine at most, at a low priority: the game's own threads come first
++  const uint32_t count = std::clamp(std::max(std::thread::hardware_concurrency(), 1u) / 4, 1u, 4u);
++  for (uint32_t i = 0; i < count; ++i) {
++    s_upscaleWorkers.emplace_back(
++        thread::Options{
++            .name = fmt::format("Aurora upscale worker {}", i),
++            .priority = thread::Priority::Low,
++        },
++        upscale_worker);
++  }
++}
++
++void stop_upscale_workers() {
++  for (auto& worker : s_upscaleWorkers) {
++    worker.request_stop();
++  }
++  s_upscaleJobCv.notify_all();
++  for (auto& worker : s_upscaleWorkers) {
++    if (worker.joinable()) {
++      worker.join();
++    }
++  }
++  s_upscaleWorkers.clear();
++  std::lock_guard lock{s_upscaleMutex};
++  s_upscaleJobs.clear();
++  s_upscaleResults.clear();
++  s_upscaleBusy = 0;
++  s_upscaleWaitingBytes = 0;
++  s_upscaleGiven.clear();
++  s_upscaleDeferred.clear();
++  s_upscaleSources.clear();
++}
++
++// Whether source's pictures keep changing (it is drawn into), told its new one (a content cache miss)
++bool upscale_source_changing(const GXTexObj_& obj, const GXTlutObj_* tlut, const TextureContentKey& key) {
++  if (s_upscaleSources.size() >= UpscaleMaxTracked) {
++    s_upscaleSources.clear();
++  }
++  auto& source = s_upscaleSources[UpscaleSourceKey{
++      .data = obj.data,
++      .tlut = tlut != nullptr ? tlut->data : nullptr,
++      .width = obj.width(),
++      .height = obj.height(),
++      .format = obj.format(),
++  }];
++  const uint64_t picture = (key.textureHash.low64 ^ (key.tlutHash.low64 * 0x9E3779B97F4A7C15ull)) | 1;
++  if (source.picture != 0 && source.picture != picture) {
++    source.changes = s_frameCount - source.lastFrame <= UpscaleChangeGapFrames ? source.changes + 1 : 1;
++    if (source.changes >= UpscaleChangingAfter) {
++      source.changingUntil = s_frameCount + UpscaleChangingHoldFrames;
++    }
++  }
++  source.picture = picture;
++  source.lastFrame = s_frameCount;
++  return s_frameCount < source.changingUntil;
++}
++
++void defer_upscale(const TextureContentKey& key) {
++  if (s_upscaleDeferred.size() >= UpscaleMaxTracked) {
++    s_upscaleDeferred.clear();
++  }
++  s_upscaleDeferred.insert(key);
++}
++
++// key's picture given to the workers: obj's bytes (and tlut's), read once already (a snapshot); false: they have
++// enough to do (it is deferred)
++bool give_upscale(const TextureContentKey& key, const GXTexObj_& obj, const GXTlutObj_* tlut, const char* name) {
++  if (s_upscaleGiven.contains(key)) {
++    return true;
++  }
++  const bool all = s_upscaleWaitForAll.load(std::memory_order_relaxed);
++  const size_t textureBytes = texture::texture_source_size(obj.format(), obj.width(), obj.height(), obj.mip_count());
++  const size_t tlutBytes = tlut != nullptr ? texture::tlut_source_size(tlut->numEntries) : 0;
++  const auto* texture = static_cast<const uint8_t*>(obj.data);
++  const auto* palette = tlut != nullptr ? static_cast<const uint8_t*>(tlut->data) : nullptr;
++  UpscaleJob job{
++      .key = key,
++      .texture = std::vector<uint8_t>(texture, texture + textureBytes),
++      .tlut = palette != nullptr ? std::vector<uint8_t>(palette, palette + tlutBytes) : std::vector<uint8_t>{},
++      .format = obj.format(),
++      .tlutFormat = tlut != nullptr ? tlut->format : GX_TL_IA8,
++      .tlutEntries = tlut != nullptr ? tlut->numEntries : u16{0},
++      .width = obj.width(),
++      .height = obj.height(),
++      .mips = obj.mip_count(),
++      .factor = s_upscaleFactor.load(std::memory_order_relaxed),
++      .upscaler = s_upscaler.load(std::memory_order_relaxed),
++      .generation = s_upscaleGeneration.load(std::memory_order_relaxed),
++      .name = name,
++  };
++  if constexpr (!texture::AsyncTextureReplacements) {
++    // (one thread, the browser's: upscaled here, put in at the frame's end as the workers' are)
++    s_upscaleResults.push_back(
++        {.key = job.key, .levels = upscale_job(job), .generation = job.generation, .name = job.name});
++  } else {
++    // (never waited for while a frame is drawn: a worker holding the lock may be a low-priority thread the
++    // system put aside on a busy machine; taken, the picture waits for its next draw)
++    std::unique_lock lock{s_upscaleMutex, std::defer_lock};
++    if (all) {
++      lock.lock();
++    } else if (!lock.try_lock()) {
++      defer_upscale(key);
++      return false;
++    }
++    const size_t waiting = s_upscaleJobs.size() + s_upscaleBusy + s_upscaleResults.size();
++    if (!all && (waiting >= UpscaleMaxWaiting || s_upscaleWaitingBytes + textureBytes + tlutBytes > UpscaleMaxWaitingBytes)) {
++      defer_upscale(key);
++      return false;
++    }
++    start_upscale_workers();
++    s_upscaleJobs.push_back(std::move(job));
++    s_upscaleWaitingBytes += textureBytes + tlutBytes;
++  }
++  s_upscaleStarted = true;
++  s_upscaleJobCv.notify_one();
++  s_upscaleGiven.insert(key);
++  s_upscaleDeferred.erase(key);
++  ++s_upscaleStats.queued;
++  return true;
++}
++
++// While waiting for all (tests on a virtual clock): a texture missing from the content cache upscaled here, on the
++// frame's thread, and drawn so from its first frame, as before the workers (the same captures); else empty
++gfx::TextureHandle upscale_at_once(const GXTexObj_& snap, const GXTlutObj_* snapTlut, const char* name) {
++  if (!s_upscaleWaitForAll.load(std::memory_order_relaxed) || !upscale_applies(snap.width(), snap.height())) {
++    return {};
++  }
++  UpscaleTimer timer;
++  const size_t textureBytes = texture::texture_source_size(snap.format(), snap.width(), snap.height(), snap.mip_count());
++  const auto* texture = static_cast<const uint8_t*>(snap.data);
++  const auto* palette = snapTlut != nullptr ? static_cast<const uint8_t*>(snapTlut->data) : nullptr;
++  const size_t tlutBytes = snapTlut != nullptr ? texture::tlut_source_size(snapTlut->numEntries) : 0;
++  const UpscaleJob job{
++      .texture = std::vector<uint8_t>(texture, texture + textureBytes),
++      .tlut = palette != nullptr ? std::vector<uint8_t>(palette, palette + tlutBytes) : std::vector<uint8_t>{},
++      .format = snap.format(),
++      .tlutFormat = snapTlut != nullptr ? snapTlut->format : GX_TL_IA8,
++      .tlutEntries = snapTlut != nullptr ? snapTlut->numEntries : u16{0},
++      .width = snap.width(),
++      .height = snap.height(),
++      .mips = snap.mip_count(),
++      .factor = s_upscaleFactor.load(std::memory_order_relaxed),
++      .upscaler = s_upscaler.load(std::memory_order_relaxed),
++  };
++  const auto levels = upscale_job(job);
++  if (levels.data.empty()) {
++    return {};
++  }
++  return gfx::new_static_texture_2d(levels.width, levels.height, levels.levels, GX_TF_RGBA8_PC,
++                                    {levels.data.data(), levels.data.size()}, false, name);
++}
++
++// A texture just uploaded as it is (a content cache miss, key; snap: the one read of its bytes it was keyed and
++// uploaded from, source: the game's): its picture given to the workers, or deferred when its source keeps changing
++void upscale_new_picture(const GXTexObj_& source, const GXTlutObj_* sourceTlut, const GXTexObj_& snap,
++                         const GXTlutObj_* snapTlut, const TextureContentKey& key, const char* name) {
++  if (!upscale_applies(snap.width(), snap.height())) {
++    return;
++  }
++  UpscaleTimer timer;
++  if (upscale_source_changing(source, sourceTlut, key)) {
++    ++s_upscaleStats.dynamicSkips;
++    defer_upscale(key);
++    return;
++  }
++  give_upscale(key, snap, snapTlut, name);
++}
++
++// A content cache hit on a deferred picture (drawn again): given to the workers now
++void upscale_drawn_again(const GXTexObj_& obj, const GXTlutObj_* tlut, const TextureContentKey& key) {
++  if (s_upscaleDeferred.empty() || !s_upscaleDeferred.contains(key) || !upscale_applies(obj.width(), obj.height())) {
++    return;
++  }
++  UpscaleTimer timer;
++  const GXTexObj_ snap = snapshot_texture(obj);
++  GXTlutObj_ snapTlut;
++  if (tlut != nullptr) {
++    snapTlut = snapshot_tlut(*tlut);
++  }
++  // (keyed again from the one read: a picture that changed meanwhile is another key's)
++  if (!(hash_texture_source(snap, tlut != nullptr ? &snapTlut : nullptr, false).contentKey == key)) {
++    return;
++  }
++  give_upscale(key, snap, tlut != nullptr ? &snapTlut : nullptr,
++               tlut != nullptr ? "GX Static Palette Texture" : "GX Static Texture");
++}
++
++// An upscaled picture going up to the GPU a few rows at a time (a 4x texture is up to 21 MiB: uploaded at once,
++// one cost a frame 10 ms), drawn once it is all there
++struct UpscaleUpload {
++  UpscaleResult result;
++  gfx::TextureHandle handle; // made as its upload starts
++  uint32_t level = 0;
++  uint32_t row = 0;
++  size_t offset = 0; // (level, row)'s in result.levels.data
++};
++std::deque<UpscaleUpload> s_upscaleUploads; // the frame's thread's
++
++// result's picture still the one a texture draws, drawn of late (all: whether or not drawn of late)
++bool upscale_wanted(const UpscaleResult& result, bool all) {
++  if (result.generation != s_upscaleGeneration.load(std::memory_order_relaxed) || result.levels.data.empty()) {
++    return false; // (the setting changed since: the caches are let go of, and each texture made again at it)
++  }
++  uint64_t unused = 0;
++  const auto* cached = s_contentCache.peek(result.key, &unused);
++  if (cached == nullptr || !*cached) {
++    return false; // (let go of meanwhile: upscaled when it is made again)
++  }
++  if (!all && unused > UpscaleDrawnWithinFrames) {
++    defer_upscale(result.key); // (not drawn now: put in if it is again, not uploaded for nothing)
++    return false;
++  }
++  return true;
++}
++
++// At a frame's end (the FIFO drained): the workers' results uploaded, within the budget (all of them, while
++// waiting for all); each, once all there, in the content cache under its key and in every texture object that
++// holds the picture drawn meanwhile
++void upscale_publish() {
++  if (!s_upscaleStarted) {
++    return;
++  }
++  const bool all = s_upscaleWaitForAll.load(std::memory_order_relaxed);
++  std::deque<UpscaleResult> ready;
++  {
++    std::unique_lock lock{s_upscaleMutex, std::defer_lock};
++    if (all) {
++      lock.lock();
++      s_upscaleDoneCv.wait(lock, [] { return s_upscaleJobs.empty() && s_upscaleBusy == 0; });
++      ready.swap(s_upscaleResults);
++    } else if (lock.try_lock()) { // (else the next frame: as in give_upscale, never waited for)
++      ready.swap(s_upscaleResults);
++    }
++  }
++  UpscaleTimer timer;
++  const auto from = std::chrono::steady_clock::now();
++  for (auto& result : ready) {
++    s_upscaleUploads.push_back({.result = std::move(result)});
++  }
++  // the picture drawn meanwhile (held here until the texture objects let go of it) -> the upscaled one
++  absl::flat_hash_map<const gfx::TextureRef*, std::pair<gfx::TextureHandle, gfx::TextureHandle>> swapped;
++  uint64_t bytes = 0;
++  bool created = false;
++  while (!s_upscaleUploads.empty()) {
++    if (!all && (bytes >= UpscaleUploadBytesPerFrame || std::chrono::steady_clock::now() - from >= UpscalePublishBudget)) {
++      break;
++    }
++    auto& up = s_upscaleUploads.front();
++    const auto& levels = up.result.levels;
++    if (!up.handle) {
++      s_upscaleGiven.erase(up.result.key);
++      if (!upscale_wanted(up.result, all)) {
++        s_upscaleUploads.pop_front();
++        continue;
++      }
++      if (created && !all) {
++        break; // (one a frame: a large texture takes the GPU's driver a few ms to make)
++      }
++      created = true;
++      up.handle = gfx::new_dynamic_texture_2d(levels.width, levels.height, levels.levels, GX_TF_RGBA8_PC,
++                                              up.result.name);
++    }
++    // rows of the level it is on, as many as the budget leaves (one at least)
++    const uint32_t w = std::max(1u, levels.width >> up.level), h = std::max(1u, levels.height >> up.level);
++    const uint32_t bytesPerRow = w * 4;
++    const uint64_t left = all ? UINT64_MAX : UpscaleUploadBytesPerFrame - std::min(bytes, UpscaleUploadBytesPerFrame);
++    const uint32_t rows = static_cast<uint32_t>(std::clamp<uint64_t>(left / bytesPerRow, 1, h - up.row));
++    gfx::queue_texture_upload_data(levels.data.data() + up.offset, bytesPerRow, rows,
++                                   {.texture = up.handle->texture, .mipLevel = up.level, .origin = {0, up.row, 0}},
++                                   {w, rows, 1});
++    bytes += static_cast<uint64_t>(bytesPerRow) * rows;
++    up.offset += static_cast<size_t>(bytesPerRow) * rows;
++    up.row += rows;
++    if (up.row < h) {
++      continue;
++    }
++    up.row = 0;
++    if (++up.level < levels.levels) {
++      continue;
++    }
++    // all there: in place of the picture drawn meanwhile, if that is still wanted
++    auto upload = std::move(up);
++    s_upscaleUploads.pop_front();
++    auto* cached = s_contentCache.peek(upload.result.key);
++    if (cached == nullptr || !*cached ||
++        upload.result.generation != s_upscaleGeneration.load(std::memory_order_relaxed)) {
++      continue;
++    }
++    auto drawn = *cached;
++    ++s_upscaleStats.published;
++    s_upscaleStats.publishedBytes += texture_handle_size(upload.handle);
++    cache_content_texture(upload.result.key, upload.handle);
++    swapped.emplace(drawn.get(), std::pair{std::move(drawn), std::move(upload.handle)});
++  }
++  s_stats.uploadBytes += bytes;
++  if (!swapped.empty()) {
++    for (auto& [_, entry] : s_textureObjectCaches) {
++      if (const auto it = swapped.find(entry.handle.get()); it != swapped.end()) {
++        entry.handle = it->second.second;
++      }
++    }
++    texture::invalidate_bindings();
++  }
++}
++
++uint32_t upscale_waiting() {
++  static uint32_t s_last = 0;
++  if (std::unique_lock lock{s_upscaleMutex, std::try_to_lock}; lock.owns_lock()) {
++    s_last = static_cast<uint32_t>(s_upscaleJobs.size() + s_upscaleBusy + s_upscaleResults.size());
++  }
++  return s_last + static_cast<uint32_t>(s_upscaleUploads.size());
++}
+ } // namespace
+ 
+ const TextureStats& texture_stats() noexcept { return s_stats; }
+@@ -782,7 +1270,10 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
+       keys->contentKey = hash_texture_source(snap, nullptr, false).contentKey;
+       handle = find_content_texture(keys->contentKey);
+     }
+-    if (!handle) {
++    if (handle) {
++      upscale_drawn_again(obj, nullptr, keys->contentKey); // (a picture drawn as it was till now)
++    } else {
++      const GXTexObj_& source = obj;
+       const GXTexObj_& obj = snap;
+ #if DEBUG
+       const auto name = gfx::texture_replacement::build_texture_replacement_name(*keys->sourceKey);
+@@ -791,19 +1282,12 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
+       const auto nameStr = "GX Static Texture";
+ #endif
+       const size_t sourceBytes = texture_source_size(obj.format(), obj.width(), obj.height(), obj.mip_count());
+-      if (s_upscaleFactor > 1) {
+-        // all its levels decoded, to see whether the smaller ones are pictures of their own (distance fades,
+-        // effects): those keep the game's levels, as upscaled_texture makes each from the one above
+-        const auto converted = gfx::convert_texture(obj.format(), obj.width(), obj.height(), obj.mip_count(),
+-                                                    {static_cast<const uint8_t*>(obj.data), sourceBytes});
+-        if (!converted.data.empty() && converted.format == wgpu::TextureFormat::RGBA8Unorm &&
+-            !converted.hasArbitraryMips) {
+-          handle = upscaled_texture(converted.data.data(), obj.width(), obj.height(), obj.mip_count(), nameStr);
+-        }
+-      }
++      handle = upscale_at_once(obj, nullptr, nameStr);
+       if (!handle) {
++        // uploaded as it is, drawn so until the upscaled one is in
+         handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), obj.format(),
+                                             {static_cast<const uint8_t*>(obj.data), sourceBytes}, false, nameStr);
++        upscale_new_picture(source, nullptr, obj, nullptr, keys->contentKey, "GX Static Texture");
+       }
+       ++s_stats.misses;
+       s_stats.uploadBytes += texture_handle_size(handle);
+@@ -857,7 +1341,11 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+       keys->contentKey = hash_texture_source(snap, &snapTlut, false).contentKey;
+       handle = find_content_texture(keys->contentKey);
+     }
+-    if (!handle) {
++    if (handle) {
++      upscale_drawn_again(obj, &tlut, keys->contentKey); // (a picture drawn as it was till now)
++    } else {
++      const GXTexObj_& source = obj;
++      const GXTlutObj_& sourceTlut = tlut;
+       const GXTexObj_& obj = snap;
+       const GXTlutObj_& tlut = snapTlut;
+       const size_t textureBytes = texture_source_size(obj.format(), obj.width(), obj.height(), obj.mip_count());
+@@ -869,14 +1357,17 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+         return {};
+       }
+       if (!converted.hasArbitraryMips) { // (smaller levels of their own: the game's, not upscaled)
+-        handle = upscaled_texture(converted.data.data(), obj.width(), obj.height(), obj.mip_count(),
+-                                  "GX Static Palette Texture");
++        handle = upscale_at_once(obj, &tlut, "GX Static Palette Texture");
+       }
+       if (!handle) {
++        // uploaded as it is, drawn so until the upscaled one is in
+         handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), GX_TF_RGBA8_PC,
+                                             {converted.data.data(), converted.data.size()}, false,
+                                             "GX Static Palette Texture");
+         handle->hasArbitraryMips = converted.hasArbitraryMips;
++        if (!converted.hasArbitraryMips) {
++          upscale_new_picture(source, &sourceTlut, obj, &tlut, keys->contentKey, "GX Static Palette Texture");
++        }
+       }
+       ++s_stats.misses;
+       s_stats.uploadBytes += texture_handle_size(handle);
+@@ -894,6 +1385,9 @@ void end_frame() noexcept {
+   s_stats.pendingLoads = streamingStats.pendingLoads;
+   s_stats.publishes = streamingStats.publishes;
+   s_stats.publishBytes = streamingStats.publishBytes;
++  upscale_publish();
++  s_upscaleStats.waiting = upscale_waiting();
++  s_upscaleStats.deferred = static_cast<unsigned>(s_upscaleDeferred.size());
+   TracyPlot("aurora: textureUploadBytes", static_cast<int64_t>(s_stats.uploadBytes));
+   TracyPlot("aurora: textureHashedBytes", static_cast<int64_t>(s_stats.hashedBytes));
+   TracyPlot("aurora: textureObjectHits", static_cast<int64_t>(s_stats.objectHits));
+@@ -910,6 +1404,11 @@ void end_frame() noexcept {
+   TracyPlot("aurora: textureReplacementPublishes", static_cast<int64_t>(s_stats.publishes));
+   TracyPlot("aurora: textureReplacementPublishBytes", static_cast<int64_t>(s_stats.publishBytes));
+ 
++  {
++    std::lock_guard lock{s_upscaleStatsMutex};
++    s_upscaleLastStats = s_upscaleStats;
++  }
++  s_upscaleStats = {};
+   s_stats = {};
+   s_stats.pendingLoads = streamingStats.pendingLoads;
+   s_stats.publishes = streamingStats.publishes;
+@@ -927,11 +1426,15 @@ void end_frame() noexcept {
+       s_contentCache.clear();
+       s_sourceKeyCache.clear();
+       clear_copy_texture_cache();
+-      s_contentCache.set_budget(std::max<uint64_t>(s_contentCache.budget() / 2, uint64_t{64} << 20));
++      s_contentBudgetBase = std::max<uint64_t>(s_contentBudgetBase / 2, uint64_t{64} << 20);
++      s_contentCache.set_budget(content_cache_budget());
+       Log.warn("Out of video memory: texture caches let go, decoded textures within {} MiB from now on",
+                s_contentCache.budget() >> 20);
+     }
+   }
++  if (s_contentCache.budget() != content_cache_budget()) {
++    s_contentCache.set_budget(content_cache_budget()); // (the upscaling changed: its textures' room with it)
++  }
+   apply_pending_invalidations();
+   sweep_object_caches();
+   s_copyCache.end_frame();
+@@ -950,6 +1453,9 @@ void fill_resource_stats(AuroraResourceStats& out) noexcept {
+ }
+ 
+ void shutdown() noexcept {
++  stop_upscale_workers();
++  s_upscaleUploads.clear();
++  s_upscaleStarted = false;
+   clear_copy_texture_cache();
+   s_copyCache.set_budget(gfx::RenderTextureCacheLimits.bytes);
+   s_textureObjectCaches.clear();
+@@ -957,7 +1463,8 @@ void shutdown() noexcept {
+   s_replacementUsers.clear();
+   s_contentCache.clear();
+   s_sourceKeyCache.clear();
+-  s_contentCache.set_budget(ContentCacheBudgetBytes);
++  s_contentBudgetBase = ContentCacheBudgetBytes;
++  s_contentCache.set_budget(content_cache_budget());
+   s_frameCount = 0;
+   s_bindGeneration = 1;
+   s_pendingInvalidations.store(0, std::memory_order_release);
+@@ -966,7 +1473,8 @@ void shutdown() noexcept {
+ }
+ 
+ void set_content_cache_budget_for_testing(uint64_t bytes) noexcept {
+-  s_contentCache.set_budget(bytes);
++  s_contentBudgetBase = bytes;
++  s_contentCache.set_budget(content_cache_budget());
+   update_cache_stats();
+ }
+ 
+@@ -1179,6 +1687,19 @@ void resolve_sampled_textures(const ShaderInfo& info) noexcept {
+ } // namespace aurora::gx
+ 
+ extern "C" void AuroraSetTextureUpscale(unsigned factor, AuroraTextureUpscaler upscaler) {
+-  aurora::gx::s_upscaleFactor = (factor == 2 || factor == 4) && upscaler != nullptr ? factor : 1;
+-  aurora::gx::s_upscaler = upscaler;
++  const unsigned f = (factor == 2 || factor == 4) && upscaler != nullptr ? factor : 1;
++  if (f != aurora::gx::s_upscaleFactor.load() || upscaler != aurora::gx::s_upscaler.load()) {
++    aurora::gx::s_upscaleGeneration.fetch_add(1); // (what the workers have from before: dropped)
++  }
++  aurora::gx::s_upscaleFactor.store(f);
++  aurora::gx::s_upscaler.store(upscaler);
++}
++
++extern "C" void AuroraSetTextureUpscaleWait(int wait) { aurora::gx::s_upscaleWaitForAll.store(wait != 0); }
++
++extern "C" void AuroraGetTextureUpscaleStats(AuroraTextureUpscaleStats* out) {
++  if (out != nullptr) {
++    std::lock_guard lock{aurora::gx::s_upscaleStatsMutex};
++    *out = aurora::gx::s_upscaleLastStats;
++  }
+ }
+-- 
+2.45.0
+

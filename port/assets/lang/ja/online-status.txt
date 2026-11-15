@@ -1,0 +1,127 @@
+# The connection as the player sees it: the join's steps, the connection icon, Copy diagnostics, Check for updates after a refusal (port/src/common/online_status_pc.c, pause_online_aurora.c, port/settings/features/online_status.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Copy diagnostics
+診断をコピー
+
+A short text about this connection for a report: your build, the join's steps, the last online lines (no names, no room code). Only to the clipboard: nothing is sent anywhere.
+報告用に、この接続についての短いテキスト：ビルド、参加の手順、最近のオンラインのログ（名前やルームコードは含みません）。クリップボードにコピーするだけで、どこにも送信しません。
+
+Check for updates
+アップデートを確認
+
+Your friend's Paper Cut is newer: {A} asks for the newest version. Once it's found, {A} opens Settings, General, where New version downloads it.
+フレンドの Paper Cut のほうが新しいです：{A}で最新のバージョンを確認します。見つかったら、{A}で設定の一般を開き、新しいバージョンからダウンロードできます。
+
+Checking...
+確認中...
+
+None found
+見つかりません
+
+Copied: paste it into your report. Nothing was sent anywhere.
+コピーしました：報告に貼り付けてください。どこにも送信していません。
+
+Couldn't copy it.
+コピーできませんでした。
+
+Still asking for the newest Paper Cut...
+最新の Paper Cut をまだ確認中...
+
+Asking for the newest Paper Cut...
+最新の Paper Cut を確認中...
+
+Connected through the relay. Times are round trips over the last 10 seconds (the slowest tenth).
+リレー経由で接続中。時間は直近10秒の往復時間です（遅いほうから1割）。
+
+Connected directly, by address. Times are round trips over the last 10 seconds (the slowest tenth).
+アドレスで直接接続中。時間は直近10秒の往復時間です（遅いほうから1割）。
+
+Joining stopped at step %d of %d: %s.
+参加は%d/%dの手順で止まりました：%s。
+
+Joining is taking a while at step %d of %d: %s.
+参加の%d/%dの手順に時間がかかっています：%s。
+
+In the room: waiting for the host to choose Play or Party...
+ルームにいます：ホストが遊ぶかパーティー...を選ぶのを待っています
+
+Joining (%d/%d): %s...
+参加中（%d/%d）：%s...
+
+reaching the online service
+オンラインサービスに接続
+
+reaching the host's game
+ホストのゲームに接続
+
+making a secure connection
+安全な接続を確立
+
+checking you have the same version
+同じバージョンかを確認
+
+getting the host's adventure
+ホストの冒険を受信
+
+going into the host's world
+ホストの世界へ移動
+
+The online service hasn't let this game into the room. Check your internet connection and the code, or try again later.
+オンラインサービスがこのゲームをルームに入れていません。インターネット接続とコードを確認するか、あとでもう一度試してください。
+
+The host's game hasn't answered at that address. Check the address and the port, and that the host chose Host by address (on the same network, or with the port forwarded or a VPN).
+そのアドレスでホストのゲームが応答しません。アドレスとポート、そしてホストがアドレスでホストを選んだか（同じネットワーク、ポート転送、またはVPN）を確認してください。
+
+The host's game hasn't answered in the room. Check that your friend is still hosting, and the code's second half.
+ルームでホストのゲームが応答しません。フレンドがまだホストしているか、コードの後半を確認してください。
+
+The host's game hasn't said which version it plays. It may be busy or still loading: wait a little, or leave and join again.
+ホストのゲームがバージョンをまだ伝えていません。忙しいか読み込み中かもしれません：少し待つか、退室してもう一度参加してください。
+
+The host's adventure hasn't come yet. The host may be in a menu, a scene or loading: wait a little, or leave and join again.
+ホストの冒険がまだ届いていません。ホストはメニューやイベント中、または読み込み中かもしれません：少し待つか、退室してもう一度参加してください。
+
+Your game hasn't reached the host's room yet. If the screen stays black, leave and join again, and copy the diagnostics for a report.
+ゲームがまだホストの部屋に着いていません。画面が黒いままなら、退室してもう一度参加し、報告用に診断をコピーしてください。
+
+%s's connection is unstable.
+%sの接続が不安定です。
+
+The connection to the host is unstable.
+ホストとの接続が不安定です。
+
+Reconnecting...
+再接続中...
+
+Keep waiting
+待ち続ける
+
+Paper Cut %s is out: get it from the Start menu's Settings, General, New version.
+Paper Cut %sが出ました：スタートメニューの設定、一般、新しいバージョンから入手できます。
+
+Connection icon
+接続アイコン
+
+Online, a small icon in the field and in battle: three bars for your connection (green good, yellow fair, red poor) and Reconnecting... while it's down. When it's bad: only then.
+オンラインで、フィールドとバトルに小さなアイコン：接続を3本のバーで表示（緑は良好、黄はふつう、赤は不安定）、切れている間は再接続中...。悪いときだけ：そのときだけ表示します。
+
+When it's bad
+悪いときだけ
+
+Online diagnostics
+オンライン診断
+
+Copy diagnostics: a short text about your online connection for a report (your build, the connection, the join's steps and the last online lines; no names, no room code). It only goes to the clipboard.
+診断をコピー：報告用に、オンライン接続についての短いテキスト（ビルド、接続、参加の手順、最近のオンラインのログ。名前やルームコードは含みません）。クリップボードにコピーするだけです。
+
+The online service is busy today: new rooms may be turned away until midnight UTC. Connecting by address still works.
+今日はオンラインサービスが混み合っています：UTCの午前0時まで、新しいルームは断られることがあります。アドレスでの接続は使えます。
+
+Your room plays on. The free relay's day starts again at %s your time.
+あなたのルームはそのまま遊べます。無料リレーの1日は、こちらの時間で%sに戻ります。
+
+The free relay is busy today: new rooms may be turned away. Yours plays on.
+今日は無料リレーが混み合っています：新しいルームは断られることがあります。あなたのルームはそのまま遊べます。
+
+The room is full: trying again...
+ルームが満員です：もう一度試しています...

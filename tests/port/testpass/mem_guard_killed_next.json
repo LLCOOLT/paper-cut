@@ -1,0 +1,33 @@
+{
+ "desc": "The system closed Paper Cut, 2 of 2: the next start finds the record ending on screen with no clean exit and no crash report: '[memory] record:' lines log it (kept as memory_record_last.txt) and the note 'The system closed Paper Cut' shows over the game",
+ "groups": [
+  "platform",
+  "memory"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_from": "mem_guard_killed",
+ "env": {
+  "TTYD_MEM_GUARD": 1,
+  "TTYD_MEM_GUARD_ROOM": 4000,
+  "TTYD_MAP": "gor_01",
+  "TTYD_MEM_GUARD_RAM": 5632,
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "log_must": [
+  "^\\[memory\\] the last run was closed by the system while on screen \\(no clean exit, no crash report\\)",
+  "^\\[memory\\] record: device 5632 MB",
+  "^\\[memory\\] record: \\d+ s on screen: \\d+ MB in use, 4000 MB left",
+  "^\\[memory\\] note shown: The system closed Paper Cut: Last time, your device ended the game while you played"
+ ],
+ "log_must_not": [
+  "\\[recovery\\] shown"
+ ],
+ "file_must": {
+  "user/memory_record_last.txt": [
+   "on screen"
+  ]
+ },
+ "timeout": 180
+}

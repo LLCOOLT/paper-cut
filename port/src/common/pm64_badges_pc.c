@@ -10,13 +10,18 @@
  * - Dizzy Stomp: TTYD's Sleepy Stomp worn, its weapon making the enemy dizzy instead of asleep, named and
  *   told as Dizzy Stomp (while no real Sleepy Stomp is worn);
  * - Peekaboo: every enemy's HP shown, tattled or not (battle_seq_command.c BattleDrawEnemyHP);
- * - Pay-Off: as many coins as the damage Mario's side took, when the battle's won (battlex_pc.c).
+ * - Pay-Off: as many coins as the damage Mario's side took, when the battle's won (battlex_pc.c);
+ * - Speedy Spin, Spin Attack, Dizzy Attack: the Spin Dash's (pm64_spin_pc.c), with "pm64_spin" on.
+ *
+ * The icons' offsets are the icon archive's order (the decomp's tools/splat_ext/icon.yaml: each badge a
+ * "pair", 32x32 CI4 and two palettes, 0x240 bytes), the moves' the move table's (src/move_table.yaml).
  *
  * Only with a ROM linked and "pm64_badges" on; online only when every player has the ROM (the hello's
  * pm64, portPm64PartnersActive). Their ids are past the game's (port/include/port/battlex.h). */
 #include "port/battlex.h"
 #include "port/pm64.h"
 #include "port/pm64_media.h"
+#include "port/pm64_spin.h"
 #include "port/settings.h"
 #include "port/statesync.h"
 #include "battle/battle.h"
@@ -51,9 +56,17 @@ static const Pm64Badge kBadges[] = {
     {"Damage Dodge", 51, 0x1F680, {ITEM_DEFEND_PLUS}, ITEM_DEFEND_PLUS},
     {"Peekaboo", 118, 0x213C0, {0}, ITEM_TIMING_TUTOR},
     {"Pay-Off", 99, 0x19EC0, {0}, ITEM_REFUND},
+    /* 0.5.1: the Spin Dash's (their effects: pm64_spin_pc.c); Dizzy Attack, the 17th, is past the first range */
+    {"Speedy Spin", 109, 0x1D940, {0}, ITEM_SLOW_GO},
+    {"Spin Attack", 106, 0x1DB80, {0}, ITEM_BUMP_ATTACK},
+    {"Dizzy Attack", 107, 0x1D700, {0}, ITEM_HEAD_RATTLE},
 };
 #define BADGES (int)(sizeof(kBadges) / sizeof(kBadges[0]))
-typedef char kBadgesFit[BADGES <= PORT_PM64_BADGE_COUNT ? 1 : -1];
+typedef char kBadgesFit[BADGES <= PORT_PM64_BADGE_COUNT + PORT_PM64_BADGE2_COUNT ? 1 : -1];
+typedef char kSpinIds[PORT_PM64_BADGE_SPEEDY_SPIN == PORT_PM64_BADGE_MIN + 14 &&
+                              PORT_PM64_BADGE_DIZZY_ATTACK == PORT_PM64_BADGE2_MIN
+                          ? 1
+                          : -1];
 
 int portPm64BadgesActive(void) {
     static int* sOn;
@@ -74,9 +87,30 @@ int portPm64BadgeCount(void) {
     return BADGES;
 }
 
+/* badge i's item and icon: the first PORT_PM64_BADGE_COUNT in their range, the rest in the second's */
+int portPm64BadgeId(int i) {
+    return i < PORT_PM64_BADGE_COUNT ? PORT_PM64_BADGE_MIN + i : PORT_PM64_BADGE2_MIN + (i - PORT_PM64_BADGE_COUNT);
+}
+
+static int iconOf(int i) {
+    return i < PORT_PM64_BADGE_COUNT ? PORT_ICON_PM64_BASE + i
+                                     : PORT_ICON_PM64_BADGE2_BASE + (i - PORT_PM64_BADGE_COUNT);
+}
+
 static int badgeOf(int id) {
-    const int i = id - PORT_PM64_BADGE_MIN;
-    return i >= 0 && i < BADGES ? i : -1;
+    int i = id - PORT_PM64_BADGE_MIN;
+    if (i >= 0 && i < PORT_PM64_BADGE_COUNT) {
+        return i < BADGES ? i : -1;
+    }
+    i = id - PORT_PM64_BADGE2_MIN;
+    if (i >= 0 && i < PORT_PM64_BADGE2_COUNT) {
+        return PORT_PM64_BADGE_COUNT + i < BADGES ? PORT_PM64_BADGE_COUNT + i : -1;
+    }
+    return -1;
+}
+
+int portPm64BadgeIndex(int id) {
+    return badgeOf(id);
 }
 
 int portPm64BadgeGrants(int id, const short** grants) {
@@ -97,15 +131,31 @@ const char* portPm64BadgeEnglish(int id) {
     return i >= 0 ? kBadges[i].english : "";
 }
 
+/* A move with no name of its own (0: Speedy Spin, Spin Attack, Dizzy Attack, the field badges) is named by its
+ * badge item's: the item table's entry with the same full description; 0 when there's none */
+static uint32_t itemNameOf(uint32_t fullDescMsg) {
+    Pm64Item it;
+    int k;
+    for (k = 0; fullDescMsg != 0 && portPm64Item(k, &it); k++) {
+        if (it.fullDescMsg == fullDescMsg) {
+            return it.nameMsg;
+        }
+    }
+    return 0;
+}
+
 /* the badge's name and description from the ROM (UTF-8); 0 without them */
 int portPm64BadgeText(int id, char* name, size_t nameSize, char* desc, size_t descSize) {
     const int i = badgeOf(id);
     Pm64Move m;
+    uint32_t nameMsg;
     name[0] = desc[0] = '\0';
     if (i < 0 || !portPm64Move(kBadges[i].move, &m)) {
         return 0;
     }
-    if (portPm64MessageText(m.nameMsg, 0, name, nameSize) <= 0) {
+    /* (message 0 is the archive's first, "a": never a name) */
+    nameMsg = m.nameMsg != 0 ? m.nameMsg : itemNameOf(m.fullDescMsg);
+    if (nameMsg == 0 || portPm64MessageText(nameMsg, 0, name, nameSize) <= 0) {
         snprintf(name, nameSize, "%s", kBadges[i].english);
     }
     portPm64MessageText(m.fullDescMsg, 0, desc, descSize);
@@ -145,7 +195,7 @@ void portPm64BadgesFill(void) {
     sFilledGen = portPm64Generation();
     portItemsInit();
     for (i = 0; i < BADGES; i++) {
-        ItemData* d = &itemDataTable[PORT_PM64_BADGE_MIN + i];
+        ItemData* d = &itemDataTable[portPm64BadgeId(i)];
         const ItemData* look = &itemDataTable[kBadges[i].looks];
         Pm64Move m;
         int bp = look->bp_cost;
@@ -159,16 +209,22 @@ void portPm64BadgesFill(void) {
         d->type_sort_order = (s16)(look->type_sort_order + 1);
         d->usable_locations = 0;
         d->battle_params = NULL;
-        d->icon_id = (u16)(portPm64Linked() != PM64_NONE ? PORT_ICON_PM64_BASE + i : look->icon_id);
+        d->icon_id = (u16)(portPm64Linked() != PM64_NONE ? iconOf(i) : look->icon_id);
     }
 }
 
 int portPm64MerchantStock(int* out, int max) {
     int i, n = 0;
+    const int spin = portSpinDashOn();
     if (portPm64BadgesActive()) {
         portPm64BadgesFill();
         for (i = 0; i < BADGES && n < max; i++) {
-            out[n++] = PORT_PM64_BADGE_MIN + i;
+            const int id = portPm64BadgeId(i);
+            if (!spin && (id == PORT_PM64_BADGE_SPEEDY_SPIN || id == PORT_PM64_BADGE_SPIN_ATTACK ||
+                          id == PORT_PM64_BADGE_DIZZY_ATTACK)) {
+                continue; /* (the Spin Dash's: sold with it on, pm64_spin.h) */
+            }
+            out[n++] = id;
         }
     }
     return n + portPm64FoodStock(out + n, max - n); /* and Tayce T.'s ingredients (pm64_food_pc.c) */
@@ -180,7 +236,8 @@ int portPm64MerchantStock(int* out, int max) {
 #define ICON_H 32
 #define OUT_WH 64      /* the texture made: the picture cropped to what it shows and drawn over it, finer */
 #define OUT_FILL 0.88f /* how much of the frame the picture's larger side fills: the game's own badges' and items' */
-#define ICONS (PORT_PM64_BADGE_COUNT + PORT_PM64_FOOD_COUNT) /* the badges', then Tayce T.'s recipes' */
+/* the badges', then Tayce T.'s recipes', then the badges past the first range's */
+#define ICONS (PORT_PM64_BADGE_COUNT + PORT_PM64_FOOD_COUNT + PORT_PM64_BADGE2_COUNT)
 static unsigned char sIcon[ICONS][OUT_WH * OUT_WH * 4] __attribute__((aligned(32)));
 static unsigned sIconGen[ICONS];
 
@@ -254,18 +311,34 @@ static void iconFit(const unsigned char px[ICON_H][ICON_W][4], unsigned char* o)
     }
 }
 
+/* an icon id's badge index, -1 when it isn't a badge's */
+static int iconBadge(int iconId) {
+    int i = iconId - PORT_ICON_PM64_BASE;
+    if (i >= 0 && i < PORT_PM64_BADGE_COUNT) {
+        return i < BADGES ? i : -1;
+    }
+    i = iconId - PORT_ICON_PM64_BADGE2_BASE;
+    if (i >= 0 && i < PORT_PM64_BADGE2_COUNT && PORT_PM64_BADGE_COUNT + i < BADGES) {
+        return PORT_PM64_BADGE_COUNT + i;
+    }
+    return -1;
+}
+
 const void* portPm64BadgeIcon(int iconId, int* w, int* h) {
-    const int i = iconId - PORT_ICON_PM64_BASE;
+    const int b = iconBadge(iconId);
+    /* its picture's slot: a first-range badge's or a recipe's by its icon id, a second-range badge's after them */
+    const int i = b >= PORT_PM64_BADGE_COUNT ? PORT_PM64_BADGE_COUNT + PORT_PM64_FOOD_COUNT + (b - PORT_PM64_BADGE_COUNT)
+                                             : iconId - PORT_ICON_PM64_BASE;
     const uint8_t* arc;
     size_t size;
     unsigned at;
     int looks;
-    if (i >= 0 && i < BADGES) {
-        at = kBadges[i].icon;
+    if (b >= 0) {
+        at = kBadges[b].icon;
     } else if (!portPm64FoodIcon(iconId, &at, &looks)) {
         return NULL;
     }
-    if (i >= ICONS || (arc = portPm64Segment(PM64_SEG_ICONS, &size)) == NULL || at + ICON_W * ICON_H / 2 + 32 > size) {
+    if (i < 0 || i >= ICONS || (arc = portPm64Segment(PM64_SEG_ICONS, &size)) == NULL || at + ICON_W * ICON_H / 2 + 32 > size) {
         return NULL;
     }
     *w = OUT_WH;
@@ -292,9 +365,10 @@ const void* portPm64BadgeIcon(int iconId, int* w, int* h) {
 }
 
 unsigned portPm64IconBinId(unsigned iconId) {
-    if (iconId >= PORT_ICON_PM64_BASE && iconId < PORT_ICON_PM64_BASE + PORT_PM64_BADGE_COUNT) {
-        const int i = (int)(iconId - PORT_ICON_PM64_BASE);
-        return itemDataTable[i < BADGES ? kBadges[i].looks : ITEM_POWER_JUMP].icon_id;
+    if ((iconId >= PORT_ICON_PM64_BASE && iconId < PORT_ICON_PM64_BASE + PORT_PM64_BADGE_COUNT) ||
+        (iconId >= PORT_ICON_PM64_BADGE2_BASE && iconId < PORT_ICON_PM64_BADGE2_BASE + PORT_PM64_BADGE2_COUNT)) {
+        const int i = iconBadge((int)iconId);
+        return itemDataTable[i >= 0 ? kBadges[i].looks : ITEM_POWER_JUMP].icon_id;
     }
     {
         unsigned at;

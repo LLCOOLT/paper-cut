@@ -1,0 +1,31 @@
+# The memory guard on phones (port/settings/features/mem_guard.cpp)
+
+The system closed Paper Cut
+Das System hat Paper Cut beendet
+
+Last time, your device ended the game while you played, most likely to free memory (%d MB in use, %d MB left).
+Beim letzten Mal hat dein Gerät das Spiel während des Spielens beendet, wahrscheinlich um Speicher freizugeben (%d MB belegt, %d MB frei).
+
+Last time, your device ended the game while you played, most likely to free memory.
+Beim letzten Mal hat dein Gerät das Spiel während des Spielens beendet, wahrscheinlich um Speicher freizugeben.
+
+If it happens again, lower Texture upscaling or Supersampling in Settings > Graphics.
+Falls es wieder passiert, verringere Texturen hochskalieren oder Supersampling unter Einstellungen > Grafik.
+
+Texture upscaling %s on this device (%s chosen)
+Texturen hochskalieren auf diesem Gerät %s (%s gewählt)
+
+Supersampling %s on this device (%s chosen)
+Supersampling auf diesem Gerät %s (%s gewählt)
+
+Texture pack memory %s on this device (%s chosen)
+Texturpaket-Speicher auf diesem Gerät %s (%s gewählt)
+
+Higher choices need more memory than this device has.
+Höhere Stufen brauchen mehr Speicher, als dieses Gerät hat.
+
+not on this device
+nicht auf diesem Gerät
+
+Memory running low: lighter graphics for this session
+Speicher wird knapp: einfachere Grafik für diese Sitzung

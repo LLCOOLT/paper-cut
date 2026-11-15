@@ -64,6 +64,11 @@ int portIosSaveToPhotos(const unsigned char* png, size_t len);
 /* shot_aurora.c: Photos' answer for a picture portIosSaveToPhotos started (1 added, 0 not: the access
  * refused when asked, or the library's error), for the status line; any thread. */
 void portShotPhotosDone(int ok);
+/* After SDL is up (main_aurora.c): online play through the app's lifecycle (port/include/port/statesync.h
+ * portStateSyncBackground): "stepped away" and its connections closed cleanly under a background task as
+ * it enters the background (iOS takes a suspended app's sockets without a word, and
+ * may end it: online_resume_pc.c's file brings it back), connected again as it's in front. */
+void portIosLifecycleInit(void);
 
 #ifdef __cplusplus
 }

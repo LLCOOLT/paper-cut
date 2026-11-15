@@ -36,6 +36,8 @@
 #include "battle/battle_event_default.h"
 #include "battle/battle_event_subset.h"
 #include "battle/battle_monosiri.h"
+#include "driver/swdrv.h"
+#include "evt/evt_story.h"
 #include "battle/battle_status_effect.h"
 #include "battle/battle_sub.h"
 #include "evt/evt_batstage.h"
@@ -346,6 +348,8 @@ int portPm64BossCardRow(const BattleUnit* unit, int* sprite, int* palette, int* 
     return 1;
 }
 
+static void testTattle(const BattleUnit* unit, int b); /* (tests: $TTYD_PM64_TATTLE_TEST, below) */
+
 /* the draw (pm64_enemy_pc.c): a boss unit's sprite, palette, row and size; 0 if the unit isn't one */
 int portPm64BossDraw(const BattleUnit* unit, int* sprite, int* palette, int* anim, float* scale) {
     const Pm64Boss* p;
@@ -357,6 +361,7 @@ int portPm64BossDraw(const BattleUnit* unit, int* sprite, int* palette, int* ani
     if (unit == NULL || (b = bossOfUnit(unit)) < 0 || portPm64Linked() == PM64_NONE) {
         return 0;
     }
+    testTattle(unit, b);
     p = &kBosses[b];
     *sprite = p->sprite;
     *palette = p->chargedPal > 0 && unit->work[UW_CHARGED] != 0 ? p->chargedPal - 1 : p->palette;
@@ -3913,6 +3918,7 @@ static void buildKinds(void) {
         k->cutWidth = w;
         k->cutHeight = h;
         k->itemStealParam = 30;
+        k->runRate = 50; /* (Run Away's gauge start, where a fight allows it: a common boss-sized foe's) */
         k->damageSfxName = "SFX_BTL_DAMAGED_PLIABLE1";
         if (p->sounds != NULL && p->sounds->hurt != NULL) {
             /* its own hurt sound, TTYD's thud the stand-in (battle_damage.c plays it by name: port/pm64_sfx.h) */
@@ -3969,6 +3975,178 @@ static void speechText(unsigned id, const char* tag) {
     }
     memcpy(out + o, "<k>", 4);
     portModsSetMessage(tag, out);
+}
+
+/* --- each PM64 boss its own Tattle Log entry (port/include/port/pm64_foes.h: portPm64BossEntry*) ---------------
+   Bosses of different fights stand on the same spare unit types (UNIT_UNUSED_ZESS_T is Jr. Troopa's mage, a Koopa
+   Bros. brother, a Lava Bud, a Crystal Bit), and the game's Tattle flags are per unit type: tattling one would have
+   been tattling them all, in one shared entry holding whichever fought last. So each boss unit with a Tattle of its
+   own in the ROM is an entry here (the Journal's Paper Mario page after the enemies, the settings' Tattle Log),
+   marked when Goombella tattles it (battleSetUnitMonosiriFlag's post hook, by the unit tattled), kept by key on this
+   PC (pm64_boss_tattles.txt); and as its fight starts, its unit type's Tattle flag is its own (set when this boss was
+   tattled, else clear), so its HP shows only once it was. */
+static int sEntryUnit[BOSS_UNITS_MAX];
+static int sEntries = -1;
+
+static void entriesMake(void) {
+    int u, k;
+    if (sEntries >= 0) {
+        return;
+    }
+    bossTables();
+    sEntries = 0;
+    for (u = 0; u < BOSSES; u++) {
+        const Pm64Boss* p = &kBosses[u];
+        if (p->home != 0 || p->illusory || p->tattleMsg < 0) {
+            continue; /* (a story foe is the enemies' page's; a clone and a unit with no Tattle have none) */
+        }
+        for (k = 0; k < sEntries && kBosses[sEntryUnit[k]].tattleMsg != p->tattleMsg; k++) {
+        }
+        if (k == sEntries) { /* (one entry per Tattle: a boss in two fights' files once) */
+            sEntryUnit[sEntries++] = u;
+        }
+    }
+}
+
+static void tattleKey(int u, char* out, size_t size) {
+    snprintf(out, size, "%s %X", kBosses[u].english, (unsigned)kBosses[u].tattleMsg);
+}
+
+static int unitTattled(int u) {
+    char key[64];
+    if (u < 0 || u >= BOSSES || kBosses[u].tattleMsg < 0) {
+        return 0;
+    }
+    tattleKey(u, key, sizeof(key));
+    return portPm64BossTattledKey(key);
+}
+
+/* as a fight starts: its unit type's Tattle flag this boss's own */
+static void tattleFlagOwn(int u) {
+    const int flag = kBosses[u].unitType + GSWF_TATTLE_BASE;
+    const int own = unitTattled(u);
+    const int was = swGet(flag) != 0;
+    if (own != was) {
+        if (own) {
+            swSet(flag);
+        } else {
+            swClear(flag);
+        }
+    }
+    if (getenv("TTYD_PM64_TATTLE_TEST") != NULL) {
+        printf("[pm64] boss tattle entry: %s (unit type %d) own entry, tattled %d%s\n", kBosses[u].english,
+               kBosses[u].unitType, own,
+               own == was ? "" : was ? " (the unit type's flag was set: cleared)" : " (the unit type's flag set)");
+        fflush(stdout);
+    }
+}
+
+/* Goombella's Tattle on a unit type (battleSetUnitMonosiriFlag, after): the PM64 boss on it in this fight marked */
+static void monosiriPost(BattleUnitType kind) {
+    int i;
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        const BattleUnit* unit = unitAt(i);
+        const int u = bossOfUnit(unit);
+        if (u >= 0 && unit->currentKind == kind && kBosses[u].tattleMsg >= 0) {
+            char key[64];
+            int k;
+            tattleKey(u, key, sizeof(key));
+            if (portPm64BossTattleMarkKey(key)) {
+                printf("[pm64] boss tattle: %s marked (its own entry)\n", kBosses[u].english);
+                fflush(stdout);
+            }
+            /* (its other forms in this fight, the same Tattle: Jr. Troopa's, tattled with it) */
+            for (k = 0; k < BOSSES; k++) {
+                if (k != u && sSetOf[k] == sSetOf[u] && kBosses[k].tattleMsg == kBosses[u].tattleMsg &&
+                    strcmp(kBosses[k].english, kBosses[u].english) == 0) {
+                    swSet(kBosses[k].unitType + GSWF_TATTLE_BASE);
+                }
+            }
+            return;
+        }
+    }
+}
+
+/* tests: $TTYD_PM64_TATTLE_TEST=1 logs each fight's entries (tattleFlagOwn); =2 also tattles the fight's lead, as
+   Goombella's Tattle would (battleSetUnitMonosiriFlag), once it has been drawn about 4 seconds, when it shows as not
+   tattled yet (its own entry clear, though a boss on the same unit type was tattled before) */
+static void testTattle(const BattleUnit* unit, int b) {
+    static const char* sTest = (const char*)1;
+    static int sFor = -1, sDrawn, sDone;
+    if (sTest == (const char*)1) {
+        sTest = getenv("TTYD_PM64_TATTLE_TEST");
+    }
+    if (sTest == NULL || sTest[0] != '2' || !sMain[b] || unit->currentKind != kBosses[b].unitType) {
+        return;
+    }
+    if (sFor != b) { /* (each fight's lead, and each that takes its place, once) */
+        sFor = b;
+        sDrawn = sDone = 0;
+    }
+    if (sDone || ++sDrawn < 240) {
+        return;
+    }
+    sDone = 1;
+    printf("[pm64] boss tattle test: %s shows as tattled %d; tattling it\n", kBosses[b].english,
+           (int)battleCheckUnitMonosiriFlag((BattleUnit*)unit));
+    fflush(stdout);
+    battleSetUnitMonosiriFlag(unit->currentKind);
+}
+
+int portPm64BossEntryCount(void) {
+    entriesMake();
+    return sEntries;
+}
+
+const char* portPm64BossEntryEnglish(int i) {
+    entriesMake();
+    return i >= 0 && i < sEntries ? kBosses[sEntryUnit[i]].english : "";
+}
+
+const char* portPm64BossEntryName(int i, char* out, int size) {
+    if (size <= 0) {
+        return out;
+    }
+    out[0] = '\0';
+    entriesMake();
+    if (i >= 0 && i < sEntries &&
+        portPm64MessageText(PM64_MSG(0x29, kBosses[sEntryUnit[i]].nameMsg), 0, out, (size_t)size) <= 0) {
+        snprintf(out, (size_t)size, "%s", kBosses[sEntryUnit[i]].english);
+    }
+    return out;
+}
+
+const char* portPm64BossEntryTattle(int i, char* out, int size) {
+    if (size <= 0) {
+        return out;
+    }
+    out[0] = '\0';
+    entriesMake();
+    if (i >= 0 && i < sEntries) {
+        portPm64MessageText(PM64_MSG(0x1C, kBosses[sEntryUnit[i]].tattleMsg), 0, out, (size_t)size);
+    }
+    return out;
+}
+
+int portPm64BossEntryHp(int i) {
+    entriesMake();
+    return i >= 0 && i < sEntries ? kBosses[sEntryUnit[i]].hp : 0;
+}
+
+int portPm64BossEntryLook(int i, int* sprite, int* palette, int* idle) {
+    entriesMake();
+    if (i < 0 || i >= sEntries) {
+        return 0;
+    }
+    *sprite = kBosses[sEntryUnit[i]].sprite;
+    *palette = kBosses[sEntryUnit[i]].palette;
+    *idle = kBosses[sEntryUnit[i]].idle;
+    return 1;
+}
+
+int portPm64BossEntryTattled(int i) {
+    entriesMake();
+    return i >= 0 && i < sEntries && unitTattled(sEntryUnit[i]);
 }
 
 /* a unit's Tattle Log entry, and its name and Tattle from the ROM */
@@ -4196,6 +4374,7 @@ USER_FUNC(evt_pm64boss_battle) {
         if (sSetOf[u] == sSetOf[b]) {
             bossTexts(u);
             setDefence(u, ownDefence(u));
+            tattleFlagOwn(u);
         }
     }
     /* the fight's own units: its lead and those that take its place, in turn */
@@ -4259,7 +4438,11 @@ USER_FUNC(evt_pm64boss_battle) {
     sInfo.altSelect = NULL;
     sInfo.select = sSelect;
     sInfo.bgmName = PM64_BOSS_TRACK; /* (TTYD's boss theme; a name the game's list hasn't was silence) */
-    sInfo.battleFlags |= flags & ~(PM64_BOSS_FLAG_SCALE | PM64_BOSS_FLAG_EARLY);
+    /* Run Away as the caller says, not the stage's entry: a story boss's entry (Rogueport's Lord Crump, a rush
+       map's boss) carries NPC_BATTLE_NO_ESCAPE, and the optional fights (Rogueport's meetings, the board's
+       refights) took it, Run Away greyed out. The boss rush asks for it (its own rule). Never won by Bump Attack. */
+    sInfo.battleFlags = (sInfo.battleFlags & ~NPC_BATTLE_NO_ESCAPE) | NPC_BATTLE_NO_BUMP_ATTACK |
+                        (flags & ~(PM64_BOSS_FLAG_SCALE | PM64_BOSS_FLAG_EARLY));
     npcSetupBattleInfo(npc, &sInfo);
     evtSetValue(event, args[4], 1);
     for (u = 0; u < BOSSES; u++) {
@@ -4632,5 +4815,6 @@ void portPm64FoeUnitsInit(void) {
     }
     portModHostAddHook(0, kSlot_BattleDamageDirect, (void*)bossDamagePre);
     portModHostAddHook(1, kSlot_BattleCalculateDamage, (void*)calcPost);
+    portModHostAddHook(1, kSlot_battleSetUnitMonosiriFlag, (void*)monosiriPost); /* (each PM64 boss its own Tattle entry) */
     portModHostAddHook(1, kSlot_npcSetupBattleInfo, (void*)foeSetupPost);
 }

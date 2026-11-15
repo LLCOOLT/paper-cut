@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android's game modes (the manifest's android.game_mode_config). The app is a game (isGame), and a
+     game that declares no config is open to the system's interventions: a Game Dashboard or an OEM's game
+     launcher (game boosters, "battery" profiles) may override its frame rate, commonly to 30, and scale its
+     picture down. Paper Cut paces itself (60 game frames a second, Battery saver and Frame rate in its own
+     settings), so it opts out of both: a phone set to 60 shows 60 (a 0.4.1 report: "capped at exactly 30
+     fps when set to 60"). The modes themselves stay the player's: nothing here changes how the game runs. -->
+<game-mode-config xmlns:android="http://schemas.android.com/apk/res/android"
+    android:supportsPerformanceGameMode="true"
+    android:supportsBatteryGameMode="true"
+    android:allowGameAngleDriver="false"
+    android:allowGameDownscaling="false"
+    android:allowGameFpsOverride="false" />

@@ -1,0 +1,61 @@
+{
+ "desc": "a player who joins while another fights a battle of its own (not shared: no one was linked when it began): the session's merge of the progress, and stats with Mario's rank 1 (TTYD_NET_FUZZ_INJECT, as the host's), wait for the field. Mario's rank changed under a battle that began at rank 0 left its stage's nozzles unset, and an attack's aftereffect that turned them on crashed (BattleStage_NozzleWorkCheck: by chance, so the log line shows the wait) (the injected stats are this game's alone: the progress check's merge-again on the differing digests is expected, so no drift check)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_EXIT_FRAMES": 4200,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 4200"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_MAP": "gor_01"
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_map hei_03 600",
+     "wait 120",
+     "battle 4",
+     "wait 4000"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 1000,
+     "TTYD_NET_FUZZ_FROM": 60,
+     "TTYD_NET_FUZZ_INJECT": "r:1:9:98@12=0100"
+    },
+    "log_must": [
+     "fuzz: inject: a reliable one from player 1, type 9, 98 bytes",
+     "fuzz: inject: taken \\(no crash\\)",
+     "player 1's progress kept for after this game's own battle",
+     "merge: stats now level 1"
+    ],
+    "log_must_not": [
+     "\\*\\*\\* crash"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

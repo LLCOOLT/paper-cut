@@ -41,7 +41,7 @@ int portCrashQuitting(void);
  * Call after SDL is up (aurora_initialize), whose own SIGTERM and SIGINT handlers it chains to.
  * Elsewhere it does nothing. */
 void portCrashQuitSignalsInit(void);
-/* aborts if p is below 2 GiB (sound-name words, include/sfx_name_word.h) */
+/* notes p when it is below 2 GiB (gPortLowAddresses: sound and NPC names, port/include/port/low_address.h) */
 void portCheckHostAddress(const void* p, const char* what);
 /* a frame completed ($TTYD_WATCHDOG, crash_pc.c) */
 void portWatchdogFrame(void);
@@ -69,6 +69,11 @@ void portTraceMsgMissing(const char* tag, const char* area, s32 areaCount, const
 void portTraceMsgElsewhere(const char* tag, const char* file, const char* area);
 /* $TTYD_MAP's warp done, or none asked for (tests that drive the page wait for it: TTYD_PADBIND_TEST) */
 int portWarpSettled(void);
+/* a test's "reach it within $TTYD_WARP_LIMIT seconds" (the warp's, the story row's): over only when that many
+   seconds of wall time went by AND the game had that many seconds' frames (at 60 a second) to get there, or ten
+   times the limit went by whatever the frames (a hang). A loaded machine runs a game at a few frames a second:
+   wall time alone failed boots there that were only slow (t51o01 interp_audit_*, gfx_intel_warp_house) */
+int portWarpLimitOver(long long start, unsigned limitSeconds, unsigned framesSinceStart);
 /* a memory card step's result ($TTYD_TRACE, cardmgr.c) */
 void portTraceCard(const char* step, s32 result);
 /* Frame captures to PNG (Aurora: port/src/aurora/shot_aurora.c; headless:
@@ -99,6 +104,13 @@ void portInterpKeep(void* p, unsigned int n);
  * from a scratch arena, so the game's heap is as without these frames
  * (a smartEntry*; NULL if the arena is full). */
 void* portInterpScratchAlloc(u32 size);
+/* A draw callback (a DispCallback) that makes textures once, the first time it is drawn (the Punies'): a draw list
+ * with it is not drawn again in such a frame (as extdrv's extMakeTexture; interp_aurora.c) */
+void portInterpOneShotDraw(void* callback);
+/* whether a smartEntry* came from that arena */
+BOOL portInterpScratchOwns(const void* entry);
+/* memory.c: the game heaps' frees held during such a frame, done after the game's next own draw (marioStDisp) */
+void portMemDeferredFreesFlush(void);
 /* Save warps (port/src/common/warp_pc.c): continue from a .gci save file
  * (the settings page), at the next retrace the game can take it. */
 void portWarpRequestSave(const char* path);
@@ -112,6 +124,9 @@ void portRandSetState(u32 state);
  * static analyzer needs to know for the checks before it (input_pc.c's load, walk_to and talk) */
 void portTestFlush(void);
 __attribute__((noreturn)) void portTestExit(int code);
+/* the player's screenshots still being saved off the game's thread, written first (ms at most): a test's
+   exit (shot_aurora.c; headless: none) */
+void portShotSavesWait(int ms);
 /* a test's end begun (the input script's end, the map warp's last frames): no more fingerprint
  * lines, so the file ends at the same frame however long Aurora's last capture takes */
 void portTestEnding(void);
@@ -152,6 +167,9 @@ s64 portLockstepClock(void);
 /* days since 1970-01-01 (UTC) by portLockstepClock: what every date that
  * picks game content uses (port/include/port/date_seed.h's portDateDay) */
 unsigned portLockstepDay(void);
+/* online, a guest: the host's day (its roster, statesync_pc.c), what portLockstepDay gives while it's set, so both
+   games show the same daily shelves and climbs; 0 none (off line, the host itself) */
+extern unsigned portLockstepDayOverride;
 /* the game clock now (what OSGetTime would give) without moving it: for
  * reads from drawing, menus, snapshots and anything else that does not run
  * the same number of times in every game of a session or a replay */

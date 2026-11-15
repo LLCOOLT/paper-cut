@@ -1,0 +1,85 @@
+{
+ "desc": "relay words garbled or out of their place mid-session (TTYD_NET_FUZZ_INJECT's t: layer, after the relay's welcome): a ticket of letters, a well-shaped ticket that isn't this game's, framed and caps split again, a place no relay has. Each is left out, so the guest's ticket stays the relay's: when its connection then goes quiet and the relay keeps the old one a while (--quiet guest:14:20), its next try takes its place back by that ticket at once, as the guest (0.5.0 kept a garbled ticket: the try was turned away as a new game's and the guest asked for player 3 or 4's place instead)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 5400
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 3000",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 2400",
+     "wait_peer here 2000",
+     "give 149",
+     "flag 1001",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_NET_FUZZ_FROM": 300,
+     "TTYD_NET_FUZZ_INJECT": "t:caps split;t:framed;t:ticket 0123456789abcdef"
+    },
+    "log_must": [
+     "fuzz: inject: the relay's word \"caps split\"",
+     "net: a relay word left out \\(caps out of its place\\)",
+     "net: a relay word left out \\(framed out of its place\\)",
+     "net: a relay word left out \\(a ticket after the welcome\\)",
+     "net: session resumed with player 2"
+    ],
+    "log_must_not": [
+     "doesn't frame the guest's messages"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 3000",
+     "give 154",
+     "coins 10",
+     "wait 2400",
+     "wait_peer here 2000",
+     "give 155",
+     "flag 1002",
+     "wait 700"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 300,
+     "TTYD_NET_FUZZ_FROM": 300,
+     "TTYD_NET_FUZZ_INJECT": "t:ticket zzzzzzzzzzzzzzzzzzzzzzzzzzzz;t:framed;t:peer 7;t:ticket 0123456789abcdef0123456789abcdef"
+    },
+    "log_must": [
+     "net: a relay word left out \\(a ticket after the welcome\\)",
+     "net: a relay word left out \\(framed out of its place\\)",
+     "net: a relay word left out \\(no such place\\)",
+     "fuzz: inject: taken \\(no crash\\)",
+     "net: connection lost \\(quiet\\)",
+     "net: session resumed with player 1"
+    ],
+    "log_must_not": [
+     "asks for player 3 or 4's place",
+     "didn't take this game's ticket"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--quiet",
+   "guest:14:20"
+  ]
+ },
+ "timeout": 300
+}

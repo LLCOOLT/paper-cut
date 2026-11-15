@@ -16,8 +16,12 @@
  *                       saved: one run captures a look off, then on ("[input] setting KEY = V")
  *   battle              start a battle with the nearest enemy NPC, as a map
  *                       script would (evt_npc_battle_start); none on the map
- *                       ends the test (exit 6)
+ *                       ends the test (exit 6). battle N: entry N of the area's battle
+ *                       table, given to the nearest NPC; battle N foe: to the nearest enemy NPC
  *   hp N                set Mario's HP (pouchSetHP), e.g. 1 to reach a Game Over
+ *   fade TYPE [MS] [R,G,B]  fadeEntry (fadedrv.h's FadeType number) as a script starts one;
+ *                       fade tec|soft|white on|off: fadeTecOn, fadeSoftFocusOn, fadeWhiteOutOn;
+ *                       fade reset: every fade slot cleared (fadeReset)
  *   walk_to HIT [MAX]   the stick towards hit object HIT (an exit's zone) until
  *                       the map changes, jumping when stuck; at most MAX frames
  *   walk_to X Z [MAX]   the same towards point X, Z of the map, until Mario is
@@ -36,7 +40,14 @@
  *                       1 title, 2 field, 4 battle, 6 file select), at most
  *                       MAX frames (default 3600), else exit 5
  *   wait_map NAME [MAX] no input until NAME is the current map, as wait_seq
+ *   wait_flag FLAG MAP [MAX]  no input until saved flag FLAG (GSWF, by name or number) is set or MAP is the
+ *                       current map, as wait_seq: a random fight's end either way (won: its flag; lost: thrown
+ *                       out to MAP, e.g. the Punies' Jabbi fight in mri_08)
+ *   wait_command WHO [MAX]  no input until a battle command menu takes input: WHO mario, partner or
+ *                       any (a move played out, the enemies' turn over), as wait_seq
  *   wait_y Y [MAX]      no input until Mario is at height Y or above (riding a lift)
+ *   wait_choice [MAX]   no input until a choice (a message's yes/no, its options) takes keys, as wait_seq:
+ *                       the next step's press lands on its first frame
  *   wait_vfx NAME [MAX] no input until an effect named NAME (its type: GonbabaBreath, Nokotarou)
  *                       was drawn with something showing (port/include/port/vfx_trace.h), as wait_seq
  *                       (default MAX 600): a capture of the effect right after it, whenever it came
@@ -47,7 +58,7 @@
  *                       Start menu), "here" (linked), "battle", "field", "room" (in this one's room),
  *                       "coop" (a co-op guest), "free" (in the field, keys on), "busy" (a player not
  *                       free: title, loading, battle, scene, menu), "map=NAME"; a count after it ("here3") asks that many
- *                       players; "!card" / "!paused" ... none shows it; as wait_seq. Two games' scripts
+ *                       players; "!card" / "!paused" ... none shows it; "<here3" fewer than that many; as wait_seq. Two games' scripts
  *                       meet so, however far apart they started (launches are staggered under load)
  *   wait_hit HIT x|y|z >=|<= V  no input until hit object HIT's centre is there (a
  *                       moving platform come alongside), at most 3600 frames
@@ -58,11 +69,20 @@
  *                       (screens that ignore input during their intro)
  *   give ID             the item, key item or badge ID (pouchGetItem)
  *   join N / party N    partner N joins / joins and comes out (1 Goombella..7)
+ *   leave N             partner N leaves the party (the story's partyLeft: Doopliss in jin_04)
+ *   yoshi_color N       Yoshi's colour bits in the pouch set to N (0-7: 7 is no colour, a garbled one's)
  *   story N / flag N    the story (GSW 0) set to N / switch GSWF N set
+ *   mail N              letter N received, unread (pouchReceiveMail)
  *   audience N, coins N, sp N, fp N   those set (sp: star power, in 1/100 units)
  *   maxsp N, maxhp N, maxfp N   the maximums set (maxhp and maxfp also fill them)
+ *   foe_hp N            in a battle, every enemy's HP and maximum N (a run of moves outlasts their damage)
  *   gsw N V             saved byte GSW N set to V (story values, area progress)
+ *   lsw N V             the area's own byte LSW N set to V
+ *   bgm_off             the music on both BGM channels faded out (a game that never had a scene's music)
  *   level N             Mario's level set to N
+ *   bros_hp N, bros_fp N  Brothers mode's Luigi's HP or FP between battles set to N
+ *   star_rank N         Mario's own rank set to N (0 Rookie .. 3 Superstar: a battle stage's nozzles
+ *                       and iron frame from 1 up; `rank` is the partners')
  *   stars MASK          the special moves obtained (bit 0: Sweet Treat ...)
  *   swap                the next partner out, in the partner menu's order (the quick-swap control,
  *                       on whether or not Enhancements has it on); `party N` for a given one
@@ -76,6 +96,8 @@
  *   travel N            Enhancements fast travel to hub N (0 Rogueport, 1 Petalburg ...)
  *   mobj_event NAME     run map object NAME's event, as hitting it would (a
  *                       switch's, a block's)
+ *   mobj_hit NAME       map object NAME hit, as from below or by the hammer (its kind's own
+ *                       work: a Heart Block's heal)
  *   talk NAME|N [MAX]   talk to that NPC as A in front of it does (only where the map blocks the
  *                       real way: across a counter); A and B as talk_all presses them
  *   talk_all [MAX]      talk to every NPC of the map in turn (not those parked
@@ -93,6 +115,8 @@
  *                       menu up
  *   shadow STEP         STEP in $TTYD_INPUT_SHADOW games only (online tests: the
  *                       other players' own tap, hover, back or wheel)
+ *   on_map NAME STEP    STEP only if NAME is the map when it comes up, else passed over (the steps that
+ *                       finish a walk a battle on the way may have left short)
  *   select N|list       open selection window type N (0-18; key items, items,
  *                       badges, partners, ...), or a window of a list of items
  *                       as a locked door's script opens; press keys to close it
@@ -102,6 +126,8 @@
  *                       and stalls (tools/port/monkey.py; randAction below)
  *   state save|load N   save state slot N (1-4) saved or loaded at the end of
  *                       this frame (Aurora, port/src/aurora/savestate_aurora.c)
+ *   resume_continue     quick resume's last snapshot written out and loaded as the launcher's Continue
+ *                       loads it (Aurora, port/src/aurora/resume_aurora.c)
  *   where [npcs|hits|mobjs]  print the map, Mario's place, the story, the sequence, control;
  *                       npcs: each NPC of the map too (index, name, x y z); hits: each hit
  *                       object (centre, box; exits and cases first, marked *; `where hits NAME`: those
@@ -115,13 +141,17 @@
  *   where words         every saved flag set and saved byte not 0 (GSWF, LSWF, GSW, LSW)
  *   where windows       the game's windows still open (message, select, item lists): how many, then
  *                       each one's slot, type, state and alpha
- *   dev STEP            a device flow's step (port/src/common/flows_pc.c): a virtual controller plugged in
+ *   where screen        "live" (the field on screen: the 3D camera and the map drawn, the fades done) or what
+ *                       hides it ("black: the 3D camera is off", a fade ended out, ...), the Start menu, Mario
+ *   dev STEP           a device flow's step (port/src/common/flows_pc.c): a virtual controller plugged in
  *                       or pressed, a keyboard key, a touch control, a wait or an expectation, with
  *                       controller 1 left to those devices (never written by the script) meanwhile
  *   pad N KEYS [FRAMES] controller N (2-4) plugged in (from now on), KEYS held on it FRAMES (default 2;
  *                       KEYS "none": only plugged in); the script goes on at once (co-op players' presses)
  *   unplug N [FRAMES] / plug N   controller N pulled out (for FRAMES, else until plug N) / back in
  *   online leave / online join CODE|ADDRESS   as the Start menu's Leave the room / Join (online tests)
+ *   online last_pause   this game's pauses from now on marked its last (a guest's "wait_peer paused_last")
+ *   online hold_pause on|off  this game reads to the others as paused until off (where Start opens nothing)
  *   together PICK / together seat S W   the Multiplayer page's pick (versus, raid, bossrush, quiz, cards,
  *                       bingo, dm2-dm4, together) / Who's who swap of seats S and W, as its button (Aurora)
  *   key NAME [FRAMES]   a keyboard key (SDL's name: Escape, Return...) held FRAMES (default 2), as the
@@ -141,6 +171,8 @@
 #include "port/companion_menu.h"
 #include "port/gameplus.h"
 #include "port/menu_tap.h"
+#include "port/menu_buttons.h"
+#include "port/crowd.h"
 #include "port/practice.h"
 #include "port/practice_more.h"
 #include "port/practice_tools.h"
@@ -151,6 +183,7 @@
 #include "port/players.h"
 #include "port/story_test.h"
 #include "port/together.h"
+#include "port/screen_live.h"
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
 #endif
@@ -171,6 +204,7 @@
 #include "port/platform.h"
 #include "data/mapdata.h"
 #include "driver/casedrv.h"
+#include "driver/fadedrv.h"
 #include "driver/hitdrv.h"
 #include "driver/mapdrv.h"
 #include "driver/swdrv.h"
@@ -183,6 +217,7 @@
 #include "manager/evtmgr.h"
 #include "mario/mario.h"
 #include "mario/mario_pouch.h"
+#include "data/item_data.h"
 #include "mario/mariost.h"
 #include "mario/mario_party.h"
 #include "driver/mobjdrv.h"
@@ -200,6 +235,7 @@ EventEntry* mobjRunEvent(MapObjectEntry* entry, EvtWord* eventCode); /* mobjdrv.
 int portFlowsStep(const char* args);
 int portFlowsStepDone(void);
 void portFlowsFrame(void);
+int portMsgWaiting(int* sel, int* numSel, const char** tag); /* msgdrv.c (wait_choice) */
 
 typedef struct Step {
     char text[96];
@@ -210,6 +246,7 @@ typedef struct Step {
     char name[160]; /* (where gsw|flag|have: its whole list) */
     s32 waitMax; /* wait_seq / wait_map */
     u32 seed;    /* random: its generator's seed (0: none, plain input) */
+    char onMap[16]; /* on_map NAME STEP: the step only while NAME is the map, else passed over ("" always) */
 } Step;
 
 /* the script's own controllers 2-4 (pad N KEYS, unplug N, plug N): each plugged in from its first "pad" (or
@@ -224,7 +261,8 @@ static struct {
     int left;
 } sScriptPad[4];
 static int sCoopWherePending; /* where coop: printed at the end of this frame's input (portInputApply) */
-static int sCoopSettledSeen;  /* where coop MAX: everyone was settled at the end of the last frame's input */
+static int sCoopSettledSeen;  /* where coop MAX: the frames in a row everyone was settled, at each frame's input's end */
+#define COOP_SETTLED_FRAMES 30
 #ifdef TTYD_BACKEND_AURORA
 static char sKeyName[32]; /* key NAME FRAMES: the key held, and the frames until it is let go */
 static int sKeyLeft;
@@ -527,6 +565,9 @@ static char sSweepMap[32];
 
 static Step sSteps[MAX_LINES];
 static s32 sCount, sCur = -1, sLeft;
+/* loop: the frame (sFrame) a looping script ends at ($TTYD_EXIT_FRAMES; 0 no loop yet), and that end come */
+static u32 sLoopUntil;
+static BOOL sLoopEnd;
 static int sState = -1; /* -1 unread, 0 off, 1 loaded, 2 running, 3 ended */
 
 static BOOL parseKeys(Step* s, char* keys) {
@@ -567,6 +608,11 @@ static BOOL parseKeys(Step* s, char* keys) {
 __attribute__((weak)) void portSaveStateRequest(int slot, int load) {
     (void)slot;
     (void)load;
+}
+
+/* port/src/aurora/resume_aurora.c: quick resume's snapshot written and Continued, as the launcher's Continue
+   (tests); the headless build has no quick resume */
+__attribute__((weak)) void portResumeContinueTest(void) {
 }
 
 /* port/src/aurora/rewind_aurora.c: the Rewind control held for frames (tests) */
@@ -628,10 +674,21 @@ static void load(const char* path) {
             }
             memmove(line, line + 7, strlen(line + 7) + 1);
         }
+        char onMap[16] = "";
+        if (strncmp(line, "on_map ", 7) == 0) {
+            /* on_map NAME STEP: STEP only if NAME is the map when it comes up (a way that a battle on it can
+             * leave unfinished: the steps to finish it, passed over once the walk got there) */
+            int used = 0;
+            if (sscanf(line + 7, "%15s %n", onMap, &used) < 1 || used == 0) {
+                goto bad;
+            }
+            memmove(line, line + 7 + used, strlen(line + 7 + used) + 1);
+        }
         if (sscanf(line, "%31s %63s %63s %15s %31s", cmd, a1, a2, a3, a4) < 1) {
             continue;
         }
         memset(s, 0, sizeof(*s));
+        snprintf(s->onMap, sizeof(s->onMap), "%s", onMap);
         snprintf(s->text, sizeof(s->text), "%s %s %s %s %s", cmd, a1, a2, a3, a4);
         if (strcmp(cmd, "wait") == 0) {
             s->frames = atoi(a1);
@@ -668,7 +725,8 @@ static void load(const char* path) {
             snprintf(s->name, sizeof(s->name), "%s %s", a1, a2);
         } else if (strcmp(cmd, "battle") == 0) {
             s->frames = -3;
-            snprintf(s->name, sizeof(s->name), "%s", a1); /* optional: an entry of the area's table */
+            /* optional: an entry of the area's table; "battle N foe" gives it to the nearest enemy NPC */
+            snprintf(s->name, sizeof(s->name), "%s%s", a1, strcmp(a2, "foe") == 0 ? " foe" : "");
         } else if (strcmp(cmd, "wait_seq") == 0 || strcmp(cmd, "wait_map") == 0) {
             s->frames = cmd[5] == 's' ? -5 : -6;
             snprintf(s->name, sizeof(s->name), "%s", a1);
@@ -679,6 +737,17 @@ static void load(const char* path) {
             snprintf(s->name, sizeof(s->name), "%s", a2);
             s->waitMax = a3[0] ? atoi(a3) : 3600;
             if (!parseKeys(s, a1)) goto bad;
+        } else if (strcmp(cmd, "wait_flag") == 0) {
+            /* wait_flag FLAG MAP [MAX]: until the flag is set or MAP is the map */
+            if (!a1[0] || !a2[0]) goto bad;
+            s->frames = -45;
+            snprintf(s->name, sizeof(s->name), "%s %s", a1, a2);
+            s->waitMax = a3[0] ? atoi(a3) : 3600;
+        } else if (strcmp(cmd, "wait_command") == 0) {
+            /* wait_command mario|partner|any [MAX]: no input until that one's battle command menu takes input */
+            s->frames = -42;
+            snprintf(s->name, sizeof(s->name), "%s", a1[0] ? a1 : "any");
+            s->waitMax = a2[0] ? atoi(a2) : 3600;
         } else if (strcmp(cmd, "save") == 0) {
             /* save: the open file, here and now, as a Save Block does
              * (cardWrite); waits until the card is done. A checkpoint: a later
@@ -704,6 +773,10 @@ static void load(const char* path) {
             s->frames = -26;
             snprintf(s->name, sizeof(s->name), "%s", a1);
             s->waitMax = a2[0] ? atoi(a2) : 3600;
+        } else if (strcmp(cmd, "wait_choice") == 0) {
+            /* wait_choice [MAX]: no input until a choice takes keys */
+            s->frames = -44;
+            s->waitMax = a1[0] ? atoi(a1) : 3600;
         } else if (strcmp(cmd, "wait_vfx") == 0 && a1[0]) {
             /* wait_vfx NAME [MAX]: no input until effect NAME was drawn showing something */
             s->frames = -30;
@@ -738,14 +811,19 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "pause") == 0) {
             s->frames = -7;
             snprintf(s->name, sizeof(s->name), "%s", a1);
-        } else if (strcmp(cmd, "give") == 0 || strcmp(cmd, "join") == 0 || strcmp(cmd, "party") == 0 ||
+        } else if (strcmp(cmd, "give") == 0 || strcmp(cmd, "join") == 0 || strcmp(cmd, "leave") == 0 ||
+                   strcmp(cmd, "party") == 0 ||
                    strcmp(cmd, "story") == 0 || strcmp(cmd, "flag") == 0 || strcmp(cmd, "audience") == 0 ||
                    strcmp(cmd, "coins") == 0 || strcmp(cmd, "sp") == 0 || strcmp(cmd, "fp") == 0 ||
                    strcmp(cmd, "maxsp") == 0 || strcmp(cmd, "maxhp") == 0 || strcmp(cmd, "stars") == 0 ||
                    strcmp(cmd, "swap") == 0 || strcmp(cmd, "travel") == 0 || strcmp(cmd, "level") == 0 ||
-                   strcmp(cmd, "gsw") == 0 || strcmp(cmd, "maxfp") == 0 || strcmp(cmd, "drop") == 0 ||
-                   strcmp(cmd, "maxbp") == 0 || strcmp(cmd, "rank") == 0) {
-            /* state set-up for a test, at once */
+                   strcmp(cmd, "gsw") == 0 || strcmp(cmd, "lsw") == 0 || strcmp(cmd, "maxfp") == 0 ||
+                   strcmp(cmd, "drop") == 0 || strcmp(cmd, "bros_hp") == 0 || strcmp(cmd, "bros_fp") == 0 ||
+                   strcmp(cmd, "maxbp") == 0 || strcmp(cmd, "rank") == 0 || strcmp(cmd, "star_rank") == 0 ||
+                   strcmp(cmd, "audience_throw") == 0 || strcmp(cmd, "foe_hp") == 0 || strcmp(cmd, "mail") == 0 ||
+                   strcmp(cmd, "yoshi_color") == 0 || strcmp(cmd, "bgm_off") == 0) {
+            /* state set-up for a test, at once (audience_throw: in a battle, an audience member winds up a
+             * throw, as the crowd's own start) */
             s->frames = -13;
             snprintf(s->name, sizeof(s->name), "%s", cmd);
             s->waitMax = (s32)strtol(a1, NULL, 0);
@@ -760,6 +838,12 @@ static void load(const char* path) {
             } else {
                 snprintf(s->name, sizeof(s->name), "sfx:%s", a1);
             }
+        } else if (strcmp(cmd, "fade") == 0 && a1[0]) {
+            /* fade TYPE [MS] [R,G,B]: fadeEntry(TYPE, MS, colour) as a script's evt_fade_entry starts it (fadedrv.h's
+             * FadeType numbers; the widescreen sweep's wipes, curtains and pages); fade tec|soft|white on|off: the
+             * dark and light overlays and the 3D's white-out (fadeTecOn, fadeSoftFocusOn, fadeWhiteOutOn) */
+            s->frames = -13;
+            snprintf(s->name, sizeof(s->name), "fade:%s %s %s", a1, a2[0] ? a2 : "0", a3[0] ? a3 : "0,0,0");
         } else if (strcmp(cmd, "practice") == 0) {
             /* practice wear BADGE | practice partner P hp|maxhp|rank VALUE | practice stat NAME VALUE |
              * practice show | practice items | practice warp MAP [ENTRANCE] | practice jump POINT (Aurora):
@@ -842,9 +926,9 @@ static void load(const char* path) {
             s->frames = -23;
             s->stickX = 3;
             s->waitMax = a1[0] ? atoi(a1) : 1800;
-        } else if (strcmp(cmd, "mobj_event") == 0) {
+        } else if (strcmp(cmd, "mobj_event") == 0 || strcmp(cmd, "mobj_hit") == 0) {
             s->frames = -15;
-            snprintf(s->name, sizeof(s->name), "%s", a1);
+            snprintf(s->name, sizeof(s->name), "%s%s", cmd[5] == 'h' ? "hit:" : "", a1);
         } else if (strcmp(cmd, "select") == 0) {
             s->frames = -14;
             s->waitMax = strcmp(a1, "list") == 0 ? -1 : atoi(a1);
@@ -852,6 +936,8 @@ static void load(const char* path) {
             /* rewind N: the Rewind control held for the next N frames */
             s->frames = -22;
             s->waitMax = atoi(a1);
+        } else if (strcmp(cmd, "resume_continue") == 0) {
+            s->frames = -46;
         } else if (strcmp(cmd, "state") == 0) {
             s->frames = -24;
             s->waitMax = atoi(a2) - 1;
@@ -863,7 +949,8 @@ static void load(const char* path) {
             s->stickX = strcmp(a1, "npcs") == 0 ? 1 : strcmp(a1, "hits") == 0 ? 2 : strcmp(a1, "mobjs") == 0 ? 3
                       : strcmp(a1, "flag") == 0 ? 4 : strcmp(a1, "gsw") == 0 ? 5 : strcmp(a1, "floor") == 0 ? 6
                       : strcmp(a1, "items") == 0 ? 7 : strcmp(a1, "words") == 0 ? 8
-                      : strcmp(a1, "have") == 0 ? 9 : strcmp(a1, "windows") == 0 ? 10 : 0;
+                      : strcmp(a1, "have") == 0 ? 9 : strcmp(a1, "windows") == 0 ? 10
+                      : strcmp(a1, "screen") == 0 ? 11 : 0;
             /* where flag|gsw|have: every name or number to the line's end (from the line itself: the
                split above keeps three, and a3 only 15 characters, so a longer list or name was cut) */
             {
@@ -893,6 +980,17 @@ static void load(const char* path) {
             s->waitMax = atoi(a1) - 1;
             s->seed = a3[0] ? (u32)atoi(a3) : 2u;
             if (strcmp(a2, "none") != 0 && !parseKeys(s, a2)) goto bad;
+        } else if (strcmp(cmd, "online") == 0 && strcmp(a1, "last_pause") == 0) {
+            /* online last_pause: this game's pauses from now on are marked its last (a guest's "wait_peer
+             * paused_last" waits for that one, however many it missed while away) */
+            s->frames = -36;
+            s->stickX = 2;
+        } else if (strcmp(cmd, "online") == 0 && strcmp(a1, "hold_pause") == 0 &&
+                   (strcmp(a2, "on") == 0 || strcmp(a2, "off") == 0)) {
+            /* online hold_pause on|off: this game reads to the others as paused (its Start menu up) until off,
+             * where Start opens nothing (Peach's interludes): a test's last pause there */
+            s->frames = -36;
+            s->stickX = strcmp(a2, "on") == 0 ? 3 : 4;
         } else if (strcmp(cmd, "online") == 0 && (strcmp(a1, "leave") == 0 || (strcmp(a1, "join") == 0 && a2[0]))) {
             /* online leave / online join CODE|ADDRESS: as the Start menu's Leave the room and Join (headless has
              * no Multiplayer page; $TTYD_SYNC_LEAVE_AT and _MENU_JOIN_AT at a step of the script, not a frame) */
@@ -924,6 +1022,11 @@ static void load(const char* path) {
             s->seed = a2[0] ? (u32)atoi(a2) : 0u;
         } else if (strcmp(cmd, "end") == 0) {
             s->frames = -2;
+        } else if (strcmp(cmd, "loop") == 0) {
+            /* loop: back to the script's first step (a run longer than MAX_LINES steps hold: the online soak's
+             * games stood still the last 45% of its 2 game-hours, their scripts used up); $TTYD_EXIT_FRAMES
+             * ends it */
+            s->frames = -43;
         } else {
             goto bad;
         }
@@ -1025,8 +1128,9 @@ static s32 nearestEnemy(void) {
 }
 
 /* The nearest live NPC with a battle group (an enemy), as a map script names
- * it; with entry >= 0 the nearest live NPC, which gets that battle. */
-static void startBattle(s32 entry) {
+ * it; with entry >= 0 the nearest live NPC, which gets that battle (foe: the nearest enemy NPC, as `battle`
+ * picks it: a fight the Paper Mario 64 story enemies take, which leave a townsfolk NPC's alone). */
+static void startBattle(s32 entry, BOOL foe) {
     NpcWork* wp = npcGetWorkPtr();
     MarioWork* mario = marioGetPtr();
     NpcEntry* best = NULL;
@@ -1038,7 +1142,8 @@ static void startBattle(s32 entry) {
         /* as the field battle check (npcdrv.c): a battle group and a defeat
          * script; story NPCs with only a group would fight out of context */
         if (!(npc->flags & NPC_FLAG_USED) ||
-            (entry < 0 && (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL))) {
+            ((entry < 0 || foe) && (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL ||
+                                    (foe && !(npc->flags & NPC_FLAG_ENEMY))))) {
             continue;
         }
         dx = npc->position.x - mario->position.x;
@@ -1425,9 +1530,15 @@ static void applyScript(PADStatus* pad) {
         if (sSweepEvt >= 0) {
             const BOOL running = evtCheckID(sSweepEvt);
             if (running && ++sSweepFrames <= sSweepMax) {
+                int sel = 0, num = 0;
+                const char* tag = NULL;
+                /* (a choice taking keys: A on what the cursor or the automatic answer is on, never B, which
+                   cancels it as its last option: Whacka's "Fight me?" read No when a B landed on the yes/no,
+                   postgame_whacka) */
+                const int choice = portMsgWaiting(&sel, &num, &tag) == 2;
                 if (sSweepFrames % 20 < 2) {
                     pad[0].button = PAD_BUTTON_A;
-                } else if (sSweepFrames % 90 >= 45 && sSweepFrames % 90 < 47) {
+                } else if (!choice && sSweepFrames % 90 >= 45 && sSweepFrames % 90 < 47) {
                     pad[0].button = PAD_BUTTON_B;
                 }
                 return;
@@ -1577,6 +1688,17 @@ static void applyScript(PADStatus* pad) {
                 sWalkFrames = -1;
                 return;
             }
+            if (w->stickX == 2 && sWalkBattle && (npc == NULL || !(npc->flags & NPC_FLAG_USED))) {
+                /* walk_to npc: the NPC fought on the way and gone with its defeat (the walk now goes on after a
+                   battle, so it no longer ends at the scene after it: fullrun_07_kroop, _08_bristles) */
+                memset(&pad[0], 0, sizeof(pad[0]));
+                pad[0].err = PAD_ERR_NONE;
+                printf("[input] frame %u: walk_to npc %s: fought on the way, gone after %d frames\n", (unsigned)sFrame,
+                       w->name, (int)sWalkFrames);
+                fflush(stdout);
+                sWalkFrames = -1;
+                return;
+            }
             if (npc == NULL || !(npc->flags & NPC_FLAG_USED)) {
                 printf("[input] FAIL: walk_to npc %s: no such NPC on map '%s'\n", w->name, gp->currentMapName);
                 fflush(stdout);
@@ -1647,6 +1769,13 @@ static void applyScript(PADStatus* pad) {
             return;
         }
         if (point && sWalkFrames > 0 && !(seqGetSeq() == SEQ_GAME && marioChkKey())) {
+            if (sWalkBattle && w->stickX != 3 && sWalkScene < 600) {
+                /* the field coming back after a battle on the way (online, the shared battle's end holds the keys
+                   until every game is back, 90 frames and more): not a scene; the walk goes on (st51 s51-009's
+                   walks in gon_10 all ended there and came up short) */
+                sWalkScene++;
+                return;
+            }
             /* a scene took Mario on the way (a trigger crossed): the walk's job is done */
             if (++sWalkScene >= 30 && w->stickX != 3) { /* (fight: the battle's start, then the battle) */
                 printf("[input] frame %u: walk_to: a scene took over at %.0f %.0f after %d frames\n", (unsigned)sFrame,
@@ -1670,6 +1799,9 @@ static void applyScript(PADStatus* pad) {
         if (seqGetSeq() == SEQ_GAME && marioChkKey()) {
             /* near a point: slower, so Mario stops on it rather than past it */
             const float tilt = point && len < 60.0f ? 40.0f + len : 100.0f;
+            if (sWalkScene > 0 && w->stickX != 3) {
+                sWalkBattle = FALSE; /* (the battle's end waited out: a later key-off is a scene again) */
+            }
             sWalkScene = 0;
             if (len > 1.0f) {
                 walkStick(&pad[0], dx / len, dz / len, tilt);
@@ -1717,6 +1849,30 @@ static void applyScript(PADStatus* pad) {
             }
         } else if (w->frames == -29) {
             met = portStateSyncPeerShows(w->name); /* wait_peer */
+        } else if (w->frames == -45) {
+            /* wait_flag FLAG MAP: the flag set, or MAP the map */
+            char flag[80] = "", map[32] = "";
+            met = FALSE;
+            if (sscanf(w->name, "%79s %31s", flag, map) == 2) {
+                char* end;
+                long id = strtol(flag, &end, 0);
+                if (*end != '\0') {
+                    int k;
+                    id = -1;
+                    for (k = 0; k < portGswfNamesCount; k++) {
+                        if (strcmp(portGswfNames[k].name, flag) == 0) {
+                            id = portGswfNames[k].value;
+                            break;
+                        }
+                    }
+                }
+                met = (id >= 0 && swGet((s32)id) != 0) ||
+                      (gp != NULL && strcmp(gp->currentMapName, map) == 0);
+            }
+        } else if (w->frames == -42) {
+            /* wait_command: that side's battle command menu taking input */
+            const int kind = portBattleCommandMenuUp();
+            met = kind >= 0 && (strcmp(w->name, "any") == 0 || (strcmp(w->name, "mario") == 0) == (kind == 0));
         } else if (w->frames == -38) {
 #ifdef TTYD_BACKEND_AURORA
             met = portTogetherPicked() == atoi(w->name); /* press_until_pick */
@@ -1726,7 +1882,10 @@ static void applyScript(PADStatus* pad) {
         } else if (w->frames == -35) {
             /* where coop [MAX]: everyone settled (as the end of the last frame's input found), or MAX frames
                gone; never a failure here: the line says NOT SETTLED and the run goes on */
-            met = sCoopSettledSeen || sWaitFrames >= w->waitMax;
+            /* (settled for COOP_SETTLED_FRAMES in a row: settled for one frame, a guest just arrived was pulled into
+               the host's entry scene the next, and the line printed then said NOT SETTLED,
+               online_coop_follow_arrival) */
+            met = sCoopSettledSeen >= COOP_SETTLED_FRAMES || sWaitFrames >= w->waitMax;
             if (met) {
                 sCoopWherePending = 1;
             }
@@ -1740,6 +1899,10 @@ static void applyScript(PADStatus* pad) {
             met = marioGetPtr()->position.y >= (f32)atof(w->name); /* wait_y */
         } else if (w->frames == -30) {
             met = portVfxShownLately(w->name); /* wait_vfx */
+        } else if (w->frames == -44) {
+            int sel = 0, num = 0;
+            const char* tag = NULL;
+            met = portMsgWaiting(&sel, &num, &tag) == 2; /* wait_choice */
         } else if (w->frames == -11) {
             met = swByteGet(0) >= atoi(w->name);
         } else if (w->frames == -10) {
@@ -1748,11 +1911,25 @@ static void applyScript(PADStatus* pad) {
             met = w->frames == -5 ? (s32)seqGetSeq() == atoi(w->name)
                                   : gp != NULL && strcmp(gp->currentMapName, w->name) == 0;
         }
+        if (!met && w->frames == -9 && seqGetSeq() == SEQ_BATTLE) {
+            /* press_until_control: a battle on the way, its frames not counted (an online shared battle of four
+               players ran 2861 frames, past the step's 3000 with its scene after, s51-017); the keys pressed as
+               before */
+            memset(&pad[0], 0, sizeof(pad[0]));
+            pad[0].err = PAD_ERR_NONE;
+            if (sFrame % 30 < 2) {
+                pad[0].button = w->buttons;
+                pad[0].stickX = w->stickX;
+                pad[0].stickY = w->stickY;
+            }
+            return;
+        }
         if (!met) {
             if (++sWaitFrames > w->waitMax) {
                 printf("[input] FAIL: %s not reached in %d frames (sequence %d, map '%s')\n", w->text,
                        (int)w->waitMax, (int)seqGetSeq(), gp != NULL ? gp->currentMapName : "");
                 fflush(stdout);
+                portStoryTestDumpScripts("the step ran out"); /* what holds this game (the host's too) */
                 portSettingsDumpNow(); /* tests: $TTYD_SETTINGS_DUMP, a failed run's too */
                 portTestExit(5);
             }
@@ -1772,8 +1949,13 @@ static void applyScript(PADStatus* pad) {
         fflush(stdout);
         sWaitFrames = -1;
     }
+    if (sLoopUntil != 0 && sFrame >= sLoopUntil) {
+        /* (a looping script: $TTYD_EXIT_FRAMES of it run, it ends as at its `end`, the step under way cut) */
+        sLeft = 0;
+        sLoopEnd = 1;
+    }
     while (sLeft <= 0) {
-        if (sCur >= 0 && sSteps[sCur].frames == -2) {
+        if (sLoopEnd || (sCur >= 0 && sSteps[sCur].frames == -2)) {
             /* end: wait for a pending capture, then leave (the fingerprint file ends here: the
                capture takes a few frames more or less on Aurora, its readback in real time) */
             portTestEnding();
@@ -1793,8 +1975,28 @@ static void applyScript(PADStatus* pad) {
             return;
         }
         s = &sSteps[sCur];
+        if (s->onMap[0] && (gp == NULL || strcmp(gp->currentMapName, s->onMap) != 0)) {
+            printf("[input] frame %u: (not on %s: passed over) %s\n", (unsigned)sFrame, s->onMap, s->text);
+            fflush(stdout);
+            continue;
+        }
         printf("[input] frame %u: %s\n", (unsigned)sFrame, s->text);
         fflush(stdout);
+        if (s->frames == -43) {
+            /* loop: from the top, not twice in one frame (a script of steps with no frames stood the game still) */
+            static u32 sLoopFrame = 0xFFFFFFFFu;
+            if (sLoopFrame == sFrame) {
+                sState = 3;
+                return;
+            }
+            sLoopFrame = sFrame;
+            if (sLoopUntil == 0) {
+                const char* v = getenv("TTYD_EXIT_FRAMES");
+                sLoopUntil = v != NULL && atoi(v) > 0 ? (u32)atoi(v) : 0xFFFFFFFFu;
+            }
+            sCur = -1;
+            continue;
+        }
         if (s->frames == -1) {
             /* with the map warp (map_sweep --input), named <map>__<NAME> */
             const char* map = getenv("TTYD_MAP");
@@ -1839,7 +2041,11 @@ static void applyScript(PADStatus* pad) {
             continue;
         }
         if (s->frames == -36) {
-            if (s->stickX) {
+            if (s->stickX == 2) {
+                portStateSyncMarkLastPause();
+            } else if (s->stickX == 3 || s->stickX == 4) {
+                portStateSyncTestPause(s->stickX == 3);
+            } else if (s->stickX) {
                 char text[64];
                 const char* port = getenv("TTYD_SYNC_PORT");
                 /* (an address with no port: the session's, as $TTYD_SYNC_MENU_JOIN_AT's) */
@@ -1859,7 +2065,7 @@ static void applyScript(PADStatus* pad) {
         if (s->frames == -3) {
             /* battle [N]; N may also come from $TTYD_BATTLE_SETUP (map_sweep --battles) */
             const char* n = s->name[0] ? s->name : getenv("TTYD_BATTLE_SETUP");
-            startBattle(n != NULL && *n ? atoi(n) : -1);
+            startBattle(n != NULL && *n ? atoi(n) : -1, strstr(s->name, " foe") != NULL);
             continue;
         }
         if (s->frames == -41) {
@@ -1899,7 +2105,7 @@ static void applyScript(PADStatus* pad) {
         }
         if (s->frames == -5 || s->frames == -6 || s->frames == -9 || s->frames == -10 || s->frames == -11 || s->frames == -26 ||
             s->frames == -27 || s->frames == -29 || s->frames == -30 || s->frames == -31 || s->frames == -35 ||
-            s->frames == -38) {
+            s->frames == -38 || s->frames == -42 || s->frames == -44 || s->frames == -45) {
             sWaitFrames = 0;
             sCoopSettledSeen = 0;
             memset(&pad[0], 0, sizeof(pad[0]));
@@ -1946,7 +2152,38 @@ static void applyScript(PADStatus* pad) {
         }
         if (s->frames == -13) {
             const s32 v = s->waitMax;
-            if (strncmp(s->name, "sfx:", 4) == 0) {
+            if (strncmp(s->name, "fade:", 5) == 0) {
+                char what[16] = "", arg[16] = "";
+                int ms = 0, r = 0, g = 0, b = 0;
+                sscanf(s->name + 5, "%15s %15s %d,%d,%d", what, arg, &r, &g, &b);
+                ms = atoi(arg);
+                if (strcmp(what, "reset") == 0) {
+                    int i;
+                    for (i = 0; i < 5; i++) {
+                        fadeReset(i);
+                    }
+                    printf("[input] fade reset\n");
+                } else if (strcmp(what, "tec") == 0 || strcmp(what, "soft") == 0 || strcmp(what, "white") == 0) {
+                    const int on = strcmp(arg, "on") == 0;
+                    if (what[0] == 't') {
+                        on ? fadeTecOn() : fadeTecOff();
+                    } else if (what[0] == 's') {
+                        on ? fadeSoftFocusOn() : fadeSoftFocusOff();
+                    } else {
+                        on ? fadeWhiteOutOn() : fadeWhiteOutOff();
+                    }
+                    printf("[input] fade %s %s\n", what, on ? "on" : "off");
+                } else {
+                    GXColor c;
+                    c.r = (u8)r;
+                    c.g = (u8)g;
+                    c.b = (u8)b;
+                    c.a = 255;
+                    fadeEntry(atoi(what), ms, c);
+                    printf("[input] fade %d %d ms\n", atoi(what), ms);
+                }
+                fflush(stdout);
+            } else if (strncmp(s->name, "sfx:", 4) == 0) {
                 char* at = strchr(s->name + 4, '@');
                 if (at != NULL && marioGetPtr() != NULL) {
                     Vec pos = marioGetPtr()->position;
@@ -1976,18 +2213,35 @@ static void applyScript(PADStatus* pad) {
                 }
             } else if (strcmp(s->name, "join") == 0) {
                 partyJoin((PartyId)v);
+            } else if (strcmp(s->name, "leave") == 0) {
+                partyLeft((PartyId)v); /* (as the story's evt_pouch_party_left: Doopliss takes them in jin_04) */
             } else if (strcmp(s->name, "party") == 0) {
                 if (v > 0 && v < MAIN_PARTY_MEMBER_MAX) {
                     partyJoin((PartyId)v); /* (a follower, 8 and up, joins nothing: the pouch has the seven) */
                 }
                 marioPartyKill();
                 marioPartyEntry((PartyId)v);
+            } else if (strcmp(s->name, "mail") == 0) {
+                pouchReceiveMail(v); /* (as the post arrives: received, unread) */
             } else if (strcmp(s->name, "story") == 0) {
                 swByteSet(0, v);
             } else if (strcmp(s->name, "flag") == 0) {
                 swSet(v);
             } else if (strcmp(s->name, "audience") == 0) {
                 pouchSetAudienceNum((f32)v);
+            } else if (strcmp(s->name, "audience_throw") == 0) {
+                const int who = gp != NULL && gp->inBattle ? portAudienceThrowTest() : -1;
+                printf("[input] audience_throw: %s %d\n", who >= 0 ? "member" : "nobody can (no battle, or no one fit):",
+                       who);
+                fflush(stdout);
+            } else if (strcmp(s->name, "foe_hp") == 0) {
+                printf("[input] foe_hp: %d enemies at %d HP\n", gp != NULL && gp->inBattle ? portFoeHpTest(v) : 0, v);
+                fflush(stdout);
+            } else if (strcmp(s->name, "yoshi_color") == 0) {
+                /* (tests: the pouch's three bits as they are, 7 too: a garbled progress's) */
+                pouchSetPartyColor(PARTNER_YOSHI, v);
+                printf("[input] yoshi_color %d: read back %d\n", v, (int)pouchGetPartyColor(PARTNER_YOSHI));
+                fflush(stdout);
             } else if (strcmp(s->name, "coins") == 0) {
                 pouchSetCoin(v);
             } else if (strcmp(s->name, "sp") == 0) {
@@ -2001,17 +2255,30 @@ static void applyScript(PADStatus* pad) {
                 pouchSetHP((s16)v);
             } else if (strcmp(s->name, "gsw") == 0) {
                 swByteSet(v, (s32)s->seed);
+            } else if (strcmp(s->name, "lsw") == 0) {
+                _swByteSet(v, (u8)s->seed); /* (lsw N V: the area's own word N, LSW(N)) */
+            } else if (strcmp(s->name, "bgm_off") == 0) {
+                /* (bgm_off: the field's music faded out, both channels: a game that never had a scene's music) */
+                psndBGMOff(PSND_FADE_OUT | PSND_CH(0));
+                psndBGMOff(PSND_FADE_OUT | PSND_CH(1));
             } else if (strcmp(s->name, "maxfp") == 0) {
                 pouchGetPtr()->baseMaxFP = (s16)v; /* (as a level-up raises it) */
                 pouchSetMaxFP((s16)v);
                 pouchSetFP((s16)v);
             } else if (strcmp(s->name, "level") == 0) {
                 pouchGetPtr()->level = (s16)v;
+            } else if (strcmp(s->name, "bros_hp") == 0 || strcmp(s->name, "bros_fp") == 0) {
+                /* bros_hp N / bros_fp N: Brothers mode's Luigi's HP or FP between battles */
+                int hp, fp;
+                portBrothersGetStats(&hp, &fp);
+                portBrothersSetStats(s->name[5] == 'h' ? v : hp, s->name[5] == 'f' ? v : fp);
             } else if (strcmp(s->name, "maxbp") == 0) {
                 /* maxbp N: N BP, all of it free (worn badges' costs taken off) */
                 PouchData* pouch = pouchGetPtr();
                 pouch->availableBP = (s16)(pouch->availableBP + v - pouch->maximumBP);
                 pouch->maximumBP = (s16)v;
+            } else if (strcmp(s->name, "star_rank") == 0 && v >= 0 && v <= 3) {
+                pouchGetPtr()->rank = (s16)v; /* (shared online with Mario's stats: the higher one) */
             } else if (strcmp(s->name, "rank") == 0 && v >= 0 && v <= 2) {
                 /* rank N: every partner at that rank (0 Normal, 1 Super, 2 Ultra), HP to the rank's, as Merlon */
                 s32 i;
@@ -2104,6 +2371,19 @@ static void applyScript(PADStatus* pad) {
             portMenuWheel(atoi(s->name)); /* as the wheel's notches, up > 0 */
             continue;
         }
+        if (s->frames == -15 && strncmp(s->name, "hit:", 4) == 0) {
+            /* mobj_hit NAME: map object NAME hit, as Mario's head from below or his hammer would (its kind's
+               own main function's: a Heart Block's heal) */
+            MapObjectEntry* mobj = mobjNameToPtrNoAssert(s->name + 4);
+            if (mobj == NULL) {
+                printf("[input] mobj_hit: no map object '%s'\n", s->name + 4);
+            } else {
+                mobj->flags |= MOBJ_FLAG_HIT;
+                printf("[input] mobj_hit: %s\n", s->name + 4);
+            }
+            fflush(stdout);
+            continue;
+        }
         if (s->frames == -15) {
             MapObjectEntry* mobj = mobjNameToPtrNoAssert(s->name);
             if (mobj == NULL || mobj->event == 0) {
@@ -2121,6 +2401,10 @@ static void applyScript(PADStatus* pad) {
         }
         if (s->frames == -24) {
             portSaveStateRequest(s->waitMax, s->stickX);
+            continue;
+        }
+        if (s->frames == -46) {
+            portResumeContinueTest();
             continue;
         }
         if (s->frames == -28) {
@@ -2202,6 +2486,10 @@ static void applyScript(PADStatus* pad) {
                    (int)pouchGetPtr()->coins, (int)pouchGetPtr()->currentHP, (int)partner,
                    partner >= 0 && partner < 8 ? kPartners[partner] : "other", (int)m->currMotionId,
                    m->animName != NULL ? m->animName : "-");
+            /* the menu layer (port/include/port/menu_buttons.h): on while a menu, or a message reading its
+               buttons, is up; a lesson's message stopped for its script leaves it off */
+            printf("[input] where menu layer: %d, pictures %d, keeps 0x%x\n", portMenuLayerOn(0),
+                   portMenuLayerPictures(0), portMenuLayerKeep(0));
             if (party != NULL && partner > 0) {
                 /* where the partner is and what it is doing (its motion, partyChgMot: Koops's shell out ...) */
                 printf("[input] where partner: at %.0f %.0f %.0f, motion %d, use motion %d\n", party->position.x,
@@ -2284,14 +2572,24 @@ static void applyScript(PADStatus* pad) {
             } else if (s->stickX == 8) {
                 whereWords();
             } else if (s->stickX == 9) {
-                /* where have N ...: the pouch's count of each item */
+                /* where have N ...: the pouch's count of each item, and its name's tag in the item table */
                 char ids[sizeof(s->name)];
                 char* tok;
                 snprintf(ids, sizeof(ids), "%s", s->name);
                 for (tok = strtok(ids, " "); tok != NULL; tok = strtok(NULL, " ")) {
                     const long id = strtol(tok, NULL, 0);
-                    printf("[input] where have %ld = %d\n", id, id > 0 ? (int)pouchCheckItem((u32)id) : 0);
+                    const char* tag = id > 0 && id < ITEM_TYPE_MAX ? itemDataTable[id].name : NULL;
+                    printf("[input] where have %ld = %d (%s)\n", id, id > 0 ? (int)pouchCheckItem((u32)id) : 0,
+                           tag != NULL ? tag : "-");
                 }
+            } else if (s->stickX == 11) {
+                /* where screen: the field on screen, or what hides it (port/screen_live.h: a black screen a run
+                   can tell), with the Start menu and Mario's own draw */
+                extern BOOL winCheck(void); /* win_main.c (its header beside windows.h: not here) */
+                char what[96];
+                portScreenLive(what, sizeof(what));
+                printf("[input] where screen: %s (Start menu %s, Mario %s)\n", what, winCheck() ? "open" : "closed",
+                       (m->dispFlags & MARIO_DISP_FLAG_HIDDEN) ? "hidden" : "shown");
             } else if (s->stickX == 10) {
                 /* where windows: the game's windows (windowdrv.c's slots) still in use */
                 int i, open = 0;
@@ -2870,7 +3168,7 @@ void portInputApply(PADStatus* pad) {
         sCoopWherePending = 0;
         portCoopWhere(1);
     } else if (sWaitFrames >= 0 && sCur >= 0 && sCur < sCount && sSteps[sCur].frames == -35) {
-        sCoopSettledSeen = portCoopWhere(0); /* (where coop MAX waiting: settled yet?) */
+        sCoopSettledSeen = portCoopWhere(0) ? sCoopSettledSeen + 1 : 0; /* (where coop MAX waiting: settled yet?) */
     }
     if (sCuePress < 0) {
         const char* h = getenv("TTYD_HAPTICS_PRESS");

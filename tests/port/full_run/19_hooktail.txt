@@ -22,6 +22,12 @@ wait_seq 2 3000
 press_until_control a 3000
 walk_to e_bero_2 900             # gon_09
 press_until_control a 3000
+# (online a Paragoomba up here can meet Mario on the way: after that battle he stood at (237 702 -53), the walk
+# to the door blocked there for good, st51f s51-028/053. Round by the west, then the door; gon_09 passes these)
+on_map gon_08 walk_to 200 -53 200
+on_map gon_08 walk_to 200 0 200
+on_map gon_08 walk_to e_bero_2 900
+press_until_control a 3000
 walk_to 200 0 600
 walk_to 380 -60 300              # down the pit's stairs
 walk_to 500 -50 300

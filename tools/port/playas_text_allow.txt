@@ -1,0 +1,63 @@
+# Play as's text findings that are meant (tools/port/playas_text_check.py; the rules: docs/PLAY_AS.md, Text).
+#   class  pick  source  key  # why
+# pick luigi|peach|bowser|*; source US JP EU-en EU-de EU-fr EU-es EU-it PC-xx (* and ? as in a file name); key the
+# message's file/tag (or Paper Cut's English), a '*' at its end for a prefix.
+
+# --- names ---
+name  peach  US,EU-en  aji_14/stg7_aji_37_02  # "Your little Peachy girl" (the captive, Princess Mario then): "Mario girl"
+name  luigi  US,EU-en  nok_00/stg1_nok_07_1  # "a Paper Luigi game": a real game's title, kept
+name  luigi  JP  global/gor_luigi*  # Luigi's にいさん (big brother) to the player is ルイージ when he is the player
+name  luigi  JP  tou_01/stg3_tel_10  # (the same: Luigi's call)
+name  luigi  JP  pik_01/irai_27_0*  # (the same: the brothers' Trouble Center scene)
+name  *  EU-it  gor_03/bunny_teresa_31  # Japanese left in the Italian files as UTF-16, never shown
+name  *  EU-it  tik_00/un_next_0074  # (the same)
+name  *  EU-it  tik_05/mac_7_012  # (the same)
+
+# --- pronouns: "he" there is someone else's (the name is spoken to) ---
+pronoun  peach  US,EU-en  tou_03/stg3_tou_re_124_kur  # "OK, Mario, let's totally wreck him!" (the enemy)
+pronoun  peach  EU-de  aji_14/stg7_aji_41_01_kur  # "Los, Mario, wir machen ihn fertig!" (the enemy)
+pronoun  peach  EU-de  gor_0?/ボロドー２  # "Mario, das ist er!" (the one pointed at)
+pronoun  peach  EU-fr  jin_04/stg4_jin_26_nok  # "Mario, il est fort, ce type!" (the boss)
+pronoun  peach  EU-fr  muj_05/stg5_muj_49_viv  # "Dis, Mario, ... qu'il dort?" (someone asleep)
+pronoun  peach  EU-es  gon_11/stg1_gon_31_02  # "¡Mario, vamos a por él!" (the enemy)
+
+# --- titles and agreement: the words found are another's, or agree with another word ---
+title  peach  EU-fr  nok_01/stg1_nok_24_01  # "C'est du Mario tout craché": the idiom's du whoever it is
+agreement  peach  EU-fr  aji_17/peach_aji_76_01  # "le mail ... envoyé à Mario est bien arrivé": the mail arrived
+agreement  peach  EU-fr  tik_05/mac_0_101_04  # "le corps de Mario a été pénétré": the body
+agreement  peach  EU-es  kpa_01/kpa_stg1_029  # "está buscando": a gerund
+agreement  peach  EU-es  mri_00/stg8_las_148_14  # "está luchando": a gerund
+agreement  peach  EU-it  global/m*_super_emblem_?  # "Il vestito di Mario diventa dello stesso colore": the clothes
+agreement  peach  EU-it  global/butai_0?  # "è un astro nascente", "è ormai una star": nouns, not her adjectives
+agreement  peach  EU-it  usu_00/stg8_las_148_32  # "è nei guai": in trouble
+agreement  peach  EU-it  usu_01/stg4_usu_92  # "Quella Peach è proprio una tipa": already hers ("proprio" is "really")
+agreement  peach  PC-it  Mario is here.  # "è qui": here
+
+# --- brothers: true as they read with Luigi the player ---
+brother  luigi  US,EU-en  nok_01/stg1_nok_25_1*  # "Hey, Luigi... You're Mario's older brother?": a joke, true once swapped
+brother  luigi  JP  nok_01/stg1_nok_25_1*  # (the same)
+brother  luigi  JP  pik_02/stg6_pik_23  # "say hi to your big brother", said to the player: Mario, the elder, once swapped
+brother  luigi  JP  pik_02/stg7_pik_clear_09_1  # (the same)
+brother  luigi  EU-fr  pik_02/stg6_pik_23  # (the same)
+brother  luigi  EU-fr  pik_02/kpa_stg7_028  # "les frangins": the brothers both
+brother  luigi  JP  gor_00/オドオド水夫  # a sailor's own brother
+brother  luigi  EU-it  gor_01/店員  # the Toad brothers' shop
+
+# --- mustaches: the player's described, not named; another's; Keelhaul Key's rocks (judgement: kept) ---
+nickname  peach,bowser  US,EU-en  gor_01/mac_4_004  # the 'Stache brothers' song (Keelhaul Key's rocks), stretched
+nickname  peach,bowser  JP  bom_0?/*  # Fahr Outpost: the mustache talk (Bob-ombs' own; White's and Pennington's reading of the player's, a scene about a mustache), the prophecy's other line
+nickname  peach,bowser  JP  nok_00/ホワイト  # (the same: General White's)
+nickname  peach,bowser  JP  muj_0?/*  # Keelhaul Key's rocks (赤ヒゲ、青ヒゲ) and their song; a pirate asking if the baby had one
+nickname  peach,bowser  JP  muj_20/stg5_sea_01  # (the song)
+nickname  peach,bowser  JP  gor_01/mac_4_004  # (the song)
+nickname  peach,bowser  JP  tik_00/*  # the fortune-teller's rocks and the Bob-omb mayor; the bar's master
+nickname  peach,bowser  JP  gor_01/kj_ura_0017  # the green mustache baron: Luigi
+nickname  peach,bowser  JP  tou_02/stg3_npc_re_026*  # the green-capped mustache: Luigi
+nickname  peach,bowser  JP  gor_02/powerup_ev_0?  # the mustached ones: the brothers both
+nickname  peach,bowser  JP  gor_03/mac_2_041  # the barber's colour question (the player's, a judgement: the menu that follows names a mustache's colours)
+nickname  peach,bowser  JP  mri_01/*  # White's; the Punis' "that big mustached man" (a judgement: the ruby splits it)
+nickname  peach,bowser  JP  tou_03/stg3_tou_415  # うまのヒゲ: an idiom (no one's mustache)
+nickname  peach,bowser  JP  tou_08/stg3_npc_08_02_*  # Spike's pun on トゲ and ヒゲ (a judgement: it needs the mustache)
+nickname  peach,bowser  JP  gor_00/salari_after_011  # a Koopa's own mustache
+name  luigi  JP  aaa_00/pro_0?  # (Luigi's にいさん to the player is ルイージ when he is the player: the prologue)
+name  luigi  JP  aaa_00/ep_32  # (the same: his epilogue mail)

@@ -1,0 +1,57 @@
+{
+ "desc": "Playing together over a slow relay (1.5 s each way), the host and the guest change the same story word (GSW 1600, unused) about at once: the guest's 2 goes first, the host's 1 crosses it on the way. The host takes the guest's 2, and the guest, whose 2 the host's older 1 put back, gets its own 2 again from the host, so both end on 2 (0.5.1 before: the host never sent a word it took again, the guest kept the 1 and the digests called it a DRIFT; s51-011's LSW(1) at nok_01)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--net",
+   "lat:1500-1600"
+  ],
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 6000",
+     "wait_peer room1 6000",
+     "wait 30",
+     "gsw 1600 1",
+     "wait 4000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "merge: GSW\\(1600\\) = 2"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer room1 6000",
+     "gsw 1600 2",
+     "wait 4000"
+    ],
+    "log_must": [
+     "merge: GSW\\(1600\\) = 1",
+     "merge: GSW\\(1600\\) = 2"
+    ]
+   }
+  ]
+ },
+ "timeout": 400
+}

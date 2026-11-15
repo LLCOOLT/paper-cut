@@ -72,7 +72,11 @@ unsigned portMenuButtonsAsOwn(int port, unsigned buttons);
  * game's lists, shops, choices, the file select, name entry, the battle menus, Paper Cut's pages, the
  * players' cards); the layer is on for a port from the frame after a mark until two frames after the last.
  * A talk's message marks it too (portMenuMarkText: B pages through it, as in the menus), but leaves the
- * button pictures as the field's (a lesson's "press B" there is the hammer's button).
+ * button pictures as the field's (a lesson's "press B" there is the hammer's button), and only while it reads
+ * the buttons: a message stopped for its script (a lesson's: the Plane Curse's Y on its panel, the hammer's B)
+ * leaves them the field's, as the lesson reads them. The layer moves only confirm and back (onto the game's A
+ * and B) and what they displace: the game's X and Y stay on their field buttons wherever they can, and an action
+ * a menu reads (portMenuMarkKeep: the battle menus' X while an audience member winds up a throw) stays there.
  * A face button held while the layer turns on or off gives the game nothing until it is let go (no press
  * the player didn't make). Keys, the touch controls and the mouse's and Esc's B are the game's buttons as
  * they are. The game's button pictures follow a menu's layer (button_prompts.cpp), and Esc and a right

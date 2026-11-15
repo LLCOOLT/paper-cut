@@ -25,6 +25,7 @@
 #include "evt/evt_window.h"
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
+#include "mario/mario.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "evt/evt_story.h"
@@ -276,7 +277,17 @@ static void merchantFrame(void) {
         return;
     }
     /* once the prologue's done (the plaza's scenes are over), and while there's stock */
-    if (sMerchantAsked || swByteGet(0) < STORY_STG1_00_PETAL_MEADOWS || portMerchantStock(stock, 64) == 0) {
+    if (sMerchantAsked) {
+        /* the badge set turned off in the room (nothing left to sell): gone at once, and back if it's on again */
+        NpcEntry* npc = npcNameToPtr_NoAssert(MERCHANT);
+        if (npc != NULL && marioChkCtrl() && portMerchantStock(stock, 64) == 0) {
+            npcDeleteGroup(npc);
+            sMerchantAsked = 0;
+            printf("[battlex] badge merchant in gor_01: none left to sell, gone\n");
+        }
+        return;
+    }
+    if (swByteGet(0) < STORY_STG1_00_PETAL_MEADOWS || portMerchantStock(stock, 64) == 0) {
         return;
     }
     if (npcNameToPtr_NoAssert(MERCHANT) == NULL) {

@@ -89,6 +89,11 @@ const char* const kGameplay[] = {
     // Paper Mario 64 (with a ROM linked)
     "pm64_partners", "pm64_met_all", "pm64_join", "pm64_field", "pm64_enemies", "pm64_story_enemies",
     "pm64_badges", "pm64_recipes", "pm64_bosses", "pm64_boss_scale",
+    // (Spin Dash, 0.5.1: off in every preset but the Paper Mario 64 one, as its default; Console-accurate and
+    // Original put it back off)
+    "pm64_spin",
+    // (0.5.1's Spring Jump from standing only, #53: a change to play, its default in every preset)
+    "spring_jump_standing",
     // Audio's Jukebox (a Paper Cut helper)
     "jukebox",
     // Multiplayer's rules (who plays is the players' own)
@@ -146,6 +151,7 @@ const Value kExplorer[] = {
     {"fast_travel", 1},          {"walk_boost", 1},            {"storage_anywhere", 1},
     {"collectible_tracker", 2},  {"remake_warp_pipes", 1},     {"remake_shortcut_pipes", 1},
     {"remake_chapter_shortcuts", 1}, {"remake_steeple_stairs", 1}, {"remake_pipe_a", 1},
+    {"remake_pipe_room", 1},
 };
 
 // over Vanilla+: finding everything
@@ -155,7 +161,7 @@ const Value kCompletionist[] = {
     {"bigger_bag", 1},          {"badge_loadouts", 1},
 };
 
-// over Vanilla+: playing together on one screen (the co-op rules at their own on)
+// over Vanilla+: playing together on one screen (turns on the co-op rules, which start off)
 const Value kCouch[] = {
     {"partner_revive", 1}, {"gameover_retry", 1}, {"battle_speed", 1},
     {"duo_moves", 1},      {"team_bonus", 1},     {"audience_players", 1},
@@ -866,6 +872,70 @@ const char* pm64Act(int id, int dir) {
 
 const PortPauseForm kPm64Form = {kTab, kPm64Label, pm64Rows, pm64Act};
 
+// --- The Restorations page's: Restore everything (its settings: restorations.cpp's and three of
+// postgame_extra.cpp's). Not on the Japanese release, which is that way already.
+
+constexpr const char* kRestoreLabel = "Restore everything";
+constexpr const char kRestoreNote[] =
+    "Everything the Japanese release had that Paper Cut puts back, on or off together: the chalk outline, the "
+    "Parlor Boo's bunny ears, the screen flashes (warning: rapid flashing light), the 1000 X-Nauts, the bad "
+    "ending, Hooktail's frogs and the Trial Stew. Each one is also below, to change on its own.";
+const Value kRestoreAll[] = {
+    {"rs_chalk_outline", 1}, {"rs_bunny_boo", 1},         {"rs_xnaut_crowd", 1}, {"rs_jp_flashes", 1},
+    {"pg_jp_bad_ending", 1}, {"pg_jp_hooktail_frogs", 1}, {"pg_jp_recipes", 1}, // (last: the one that changes play)
+};
+constexpr int kRestoreCount = int(sizeof(kRestoreAll) / sizeof(kRestoreAll[0]));
+
+bool restoreHere() {
+  return std::strcmp(PORT_GAME_ID, "G8MJ01") != 0;
+}
+
+// console-accurate mode keeps the Trial Stew (it changes play) as on the console: the switch is the others then
+Switch restoreSwitch() {
+  return {kRestoreAll, portConsoleAccurate() != 0 ? kRestoreCount - 1 : kRestoreCount};
+}
+
+void restoreSection(int) {
+  if (!restoreHere()) {
+    muted(portTr("The Japanese release is already this way: these are for the US and European ones."));
+    return;
+  }
+  const Switch s = restoreSwitch();
+  int total = 0;
+  const int on = switchOn(s, &total);
+  bool all = total > 0 && on == total;
+  if (ImGui::Checkbox(portTrLabel("On##restore_switch"), &all)) {
+    setSwitch(s, all);
+  }
+  ImGui::SameLine();
+  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+  ImGui::Text(portTr("%d of these %d are on."), on, total);
+  ImGui::TextWrapped("%s", portTr(kRestoreNote));
+  ImGui::PopStyleColor();
+}
+
+int restoreRows(PortPauseRow* out, int max) {
+  if (max < 1 || !restoreHere()) {
+    return 0;
+  }
+  switchRow(out, restoreSwitch(), kRestoreLabel, kRestoreNote, 0);
+  return 1;
+}
+
+const char* restoreAct(int, int) {
+  int total = 0;
+  const Switch s = restoreSwitch();
+  if (restoreHere()) {
+    setSwitch(s, switchOn(s, &total) != total); // (A, left or right: all on, or all off once all are)
+    const int on = switchOn(s, &total);
+    std::printf("[presets] restore everything: %d of %d on\n", on, total);
+    std::fflush(stdout);
+  }
+  return nullptr;
+}
+
+const PortPauseForm kRestoreForm = {kTab, kRestoreLabel, restoreRows, restoreAct};
+
 // --- Settings from 0.4.1 and older
 //
 // Every key those releases wrote is still read as it was (none was renamed; Bag size and Skip scenes
@@ -1180,6 +1250,10 @@ struct Register {
     portPauseAddForm(&kPresetForm);
     portPauseAddForm(&kRemakeForm);
     portPauseAddForm(&kPm64Form);
+    portSettingsAddSection(kTab, kRestoreLabel, nullptr, 0, restoreSection,
+                           "restore everything all restorations japanese release one switch chalk bunny flashes "
+                           "x-naut bad ending frogs trial stew");
+    portPauseAddForm(&kRestoreForm);
     portSettingsAddOverlay(selfTest, nullptr);
   }
 } sRegister;

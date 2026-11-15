@@ -25,6 +25,7 @@ press_until_control a 20000
 wait 60
 where coop 180
 wait_peer coop2 6000            # guest 2 back in its seat
+wait_peer field2 6000           # both guests out of the fight (one cut mid-fight replays its steps when back)
 walk_to 20 0 600                # up the pit's east ramp
 walk_to 60 0 300                # the east floor (y 75)
 walk_to 210 -20 600             # east, to the gap in the railing (x 200..220)

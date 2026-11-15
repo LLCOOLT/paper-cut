@@ -23,3 +23,9 @@ Playing together: the host travels, and everyone comes along.
 
 This is the host's adventure: load your own file to save.
 これは ホストの ぼうけんです セーブするには じぶんの ファイルを ロードしてください
+
+Joining %s's game...
+%sの ゲームに さんかしています...
+
+%s went to another room: close the menu to follow.
+%sが べつの へやに いどうしました: メニューを とじると ついていきます

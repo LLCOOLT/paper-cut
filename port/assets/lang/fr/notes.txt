@@ -307,3 +307,29 @@ Touche : Lire
 
 Read a paper note
 Lire une note de papier
+
+# 0.5.1: a note of one's own taken back
+
+Take back
+Reprendre
+
+Taking it back...
+Reprise...
+
+Your note is taken back.
+Votre note est reprise.
+
+It can only be taken back from where it was left.
+Elle ne peut être reprise que depuis là où elle a été déposée.
+
+This relay can't take notes back yet.
+Ce relais ne peut pas encore reprendre les notes.
+
+Only the device that left it can take it back.
+Seul l'appareil qui l'a déposée peut la reprendre.
+
+Choose it again to take your note back.
+Choisissez-la encore pour reprendre votre note.
+
+Yours: choose it to take it back.
+À vous : choisissez-la pour la reprendre.

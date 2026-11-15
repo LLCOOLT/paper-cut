@@ -6,8 +6,8 @@ Passer les scènes
 Seen only
 Déjà vues
 
-These scenes go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets, inn rests, Merlon's upgrades, Merlee's charms, Cortez's ship, the Excess Express trips, the prologue, the Palace of Shadow's key stands and globe, and a boss's intro after a Game Over (played fast). Seen only: once seen on this file (the prologue and the palace: on any file). Always: the first time too. What a scene gives is still given, and where to go next is still said.
-Ces scènes vont plus vite ou droit à leur fin : la fanfare des Étoiles de cristal et la carte, la cuisine de Zess T., les scènes de combat de l'Arène de Glitz, les billets du train et du dirigeable, les nuits à l'auberge, les améliorations de Merlon, les sorts de Merlee, le navire de Cortez, les trajets de l'Excess Express, le prologue, les socles des clés et le globe du Palais des Ténèbres, et l'intro d'un boss après un Game Over (jouée vite). Déjà vues : une fois vues dans ce fichier (le prologue et le palais : dans n'importe quel fichier). Toujours : dès la première fois. Ce qu'une scène donne est toujours donné, et où aller ensuite est toujours dit.
+Long repeated scenes go fast or straight to their end: Crystal Star fanfares, cooking, Glitz Pit matches, tickets, inn rests, upgrades, ship and train trips and more. Seen only: once you've seen them on this file. Always: the first time too. You still get everything they give.
+Les longues scènes répétées vont vite ou passent directement à leur fin : fanfares des Étoiles de cristal, cuisine, combats de l'Arène, billets, nuits à l'auberge, améliorations, voyages en bateau et en train, et plus. Déjà vues : une fois vues dans ce fichier. Toujours : dès la première fois. Vous recevez quand même tout ce qu'elles donnent.
 
 Skip Peach's and Bowser's interludes
 Passer les interludes de Peach et Bowser

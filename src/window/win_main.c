@@ -109,8 +109,12 @@ static WindowWork* wp;
 static USER_FUNC(itemUseFunc);
 #include "port/gameplus.h"
 #include "port/qol.h"
+#include "port/special_places.h"
 #include "port/companion.h"
+#include "port/companion_menu.h"
 #include "port/port_text.h"
+#include "driver/mapdrv.h"
+#include <stdio.h>
 /* winFontSet & co.: what they make of Paper Cut's text (the format or a %s of it) is Paper Cut's
  * too, drawn with the game's random numbers put back (port/include/port/port_text.h) */
 #define WIN_VSPRINTF(buf, fmt, args) PORT_TEXT_VSPRINTF(buf, fmt, args)
@@ -150,7 +154,34 @@ void PORT_HOOKABLE(winInit)(void) {
 
 /** Clears the pause menu work again; run on map change and on game over. */
 void PORT_HOOKABLE(winReInit)(void) {
+#ifdef TARGET_PC
+    /* The menu wiped while it was up: a map change, the title or a game over the port asked for with the Start
+       menu open (a warp, a mode, the online host's world bringing a guest along). Its close never ran, so what
+       its open did is undone here as its close does (the game over's own camDispOn, seq_gameover.c, is the
+       game's one case of it): else the next field stays hidden behind the menu's captured backdrop (the 3D
+       camera and the map off: a black screen), still paused (the system level: nothing moves, the menu never
+       opens again), muted and without its letterbox. The title's pages (title_menu_aurora.c) put theirs back
+       themselves; the second screen's menu never hid the field. */
+    const int up = wp != NULL && wp->menuState != 0 && !gPortCompanionMenu && seqGetSeq() != SEQ_TITLE;
+    const int lecture = up && (wp->flags & WIN_FLAG_LECTURE) != 0;
+#endif
     memset(wp, 0, sizeof(WindowWork));
+#ifdef TARGET_PC
+    if (up) {
+        camDispOn(CAMERA_3D);
+#if VERSION >= VERSION_JP
+        N_mapDispOn();
+#endif
+        camGetPtr(CAMERA_2D)->flags &= ~CAM_FLAG_LETTER_BOX_DISABLE;
+        psndClearFlag(PSND_FLAG_MUTE_SFX);
+        if (!lecture && marioStGetSystemLevel() == 0xF) {
+            marioStSystemLevel(0);
+        }
+        printf("[win] the Start menu was up as it was wiped (sequence %d): the field shown and running again\n",
+               (int)seqGetSeq());
+        fflush(stdout);
+    }
+#endif
 }
 
 /**
@@ -215,6 +246,7 @@ void PORT_HOOKABLE(winMain)(void) {
 #endif
 #ifdef TARGET_PC
     s32 quickSwap = -1; // Enhancements partner quick-swap: the partner to switch to
+    s32 diary = 0;      // the second screen's Ragged Diary: read as the item list starts it (states 300-301)
 #endif
 
     mario = marioGetPtr();
@@ -284,6 +316,15 @@ void PORT_HOOKABLE(winMain)(void) {
                     if (mario->characterId == 0 && portCompanionFieldBadge()) {
                         break;
                     }
+                    /* and the rest it asks for: a settings row, a warp or a trip, a letter read... */
+                    if (mario->characterId == 0 && portCompanionFieldMore()) {
+                        break;
+                    }
+                    if (mario->characterId == 0 && portCompanionDiary()) {
+                        /* the Ragged Diary: the menu's opening below, then its reading (300) instead of the menu */
+                        diary = 1;
+                        wp->menuSel = 0;
+                    } else
 #ifdef TTYD_BACKEND_AURORA
                     if (mario->characterId == 0 && portTitleModesPoll()) {
                         /* the title menu's Modes: on its temporary file, the Modes hub (port/title_menu.h) */
@@ -385,6 +426,12 @@ void PORT_HOOKABLE(winMain)(void) {
                     wp->menuState = 100;
                     break;
                 }
+                /* the second screen's Ragged Diary: its reading, as the item list's -3 starts it (the sound muted
+                   as the menu left it; 301 back to 3, the opening undone) */
+                if (diary) {
+                    wp->menuState = 300;
+                    break;
+                }
 #endif
 #if VERSION >= VERSION_US
                 fileAsyncf(4, 0, WIN_DIR "%s/mail.tpl", getMarioStDvdRoot(), (u32)gp->language == 0 ? "jp" : "us");
@@ -446,6 +493,9 @@ void PORT_HOOKABLE(winMain)(void) {
                 }
 #ifdef TARGET_PC
                 else if (portBowserRetry(wp->buttonTrg)) { /* Y: the stage again (port/include/port/qol.h) */
+                    kpaPauseSE2();
+                    wp->menuState = 3;
+                } else if (portSpecialBowserPause(wp->buttonTrg)) { /* X: a visit's way back (special_places.h) */
                     kpaPauseSE2();
                     wp->menuState = 3;
                 }
@@ -618,6 +668,9 @@ static void winDisp(CameraId camId, void* param) {
 static void winDispKoopa(CameraId camId, void* param) {
     winTexInit(*wp->res->data);
     winTexSet(0xB7, (Vec){0.0f, 50.0f, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+#ifdef TTYD_BACKEND_AURORA
+    portSpecialBowserPauseDisp(); /* a special place's visit: the way back's line (port/special_places.h) */
+#endif
 }
 
 #if VERSION >= VERSION_US

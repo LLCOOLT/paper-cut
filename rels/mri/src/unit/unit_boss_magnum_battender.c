@@ -488,7 +488,11 @@ static EVT_BEGIN(damage_event)
     CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 3, PART_ATTR_HIDDEN)
     CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MAGNUM_BATTENDER_LOW_HP_SCENE_DONE, LW(0))
     IF_INT_EQUAL(LW(0), 0)
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
         CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
         IF_INT_LESS_OR_EQUAL(LW(0), 7)
             CALL(btlevtcmd_WaitAttackEnd)
             CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MAGNUM_BATTENDER_LOW_HP_SCENE_DONE, 1)
@@ -701,7 +705,11 @@ static EVT_BEGIN(attack_event)
             CALL_CHILD(stamp_attack_event)
             GOTO(99)
         END_IF
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
         CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
         IF_INT_GREATER(LW(0), 20)
             CALL_CHILD(stamp_attack_event)
             GOTO(99)

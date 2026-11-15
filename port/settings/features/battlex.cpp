@@ -634,15 +634,15 @@ const char* puzzleAct(int id, int dir) {
     }
     return nullptr;
   }
-  if (gPortCompanionMenu) {
-    return "Not on the second screen: use the game's Start menu.";
-  }
   if (id == kRowPick && dir != 0) {
-    sPuzzlePick += dir;
+    sPuzzlePick += dir; // (the pick itself: the second screen's too, the start goes with it)
     return nullptr;
   }
   if (dir != 0) {
     return nullptr;
+  }
+  if (gPortCompanionMenu) {
+    return portPauseSecondScreenAct(id, dir);
   }
   if (id == kRowGiveUp) {
     portPuzzleGiveUp();
@@ -936,9 +936,8 @@ struct Register {
                             0, "battle_recap", kRecap, 3, "battle recap summary results stats damage card after");
     }
     portSettingsAddToggle("Enhancements", "Paper Cut badge set",
-                          "Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant "
-                          "in Rogueport's plaza once the prologue is done. A file holding them isn't for the "
-                          "GameCube game any more.",
+                          "Twelve new badges, each mixing two or three of the game's, sold by a Toad in Rogueport's "
+                          "plaza after the prologue. A save holding them no longer works on a GameCube.",
                           PORT_SETTING_CHANGES_PLAY | PORT_SETTING_CHANGES_SAVES, "pc_badges",
                           "badge set new badges merchant shop paper cut");
     portSettingsAddSection("Enhancements", "Paper Cut badges", nullptr, PORT_SETTING_CHANGES_PLAY, badgeSetSection,

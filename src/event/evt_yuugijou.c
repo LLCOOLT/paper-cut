@@ -1,5 +1,8 @@
 // Script commands for the Pianta Parlor (yuugijou): minigame windows, Piantas and records.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "icon_ids.h"
 #include "evt/evt_yuugijou.h"
 #include "evt/evt_cmd.h"
@@ -464,11 +467,21 @@ void PORT_HOOKABLE(monteCountDisp)(void) {
             PSMTXTrans(mtx, -128.0f, (f32)(y + 2), 0.0f);
             c4 = (GXColor){255, 255, 255, 255};
             iconNumberDispGx(mtx, yuwp->dispTokens, 0, c4);
+#ifdef TARGET_PC
+            /* the shown tokens count toward the real ones in each draw: as it was after a frame drawn between the game's (Frame rate above 60, stereo 3D),
+             * and the count's sound left to the game's own frame */
+            portInterpKeep(&yuwp->dispTick, sizeof(yuwp->dispTick));
+            portInterpKeep(&yuwp->dispTokens, sizeof(yuwp->dispTokens));
+            portInterpKeep(&monte_snd_flag, sizeof(monte_snd_flag));
+#endif
             yuwp->dispTick++;
             if ((yuwp->dispTick & 3) == 0) {
                 y = yuwp->tokens - yuwp->dispTokens;
                 yuwp->dispTick = 0;
                 if (monte_snd_flag == 0 && y != 0) {
+#ifdef TARGET_PC
+                    if (!portInterpInBetween())
+#endif
                     psndSFXOn(SFX_NAME_WORD(0x8CA));
 #if VERSION >= VERSION_JP
                     monte_snd_flag = 8;

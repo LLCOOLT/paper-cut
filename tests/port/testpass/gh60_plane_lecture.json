@@ -1,0 +1,43 @@
+{
+ "desc": "GitHub #60: the Plane Curse's lesson (tik_19's black chest, from the full run's segment 04 start) reads Y itself while its message waits on the panel: that read sees the menu layer off, so a controller's Y is the field's Y there, the button its picture shows (0.5.0 kept the layer on under any message, and with X and Y bound to a controller's X and Y labels the lesson's Y was its X). Y alone then turns Mario into a plane (story 15)",
+ "groups": [
+  "gh60",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "04_plane"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "04_plane"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_CHOICE": "mac_majin_17:1",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+ },
+ "input": "tests/port/input/gh60_plane_lecture.txt",
+ "log_must": [
+  "^\\[menuback\\] a script read the buttons 0x800, the menu layer off$",
+  "^\\[input\\] where: map 'tik_19'.*story (1[5-9])\\b",
+  "^\\[input\\] end"
+ ],
+ "timeout": 600
+}

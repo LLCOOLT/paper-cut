@@ -66,19 +66,20 @@ int portHandheld(void) {
     return sFound;
 }
 
-/* the machine's memory in MiB (0: unknown): Linux's own count, SDL's on Windows and macOS; phones and
- * tablets keep 0 (their own defaults and Aurora's mobile budgets) */
+/* the machine's memory in MiB (0: unknown): Linux's own count, SDL's everywhere else (Windows, macOS, and
+ * phones and tablets: Android and iOS gave 0 before, so a 4 GB phone kept the full 5 x 119 MiB of mapped
+ * staging buffers, #39) */
 static unsigned long memoryMiB(void) {
 #if defined(__linux__) && !defined(__ANDROID__)
     struct sysinfo info;
     if (sysinfo(&info) == 0) {
         return (unsigned long)((unsigned long long)info.totalram * info.mem_unit >> 20);
     }
-#elif defined(_WIN32) || (defined(__APPLE__) && TARGET_OS_OSX)
+    return 0;
+#else
     const int mib = SDL_GetSystemRAM();
     return mib > 0 ? (unsigned long)mib : 0;
 #endif
-    return 0;
 }
 
 static int sLowMemoryGfx, sLowEndPc;
@@ -114,13 +115,20 @@ void portHandheldConfig(void* configPtr) {
     const unsigned long mib = memoryMiB();
     /* the smaller graphics buffers: on a handheld, and wherever memory is short ($TTYD_LOW_MEMORY=0/1 says) */
     const char* low = getenv("TTYD_LOW_MEMORY");
-    /* (under 6 GB on a computer too: a 4 GB one's integrated GPU shares that memory with the system and the
-     * game, and the normal staging buffers alone are about 700 MiB) */
+    /* (under 6 GB on a computer, phone or tablet too: a 4 GB one's GPU shares that memory with the system and
+     * the game, and the normal staging buffers alone are about 600 MiB; a phone's system takes more of it, and
+     * one that runs short closes the game or resets) */
     config->lowMemoryGfx = low != NULL ? low[0] != '0' : portHandheld() || (mib != 0 && mib < 6144);
     sLowMemoryGfx = config->lowMemoryGfx;
     sLowEndPc = !portHandheld() && lowEndPc(mib);
     if (sLowEndPc || sLowMemoryGfx) {
-        printf("[gfx] a low-end computer (%lu MiB, %d threads)%s%s\n", mib, SDL_GetNumLogicalCPUCores(),
+        printf("[gfx] a low-end %s (%lu MiB, %d threads)%s%s\n",
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+               "phone or tablet",
+#else
+               "computer",
+#endif
+               mib, SDL_GetNumLogicalCPUCores(),
                sLowMemoryGfx ? ", the smaller graphics buffers" : "",
                sLowEndPc ? ", pipelines built in the background unless no_pop_in is chosen" : "");
         fflush(stdout);

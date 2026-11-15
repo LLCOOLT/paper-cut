@@ -1,0 +1,70 @@
+{
+ "desc": "Player 3's companion put out on a floor above Mario's feet (tik_01 by the pipe: Mario at y 0, the floor beside him 25 up), three games together, nobody touching a stick. A companion comes out in Mario's follower slot through partyEntry2 and partyHello, which began the partner's pop-out hop on it (at Mario's middle, 'jumping') in a run mode that never plays it: where its stand found a floor under it, it stood 'jumping' there for good on the host's screen (its guest never took it, so no own-character report is placed for it, and the host's game walks it), and the room never settled (mp l51-008, l51-032). The host's where must say settled with the companion out, and the last-resort landing must never run. A shared battle after it, and the where again.",
+ "groups": [
+  "online",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_PARTY": 1,
+  "TTYD_EXIT_FRAMES": 7200
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop2 6000",
+     "wait 240",
+     "where coop 0",
+     "battle 1",
+     "wait_seq 4 4000",
+     "wait_seq 2 12000",
+     "press_until_control a 6000",
+     "wait 240",
+     "where coop 0",
+     "wait 300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "\\[coop\\] player 3's companion comes",
+     "\\[mp\\] where: .*\\| P3 member .* \\| settled$"
+    ],
+    "log_must_not": [
+     "NOT SETTLED",
+     "was in the air with nothing to land it"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait_peer !battle 12000",
+     "wait 600"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer battle 8000",
+     "wait_peer !battle 12000",
+     "wait 600"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

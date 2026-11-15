@@ -1,0 +1,217 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Fri, 13 Nov 2026 21:00:00 -0500
+Subject: [PATCH] gfx: pipelines built on demand are counted and logged
+
+Players reported a hitch the first time they walked past a paper note or
+talked to someone: a pipeline the bundled seed (initial_pipeline_cache.db)
+didn't have was built while the frame waited. Nothing said so, so a seed
+that misses pipelines went unnoticed.
+
+- A draw's pipeline that is neither built nor queued (a GX or clear
+  configuration, not the warmup's) is built on demand: AuroraStats
+  .onDemandPipelines counts them, and the first 32 are logged with the frame
+  and why: "a configuration not in the seed or the cache" (the seed lacks
+  it) or "a known configuration at a layout not prepared" (the seed has it,
+  the warmup built it at another render target layout).
+- $AURORA_NO_PIPELINE_SEED=1 (tests): the bundled seed is not merged in, as
+  on a build without one.
+- An application that waits for the warmup (rebuild_pipeline_cache's
+  queue) can then tell whether anything after it was built on demand.
+---
+diff --git a/include/aurora/gfx.h b/include/aurora/gfx.h
+index 94504b1..d4ff766 100644
+--- a/include/aurora/gfx.h
++++ b/include/aurora/gfx.h
+@@ -26,6 +26,10 @@ typedef struct {
+   uint32_t lastIndexSize;
+   uint32_t lastStorageSize;
+   uint32_t lastTextureUploadSize;
++  /* Pipelines a draw asked for that were neither built nor queued: a GX or clear configuration new to the
++   * seed and the cache, or a known one at a render target layout the warmup didn't build. Each is built
++   * while the game waits (or its draws are skipped until ready): after a warmup, one the seed misses. */
++  uint32_t onDemandPipelines;
+ } AuroraStats;
+ 
+ const AuroraStats* aurora_get_stats();
+diff --git a/lib/gfx/pipeline_cache.cpp b/lib/gfx/pipeline_cache.cpp
+index 64b0faf..d4b81b8 100644
+--- a/lib/gfx/pipeline_cache.cpp
++++ b/lib/gfx/pipeline_cache.cpp
+@@ -340,6 +340,7 @@ static bool register_sdl_vfs() {
+ #if defined(__cpp_lib_atomic_ref)
+ static std::atomic_ref queuedPipelines{detail::resources().stats.queuedPipelines};
+ static std::atomic_ref createdPipelines{detail::resources().stats.createdPipelines};
++static std::atomic_ref onDemandPipelines{detail::resources().stats.onDemandPipelines};
+ #else
+ struct AtomicStatRef {
+   uint32_t& ref;
+@@ -355,6 +356,7 @@ struct AtomicStatRef {
+ };
+ static AtomicStatRef queuedPipelines{detail::resources().stats.queuedPipelines};
+ static AtomicStatRef createdPipelines{detail::resources().stats.createdPipelines};
++static AtomicStatRef onDemandPipelines{detail::resources().stats.onDemandPipelines};
+ #endif
+ 
+ template <typename PipelineConfig>
+@@ -396,6 +398,28 @@ enum class PipelinePriority {
+   Blocking,   // block until compiled
+ };
+ 
++// Why a draw's pipeline might be neither built nor queued (counted and logged as built on demand when so)
++enum class OnDemand {
++  NotCounted, // warmup, RmlUi
++  NewConfig,  // a configuration in neither the bundled seed nor the cache
++  NewLayout,  // a known configuration at a render target layout rebuild_pipeline_cache didn't build
++};
++
++// A pipeline built on demand: the seed missed it (a hitch on a slow GPU, a skipped draw before it is ready). The
++// first ones are logged with the frame, so a test can tell those after a warmup apart; the count is in AuroraStats.
++static void report_on_demand_pipeline(OnDemand why, PipelineRef hash) {
++  const uint32_t n = ++onDemandPipelines;
++  constexpr uint32_t MaxLogged = 32;
++  if (n <= MaxLogged) {
++    Log.info("Pipeline built on demand at frame {}: {:016x}, {}", current_frame(), static_cast<uint64_t>(hash),
++             why == OnDemand::NewConfig ? "a configuration not in the seed or the cache"
++                                        : "a known configuration at a layout not prepared");
++  }
++  if (n == MaxLogged) {
++    Log.info("Pipelines built on demand: the rest are counted, not logged");
++  }
++}
++
+ // Blocking draws wait for their pipelines within a budget per frame: on a slow CPU (a 2-core laptop chip building
+ // with DXC and an old driver), a new room's dozens of pipelines held one frame for many seconds, and Windows
+ // whitened the window as not responding. Past the budget, the frame's other new pipelines are built in the
+@@ -457,26 +481,33 @@ static void notify_pipeline_ready(bool queued, uint32_t pipelineCount) {
+   g_pipelineReadyCv.notify_all();
+ }
+ 
++// true: a configuration not known before (in neither the seed nor the cache, nor drawn yet)
+ template <typename Config>
+-static void remember_pipeline_config(ShaderType type, const Config& config, uint32_t firstFrameUsed, bool persist) {
++static bool remember_pipeline_config(ShaderType type, const Config& config, uint32_t firstFrameUsed, bool persist) {
+   const auto cacheKey = xxh3_hash(config, static_cast<HashType>(type));
+   bool changed = false;
++  bool isNew = false;
+   {
+     std::lock_guard lock{g_pipelineMutex};
+     auto [it, inserted] = g_knownPipelines.try_emplace(cacheKey, KnownPipeline{type, config, firstFrameUsed});
++    isNew = inserted;
+     changed = inserted || firstFrameUsed < it->second.firstFrameUsed;
+     it->second.firstFrameUsed = std::min(it->second.firstFrameUsed, firstFrameUsed);
+   }
+   if (persist && changed) {
+     enqueue_pipeline_cache_write(make_pipeline_cache_write(type, cacheKey, config, firstFrameUsed));
+   }
++  return isNew;
+ }
+ 
+ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallback&& cb,
+-                                      PipelinePriority priority = PipelinePriority::Normal) {
++                                      PipelinePriority priority = PipelinePriority::Normal,
++                                      OnDemand why = OnDemand::NotCounted) {
+   ZoneScoped;
+ 
+   const bool blocking = priority == PipelinePriority::Blocking;
++  // neither built nor queued, for a draw (not the warmup): built on demand
++  bool onDemand = false;
+   bool notifyWorker = false;
+   bool pipelineReady = false;
+   bool createdPipeline = false;
+@@ -504,6 +535,7 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
+         notifyWorker = priority != PipelinePriority::Background;
+       }
+     } else if (!g_hasPipelineThread && (blocking || g_pipelinesPerFrame < BuildPipelinesPerFrame)) {
++      onDemand = priority != PipelinePriority::Background && why != OnDemand::NotCounted;
+       auto result = cb();
+       pipelineCount = result.pipeline_count();
+       g_pipelines.try_emplace(runtimeKey, std::move(result));
+@@ -511,6 +543,7 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
+       g_pipelinesPerFrame += std::max(1u, pipelineCount);
+       createdPipeline = true;
+     } else {
++      onDemand = priority != PipelinePriority::Background && why != OnDemand::NotCounted;
+       PendingPipeline pending{
+           .hash = runtimeKey,
+           .create = std::move(cb),
+@@ -532,6 +565,10 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
+     }
+   }
+ 
++  if (onDemand) {
++    report_on_demand_pipeline(why, runtimeKey);
++  }
++
+   if (createdPipeline) {
+     notify_pipeline_ready(queued, pipelineCount);
+   }
+@@ -563,16 +600,19 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
+ }
+ 
+ static PipelineRef resolve_pipeline(ShaderType type, const gx::PipelineConfig& config, const RenderTargetLayout& layout,
+-                                    PipelinePriority priority) {
++                                    PipelinePriority priority, OnDemand why = OnDemand::NotCounted) {
+   const auto runtimeKey = xxh3_hash(layout.key, xxh3_hash(config, static_cast<HashType>(type)));
+-  return find_pipeline_impl(runtimeKey, [config, layout] { return create_pipeline(config, layout); }, priority);
++  return find_pipeline_impl(runtimeKey, [config, layout] { return create_pipeline(config, layout); }, priority,
++                            why);
+ }
+ 
+ static PipelineRef resolve_pipeline(ShaderType type, const clear::PipelineConfig& config,
+-                                    const RenderTargetLayout& layout, PipelinePriority priority) {
++                                    const RenderTargetLayout& layout, PipelinePriority priority,
++                                    OnDemand why = OnDemand::NotCounted) {
+   const auto runtimeKey = xxh3_hash(layout.key, xxh3_hash(config, static_cast<HashType>(type)));
+   return find_pipeline_impl(
+-      runtimeKey, [config, layout] { return CompiledPipeline{.main = create_pipeline(config, layout)}; }, priority);
++      runtimeKey, [config, layout] { return CompiledPipeline{.main = create_pipeline(config, layout)}; }, priority,
++      why);
+ }
+ 
+ #ifdef AURORA_ENABLE_RMLUI
+@@ -667,6 +707,11 @@ static void seed_pipeline_cache() {
+   if (g_pipelineCacheBroken || g_pipelineCacheDb == nullptr || g_pipelineCacheUpsertStmt == nullptr) {
+     return;
+   }
++  // $AURORA_NO_PIPELINE_SEED=1 (tests): a start as without a bundled seed, every pipeline new
++  if (const char* env = SDL_getenv("AURORA_NO_PIPELINE_SEED"); env != nullptr && SDL_strcmp(env, "1") == 0) {
++    Log.info("Bundled pipeline seed not used (AURORA_NO_PIPELINE_SEED)");
++    return;
++  }
+ 
+   const auto seedPath = pipeline_cache_seed_path();
+   sqlite3* seedDb = open_pipeline_cache_seed_db(seedPath);
+@@ -1152,15 +1197,17 @@ static void stop_pipeline_cache_writer() {
+ }
+ 
+ PipelineRef find_pipeline(const clear::PipelineConfig& config, const RenderTargetLayout& layout, bool blocking) {
+-  remember_pipeline_config(ShaderType::Clear, config, current_frame(), true);
++  const bool isNew = remember_pipeline_config(ShaderType::Clear, config, current_frame(), true);
+   return resolve_pipeline(ShaderType::Clear, config, layout,
+-                          blocking ? PipelinePriority::Blocking : PipelinePriority::Normal);
++                          blocking ? PipelinePriority::Blocking : PipelinePriority::Normal,
++                          isNew ? OnDemand::NewConfig : OnDemand::NewLayout);
+ }
+ 
+ PipelineRef find_pipeline(const gx::PipelineConfig& config, const RenderTargetLayout& layout, bool blocking) {
+-  remember_pipeline_config(ShaderType::GX, config, current_frame(), true);
++  const bool isNew = remember_pipeline_config(ShaderType::GX, config, current_frame(), true);
+   return resolve_pipeline(ShaderType::GX, config, layout,
+-                          blocking ? PipelinePriority::Blocking : PipelinePriority::Normal);
++                          blocking ? PipelinePriority::Blocking : PipelinePriority::Normal,
++                          isNew ? OnDemand::NewConfig : OnDemand::NewLayout);
+ }
+ 
+ #ifdef AURORA_ENABLE_RMLUI
+@@ -1271,6 +1318,7 @@ void shutdown_pipeline_cache() {
+ 
+   queuedPipelines = 0;
+   createdPipelines = 0;
++  onDemandPipelines = 0;
+ }
+ 
+ void begin_pipeline_frame() {
+-- 
+2.45.0
+

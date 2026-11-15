@@ -40,6 +40,7 @@
 #undef GXCopyDisp /* the real one, from the wrapper below */
 #include <SDL3/SDL_atomic.h>
 #include "port/stereo.h"
+#include "port/interp_replay.h"
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_surface.h>
@@ -541,6 +542,17 @@ typedef struct SaveJob {
     u32 w, h;
 } SaveJob;
 
+static SDL_AtomicInt sSaving; /* pictures being saved off the game's thread */
+
+/* a test's end (portTestExit): the pictures still being saved written first, a few seconds at most. Its _Exit
+   ended the detached save threads: a screenshot taken near the end was never written, readme_still_bunny_boo */
+void portShotSavesWait(int ms) {
+    const Uint64 until = SDL_GetTicks() + (Uint64)ms;
+    while (SDL_GetAtomicInt(&sSaving) > 0 && SDL_GetTicks() < until) {
+        SDL_Delay(5);
+    }
+}
+
 static int SDLCALL saveThread(void* data) {
     SaveJob* job = (SaveJob*)data;
     SDL_Surface* surface =
@@ -555,6 +567,8 @@ static int SDLCALL saveThread(void* data) {
     SDL_DestroySurface(surface);
     free(job->rgba);
     free(job);
+    fflush(stdout); /* (its "[shot] wrote" line out with it) */
+    SDL_AddAtomicInt(&sSaving, -1);
     return 0;
 }
 
@@ -578,6 +592,7 @@ static void pictureFrame(void) {
             job->rgba = sPicture;
             job->w = sPictureW;
             job->h = sPictureH;
+            SDL_AddAtomicInt(&sSaving, 1);
             thread = SDL_CreateThread(saveThread, "photo save", job);
             if (thread != NULL) {
                 SDL_DetachThread(thread);
@@ -1112,9 +1127,15 @@ void portShotBeforeCopyDisp(u32 frame) {
         return;
     }
     {
-        /* $TTYD_USER_SHOT=<frame> (tests): the player's screenshot then */
+        /* $TTYD_USER_SHOT=<frame> (tests): the player's screenshot then, or at the first frame after it with no
+           capture in flight (a test's own shot the frame before held it off, and it was never taken:
+           readme_still_bunny_boo) */
+        static int sUserShotDone;
         const char* u = getenv("TTYD_USER_SHOT");
-        if (u != NULL && burstMode() == 0 && (u32)strtoul(u, NULL, 10) == frame) {
+        const int state = SDL_GetAtomicInt(&sPictureState);
+        if (u != NULL && !sUserShotDone && burstMode() == 0 && frame >= (u32)strtoul(u, NULL, 10) &&
+            sNext[0] == '\0' && state != 1 && state != 2 && state != 5) {
+            sUserShotDone = 1; /* (portShotRequestUser takes it now: nothing else in flight) */
             portShotRequestUser();
         }
     }
@@ -1196,6 +1217,13 @@ static void capture(void) {
 }
 
 void portGXCopyDisp(void* dest, GXBool clear) {
+    if (portInterpReplayDeferCopyDisp()) {
+        /* frame interpolation by replay (interp_replay_aurora.c): the capture (and stereo's composing of the
+         * eyes) once the frame's picture is whole and next to be shown, after the left eye's replay and the
+         * in-between frames shown before it */
+        GXCopyDisp(dest, clear);
+        return;
+    }
     portStereoCompose(); /* stereoscopic 3D: the two eyes put together first, so a capture has both */
     portShotBeforeCopyDisp(VIGetRetraceCount());
     GXCopyDisp(dest, clear);

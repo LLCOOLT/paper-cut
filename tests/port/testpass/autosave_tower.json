@@ -1,0 +1,76 @@
+{
+ "desc": "Autosave on (every room) through moderun_tower's full climb of the Paper Tower: each floor reached kept as the best floor in paper_tower.txt at once (not only at the climb's end), up to 30; the story's file never saved on the tower's floors (the mode's own maps: no way out)",
+ "groups": [
+  "autosave"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2,
+  "paper_tower_seed": 4242,
+  "autosave": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ITEMS": "2,3",
+  "TTYD_BADGES": "284",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_TOWER_AUTO": "1",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 100,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 100000
+ },
+ "log_must": [
+  "\\[items\\] TTYD_ITEMS: 2 \\(0x2\\) given",
+  "\\[items\\] TTYD_ITEMS: 3 \\(0x3\\) given",
+  "\\[tower\\] auto: the climber on$",
+  "\\[tower\\] climb from gor_01, seed 4242",
+  "\\[moderun\\] The Paper Tower started",
+  "\\[tower\\] auto: floor 1 crossed in \\d+ frames",
+  "\\[tower\\] floor 5: battle",
+  "\\[tower\\] auto: floor 14 crossed in \\d+ frames",
+  "\\[tower\\] floor 15: battle",
+  "\\[tower\\] auto: floor 29 crossed in \\d+ frames",
+  "\\[tower\\] floor 30: battle",
+  "\\[tower\\] auto: floor \\d+ gate \\d+ \\(paper\\) through \\(paper mode\\)",
+  "\\[tower\\] auto: floor \\d+ gate \\d+ \\(tube\\) through \\(tube mode\\)",
+  "\\[tower\\] auto: floor \\d+ gate \\d+ \\(wind\\) through \\(paper mode\\)",
+  "\\[tower\\] climb over at floor 30, \\d+ ms, cleared$",
+  "\\[achievement\\] Ten Floors Up$",
+  "\\[achievement\\] Thin Air$",
+  "\\[achievement\\] Top of the Tower$",
+  "\\[moderun\\] The Paper Tower over after",
+  "\\[moderun\\] control back after The Paper Tower: .*lending 0",
+  "\\[moderun\\] check after The Paper Tower: stats \\w+, partners same, badges same, items same, key items same, coins \\d+ -> \\d+, .*story same",
+  "\\[moderun\\] done",
+  "^\\[autosave\\] Paper Tower: floor 1 kept as the best$",
+  "^\\[autosave\\] Paper Tower: floor 15 kept as the best$",
+  "^\\[autosave\\] Paper Tower: floor 30 kept as the best$"
+ ],
+ "log_must_not": [
+  "\\[tower\\] auto: floor \\d+ not crossed",
+  "\\[tower\\] auto: start refused",
+  "\\[tower\\] test start refused",
+  "\\[tower\\] climb over at .*\\(helped\\)",
+  "\\[tower\\] auto: floor \\d+ gate \\d+ \\(\\w+\\) through \\(walking\\)",
+  "\\[moderun\\] control not back",
+  "Another mode is running"
+ ],
+ "timeout": 900,
+ "file_must": {
+  "user/paper_tower.txt": [
+   "^floor 30 ms \\d+"
+  ]
+ }
+}

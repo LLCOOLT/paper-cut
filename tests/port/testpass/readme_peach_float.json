@@ -120,7 +120,7 @@
  "backend": "offscreen",
  "log_must": [
   "^\\[warp\\] frame \\d+: to gor_01\\b",
-  "^mods: map \\S+#(peach|bowser): texture set",
+  "^(INFO: )?mods: map \\S+#(peach|bowser): texture set",
   "^\\[input\\] end$"
  ]
 }

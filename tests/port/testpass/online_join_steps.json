@@ -1,0 +1,53 @@
+{
+ "desc": "a guest's join through a relay room, step by step (online_status_pc.c): the relay, the key, the version, the host's adventure, the host's world, each logged with its time, then the timeline; nothing slow, nothing failed, no window",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must_not": [
+     "join: begins"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1400"
+    ],
+    "log_must": [
+     "join: begins \\(a room\\): 5 steps",
+     "join: step 1 relay done in \\d+ ms",
+     "join: step 2 key done in \\d+ ms",
+     "join: step 3 version done in \\d+ ms",
+     "join: step 4 progress done in \\d+ ms",
+     "join: step 5 world done in \\d+ ms",
+     "join: done after \\d+ ms \\(ms per step: relay \\d+, key \\d+, version \\d+, progress \\d+, world \\d+\\)",
+     "quality: player 1 none -> good"
+    ],
+    "log_must_not": [
+     "taking long",
+     "join: step \\d \\w+ failed",
+     "join: the window is up"
+    ]
+   }
+  ],
+  "link": "relay"
+ },
+ "timeout": 300
+}

@@ -18,6 +18,9 @@
 #include "mot/mot_walk.h"
 #include "libc_decls.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/pm64_spin.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_sbr.h"
 #endif
@@ -405,6 +408,9 @@ void PORT_HOOKABLE(marioForceMoveMain)(void) {
 void PORT_HOOKABLE(marioSetForceMove)(f32 dir, s32 time, f32 speed) {
     MarioWork* mario = marioGetPtr();
 
+#ifdef TARGET_PC
+    portSpinDashForceMoveSet(); /* a script's walk takes Mario over from a Spin Dash (pm64_spin.h) */
+#endif
     mario->flags |= MARIO_FLAG_FORCED_MOVEMENT;
     mario->moveDirection = dir;
     mario->directionView = dir;
@@ -709,6 +715,15 @@ s32 PORT_HOOKABLE(marioGetRub)(u32 btn, s32* dirOut, s32* countOut, f32* magOut)
     s32 cw;
     s32 ccw;
 
+#ifdef TARGET_PC
+    /* The -1 returns while the stick rests or isn't turning leave the outputs unwritten, and
+     * marioChkJabara reads the turn count after any return but 0: on PC that read stack garbage,
+     * so with the Ultra Boots, A pressed after standing a moment was a Spring Jump instead of a
+     * jump. No turn reads as none (the console's stack held no positive count there). */
+    *dirOut = -1;
+    *countOut = 0;
+    *magOut = 0.0f;
+#endif
     if (btn && !(mario->buttonHold & btn)) {
         marioGetRubInit();
         *dirOut = -1;

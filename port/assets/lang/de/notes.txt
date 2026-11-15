@@ -307,3 +307,29 @@ Tippen: Lesen
 
 Read a paper note
 Papiernotiz lesen
+
+# 0.5.1: a note of one's own taken back
+
+Take back
+Zurücknehmen
+
+Taking it back...
+Wird zurückgenommen...
+
+Your note is taken back.
+Deine Notiz ist zurückgenommen.
+
+It can only be taken back from where it was left.
+Sie kann nur von dort zurückgenommen werden, wo sie hinterlassen wurde.
+
+This relay can't take notes back yet.
+Dieses Relay kann noch keine Notizen zurücknehmen.
+
+Only the device that left it can take it back.
+Nur das Gerät, das sie hinterlassen hat, kann sie zurücknehmen.
+
+Choose it again to take your note back.
+Wähle sie noch einmal, um deine Notiz zurückzunehmen.
+
+Yours: choose it to take it back.
+Deine: Wähle sie, um sie zurückzunehmen.

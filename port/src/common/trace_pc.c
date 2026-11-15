@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 #include <dolphin/vi.h>
+#include "port/luigi.h"
 #include "driver/seqdrv.h"
 #include "mario/mariost.h"
 #include "manager/evtmgr.h"
@@ -12,14 +13,17 @@
 #include "driver/swdrv.h"
 #include "port/open_world.h"
 #include "mario/mario_party.h"
+#include "party.h"
 #include "mario/mario_pouch.h"
 #include "mario/mario_motion.h"
 #include "event.h"
 #include "port/platform.h"
+#include "port/prompt_check.h"
 #include "port/gameplus.h"
 #include "port/toggles.h"
 #include "port/practice.h"
 #include "port/story_test.h"
+#include "port/map_edits.h"
 #include "port/settings.h"
 
 /* $TTYD_TRACE=2: every running script, where it is and what it calls. */
@@ -100,12 +104,19 @@ int portWarpSettled(void) {
     return sWarpState != NULL && (*sWarpState == 0 || *sWarpState == 3);
 }
 
+int portWarpLimitOver(long long start, unsigned limitSeconds, unsigned framesSinceStart) {
+    const long long wall = (long long)time(NULL) - start;
+    return (wall >= (long long)limitSeconds && framesSinceStart >= limitSeconds * 60u) ||
+           wall >= (long long)limitSeconds * 10;
+}
+
 static void warpFrame(u32 frame) {
     static int state = -1; /* -1 unread, 0 off, 1 waiting for the title, 2 warped, 3 on the map */
     sWarpState = &state;
     static char map[32], bero[32];
     static u32 exitFrames = 600, limit = 60, onMap;
     static time_t start;
+    static u32 startFrame;
     if (state < 0) {
         const char* v = getenv("TTYD_MAP");
         const char* comma;
@@ -122,6 +133,7 @@ static void warpFrame(u32 frame) {
             }
             state = 1;
             start = time(NULL);
+            startFrame = frame;
         } else if ((v = getenv("TTYD_EXIT_FRAMES")) && atoi(v) > 0 && getenv("TTYD_INPUT") == NULL &&
                    getenv("TTYD_EVENT") == NULL && getenv("TTYD_LOAD_SAVE") == NULL) {
             /* no warp and no input script: TTYD_EXIT_FRAMES counts from the start (a run left at
@@ -190,6 +202,16 @@ static void warpFrame(u32 frame) {
                     }
                 }
                 marioPartyEntry(party);
+            }
+            {
+                /* $TTYD_FOLLOWER=<member>: a story follower out beside the partner, in Mario's follower slot
+                   (8 the egg ... 12 Craw-Daddy; 10 ch2's Punio), as a save on that leg of the story has him */
+                const char* f = getenv("TTYD_FOLLOWER");
+                const s32 member = f != NULL ? atoi(f) : 0;
+                if (member >= PARTY_MEMBER_EGG && member <= PARTY_MEMBER_CRAW) {
+                    printf("[trace] follower %d out: slot %d\n", (int)member, (int)marioPartyEntry((PartyId)member));
+                    fflush(stdout);
+                }
             }
             {
                 /* $TTYD_PARTY_RANK: every partner at that rank (0 Normal, 1 Super, 2 Ultra), as Merlon ranks
@@ -305,8 +327,8 @@ static void warpFrame(u32 frame) {
         portSettingsDumpNow(); /* tests: $TTYD_SETTINGS_DUMP (tools/port/settings_fuzz.py) */
         portTestExit(0); /* no teardown: Aurora's GPU threads are still running */
     }
-    if (state < 3 && time(NULL) - start >= (time_t)limit) {
-        printf("[warp] FAIL: %s not reached in %us, frame %u (sequence %d, map '%s')\n", map, (unsigned)limit,
+    if (state < 3 && portWarpLimitOver(start, limit, frame - startFrame)) {
+        printf("[warp] FAIL: %s not reached in %us (and its frames), frame %u (sequence %d, map '%s')\n", map, (unsigned)limit,
                (unsigned)frame, (int)seqGetSeq(), gp->currentMapName);
         fflush(stdout);
         portTestExit(3);
@@ -359,12 +381,23 @@ void portTraceMsgMissing(const char* tag, const char* area, s32 areaCount, const
 
 void portTraceFrame(u32 frame) {
     static int enabled = -1;
+    static int textDump = 1;
+    if (textDump) { /* $TTYD_PLAY_AS_TEXT_DUMP: Play as's text check (luigi_pc.c), then out */
+        const char* dump = getenv("TTYD_PLAY_AS_TEXT_DUMP");
+        textDump = 0;
+        if (dump != NULL && *dump != '\0') {
+            portPlayAsTextDump(dump);
+            portTestExit(0);
+        }
+    }
     portWatchdogFrame();
     warpFrame(frame);
     portStoryTestEventFrame(); /* $TTYD_EVENT: from the title, as $TTYD_MAP */
     portGameplusFrame();
     portChaosFrame();    /* chaos mode's timer and effects (port/toggles.h) */
     portPracticeFrame(); /* the speedrun timer, achievements */
+    portMapEditsLiveFrame(); /* a room setting changed in the room: applied at once (port/map_edits.h) */
+    portPromptAuditFrame();  /* $TTYD_PROMPT_AUDIT (port/prompt_check.h) */
     static s32 lastSeq = -2;
     static char lastMap[sizeof(gp->currentMapName)];
     s32 seq;

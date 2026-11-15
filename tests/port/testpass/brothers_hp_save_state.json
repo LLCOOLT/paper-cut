@@ -1,0 +1,43 @@
+{
+ "desc": "Brothers mode: a save state keeps Luigi's HP and FP (hurt, then loaded back after a Heart-Block-like refill)",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "env": {
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "input": [
+  "wait 240",
+  "bros_hp 3",
+  "bros_fp 2",
+  "wait 30",
+  "state save 1",
+  "wait 60",
+  "bros_hp 9",
+  "bros_fp 4",
+  "wait 30",
+  "state load 1",
+  "wait 120",
+  "give 0x94",
+  "companion item 0 0",
+  "wait 60",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[brothers\\] Luigi HP 3/10 FP 2/5",
+  "^\\[brothers\\] Luigi HP 9/10 FP 4/5",
+  "^\\[brothers\\] Luigi HP 8/10 FP 2/5 \\(Mario healed",
+  "^\\[input\\] end"
+ ],
+ "timeout": 200
+}

@@ -8,6 +8,7 @@
 #include "port/text_fit.h"
 #include "port/ui_boxes.h"
 #include "port/menu_speed.h"
+#include "port/statesync.h"
 #include "wide_x.h"
 #endif
 #include "version.h"
@@ -433,6 +434,13 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
 #endif
             break;
         case 10:
+#ifdef TARGET_PC
+            /* an online guest joined with this menu up: it closes, as B here does (port/statesync.h) */
+            if (!gPortCompanionMenu && portStateSyncMenuCloseWanted() && w->menu[0].state == 100) {
+                w->active = 20;
+                break;
+            }
+#endif
             if (w->buttonTrg & (PAD_BUTTON_B | PAD_BUTTON_START)) {
                 if (w->menu[0].state == 100) {
                     w->active = 20;

@@ -19,8 +19,9 @@
  * - its sounds do nothing (pmario_sound.c), its random numbers are put back;
  * - what would change the game (an item used, a partner chosen) becomes a
  *   tap of the second screen (port/companion.h), which the game acts on as
- *   input: a badge worn or taken off and a sort are taps too; the rest
- *   (mail) is left out.
+ *   input: a badge worn or taken off, a sort, a letter read, the Ragged
+ *   Diary, a settings row that changes the game, a warp or a trip are taps
+ *   too (portCompanionFieldMore).
  * Plain C. */
 
 #ifdef __cplusplus

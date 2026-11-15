@@ -1,0 +1,98 @@
+{
+ "desc": "Five games, each free, the room's four places full: player 3 (its clock a day ahead, as another device's) leaves while player 4 holds the last place, so the gone player's place is the only one there is; it's let go (a short grace for the test) and a fifth game joins as player 3, its clock behind the gone one's. Player 2 must take the newcomer's words (its name, its ghost) and say player 3's session is new: before 0.5.1 a guest never forgot the gone player 3, so every word of the newcomer seemed older and was dropped (no ghost, not counted in the room). (The names check is off: the gone player and the newcomer share one number.)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4200
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 4000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_PLACE_GRACE_MS": 300
+    },
+    "log_must": [
+     "net: player 3's place goes to a new player"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 4000"
+    ],
+    "env": {
+     "TTYD_SYNC_NAME": "Player Two",
+     "TTYD_SYNC_AT": 300
+    },
+    "log_must": [
+     "peer: player 3's name: \"Gone Three\"",
+     "peer: player 3's session is new",
+     "peer: player 3's name: \"New Three\"",
+     "peer: player 3's words taken again \\(their new session",
+     "ghost: player 3 is here in gor_01"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 4000"
+    ],
+    "env": {
+     "TTYD_SYNC_NAME": "Gone Three",
+     "TTYD_NET_MS_OFFSET": 86400000,
+     "TTYD_SYNC_LEAVE_AT": 1100,
+     "TTYD_SYNC_AT": 600
+    },
+    "log_must": [
+     "net: this game is player 3"
+    ]
+   },
+   {
+    "role": "guest4",
+    "input": [
+     "wait 4000"
+    ],
+    "env": {
+     "TTYD_SYNC_NAME": "Four Holds",
+     "TTYD_SYNC_AT": 850
+    },
+    "log_must": [
+     "net: this game is player 4",
+     "peer: player 3's name: \"New Three\""
+    ]
+   },
+   {
+    "role": "guest3",
+    "input": [
+     "wait 4000"
+    ],
+    "env": {
+     "TTYD_SYNC_NAME": "New Three",
+     "TTYD_SYNC_AT": 2200
+    },
+    "log_must": [
+     "net: this game is player 3",
+     "peer: player 2's name: \"Player Two\" \\(the host's roster\\)",
+     "peer: player 4's name: \"Four Holds\""
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "names": false
+  }
+ },
+ "timeout": 400
+}

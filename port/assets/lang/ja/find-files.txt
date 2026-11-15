@@ -1,0 +1,25 @@
+# find-files: see tools/port/gen_lang.py (the mods and spoiler logs folders, the About page's Discord)
+
+Open the spoiler logs folder
+スポイラーログのフォルダを開く
+
+Shows the randomizer folder in the user folder, where each start's spoiler log is written: the system's folder for app data, or User beside the program with portable.txt.
+ユーザーフォルダのrandomizerフォルダを表示します。起動するたびにスポイラーログがここに書かれます。ユーザーフォルダはシステムのアプリデータ用フォルダ、またはportable.txtがあればプログラムの横のUserフォルダです。
+
+The folder didn't open: it is the randomizer folder in the user folder.
+フォルダを開けませんでした。ユーザーフォルダのrandomizerフォルダです。
+
+The mods folder: %s
+modsフォルダ: %s
+
+Spoiler logs: %s
+スポイラーログ: %s
+
+The user folder is the system's folder for app data, or the User folder beside the program when portable.txt is there (Saves > Portable mode).
+ユーザーフォルダはシステムのアプリデータ用フォルダ、またはportable.txtがあればプログラムの横のUserフォルダです（セーブ > ポータブルモード）。
+
+The Paper Cut Discord
+Paper CutのDiscord
+
+Help, players for online games and ideas: discord.gg/qkSQuRPzcQ. Bugs still go to GitHub issues.
+ヘルプ、オンラインで遊ぶ相手さがし、アイデア: discord.gg/qkSQuRPzcQ。バグは引き続きGitHubのissueへ。

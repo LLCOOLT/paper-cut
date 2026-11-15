@@ -82,14 +82,12 @@ struct SceneSkipSettings {
     portSettingsDeclare("skip_any_scene", 1, 0, 1); // (on: it acts only while Start is held in a scene)
     portSettingsDeclare("text_hold_skip", 0, 0, 1);
     portSettingsAddToggle("Gameplay", "Skip any scene",
-                          "While a scene holds Mario, hold {START} until the ring fills: the scene runs on to its "
-                          "end at once, unseen and unheard, so whatever it gives or changes still happens. {B} stops it. It "
-                          "stops at a choice, a menu or a battle (they're yours), and never runs during play, "
-                          "minigames or online.",
+                          "During a scene, hold {START} until the ring fills to jump to its end; whatever it gives "
+                          "or changes still happens, and it stops at choices and battles. Not online.",
                           0, "skip_any_scene", "skip cutscene scene hold start any fast story");
     portSettingsAddToggle("Gameplay", "Fly through text",
-                          "In a conversation, hold {B}: its pages turn as fast as they print, up to the next "
-                          "choice. A tap of {B} is the game's own.",
+                          "Hold {B} in a conversation to race through its pages, up to the next choice; a tap of {B} "
+                          "works as usual.",
                           0, "text_hold_skip", "text dialogue message skip hold b fast conversation");
     portSettingsAddOverlay(drawRing, nullptr);
   }

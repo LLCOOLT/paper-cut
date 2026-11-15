@@ -1,0 +1,121 @@
+# After a crash: crash-safe snapshots, undoing a setting, Report a problem (port/settings/features/soft_crash.cpp, report_problem.cpp, crash_report.cpp): see tools/port/gen_lang.py
+
+Crash-safe snapshots
+Istantanee anti-crash
+
+Keeps a copy of where you are every few minutes and at room changes; after a crash, the next start offers to continue from it. Not online, in leaderboard runs, the daily seed or bingo, or on a Hardcore file.
+Tiene una copia di dove sei ogni pochi minuti e quando cambi stanza; dopo un crash, l'avvio successivo propone di ripartire da lì. Non online, nelle partite in classifica, nel seme del giorno o nel bingo, né su un file Hardcore.
+
+Undone: it is back as it was. A setting used at start takes effect from the next start.
+Annullato: è tornato com'era. Un'impostazione usata all'avvio ha effetto dal prossimo avvio.
+
+Paper Cut closed after you changed %s. Undo it?
+Paper Cut si è chiuso dopo che hai cambiato %s. Annullare la modifica?
+
+Paper Cut closed after you changed %s and %d other settings. Undo them?
+Paper Cut si è chiuso dopo che hai cambiato %s e altre %d impostazioni. Annullare le modifiche?
+
+Last time the game stopped with no crash report: the system or the graphics driver ended it.
+L'ultima volta il gioco si è fermato senza rapporto di crash: l'ha chiuso il sistema o il driver grafico.
+
+Load your save as usual
+Carica il salvataggio come sempre
+
+at %s
+alle %s
+
+Continue from a few minutes ago: %s, %s.
+Continua da qualche minuto fa: %s, %s.
+
+An earlier snapshot: %s, %s.
+Un'istantanea precedente: %s, %s.
+
+Continue from a few minutes ago
+Continua da qualche minuto fa
+
+Continue from the earlier one
+Continua da quella precedente
+
+No snapshots were made while playing online: the world was the host's, not yours to come back to alone.
+Nessuna istantanea mentre giocavi online: il mondo era dell'host, non tuo per tornarci da solo.
+
+No snapshots were made during a replay or a ghost race: it plays from its own start.
+Nessuna istantanea durante un replay o una corsa col fantasma: parte dal suo inizio.
+
+No snapshots were made during a leaderboard run: its replay is what counts.
+Nessuna istantanea durante una partita in classifica: conta il suo replay.
+
+No snapshots were made on the daily seed: its clock is a race against everyone's.
+Nessuna istantanea nel seme del giorno: il suo cronometro è una gara contro tutti.
+
+No snapshots were made in a bingo lockout room: it is a race against the others.
+Nessuna istantanea in una stanza di bingo a blocco: è una gara contro gli altri.
+
+No snapshots were made on a hardcore file: it has one life.
+Nessuna istantanea su un file hardcore: ha una sola vita.
+
+the version, the build, the system and the graphics card
+la versione, la build, il sistema e la scheda grafica
+
+the last crash report
+l'ultimo rapporto di crash
+
+what the graphics were doing as the last run ended
+cosa faceva la grafica quando è finita l'ultima sessione
+
+the memory record of the last run (phones and tablets)
+il registro della memoria dell'ultima sessione (telefoni e tablet)
+
+the online diagnostics: the connection, no names or codes
+la diagnostica online: la connessione, senza nomi né codici
+
+your settings' values (numbers only)
+i valori delle tue impostazioni (solo numeri)
+
+the settings you changed lately, and when
+le impostazioni che hai cambiato di recente, e quando
+
+the last lines of this run's log
+le ultime righe del registro di questa sessione
+
+%d bytes
+%d byte
+
+%d KB
+%d KB
+
+The zip couldn't be made in the save folder.
+Impossibile creare lo zip nella cartella dei salvataggi.
+
+Made %s in the save folder. Add what happened on the GitHub page and attach the zip there.
+%s creato nella cartella dei salvataggi. Scrivi cosa è successo sulla pagina GitHub e allega lì lo zip.
+
+Saved a copy of the zip.
+Copia dello zip salvata.
+
+Report a problem...
+Segnala un problema...
+
+One zip of what helps a bug report, shown before it is made. Nothing is sent: you attach it on GitHub yourself.
+Uno zip di ciò che aiuta una segnalazione, mostrato prima di crearlo. Non viene inviato niente: lo alleghi tu su GitHub.
+
+The zip will hold:
+Lo zip conterrà:
+
+Taken out first: your name in folder paths, online names, the secret half of room codes and IP addresses. Nothing is sent anywhere: you attach the zip to the GitHub issue yourself.
+Tolti prima: il tuo nome nei percorsi delle cartelle, i nomi online, la metà segreta dei codici stanza e gli indirizzi IP. Non viene inviato niente da nessuna parte: alleghi tu lo zip alla issue su GitHub.
+
+Make the zip and open GitHub
+Crea lo zip e apri GitHub
+
+Save a copy of the zip...
+Salva una copia dello zip...
+
+It is here: %s
+Si trova qui: %s
+
+Report a problem
+Segnala un problema
+
+One zip of what helps a bug report (the records, your settings' values, the last log lines), shown before it is made; then GitHub's page for a new issue, to attach it to.
+Uno zip di ciò che aiuta una segnalazione (i registri, i valori delle tue impostazioni, le ultime righe del log), mostrato prima di crearlo; poi la pagina GitHub per una nuova issue, a cui allegarlo.

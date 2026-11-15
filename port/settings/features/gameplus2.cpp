@@ -150,7 +150,6 @@ void jukebox(int) {
 }
 
 // --- The Start menu's forms (port/include/port/pause_forms.h) ---
-constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 // Loadouts: each one's name over its Wear, Store worn and Rename
 enum { kWear, kStore, kRename, kLoadoutRows };
@@ -210,7 +209,7 @@ const char* loadoutAct(int id, int dir) {
   switch (id % kLoadoutRows) {
   case kWear:
     if (gPortCompanionMenu) {
-      return kSecondScreen;
+      return portPauseSecondScreenAct(id, dir);
     }
     if (portLoadoutGet(i, nullptr, 0) <= 0) {
       return "This loadout is empty: Store worn fills it.";
@@ -219,7 +218,7 @@ const char* loadoutAct(int id, int dir) {
     return nullptr;
   case kStore:
     if (gPortCompanionMenu) {
-      return kSecondScreen;
+      return portPauseSecondScreenAct(id, dir);
     }
     portLoadoutStore(i);
     sLoadoutMessage[0] = '\0';
@@ -242,8 +241,8 @@ int boostRows(PortPauseRow* out, int max) {
   if (max < 2) {
     return 0;
   }
-  const char* key = portBindingsKeyName(PORT_BIND_WALK_BOOST);
-  const char* pad = portBindingsPadName(PORT_BIND_WALK_BOOST);
+  const char* key = portBindingsKeyNameGame(PORT_BIND_WALK_BOOST); // (the game's font: its encoding)
+  const char* pad = portBindingsPadNameGame(PORT_BIND_WALK_BOOST);
   out[0] = portPauseRow("Boost key", "Change them under Controls, Bindings.", key[0] != '\0' ? nullptr : "(none)", 0);
   std::snprintf(out[0].value, sizeof(out[0].value), "%s", key);
   out[1] = portPauseRow("Boost button", "Change them under Controls, Bindings.", pad[0] != '\0' ? nullptr : "(none)", 1);
@@ -332,7 +331,7 @@ const char* trackAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   portJukeboxPlay(id == 0 ? sTrack : -1);
   return nullptr;
@@ -381,19 +380,21 @@ struct Register {
                           kPlay, "storage_anywhere", "item storage save block keep stored items");
     portSettingsAddToggle(kTab, "Walk-speed boost", "Mario moves faster while the Boost key or button is held.",
                           kPlay, "walk_boost", "walk run speed boost sprint hold");
-    portSettingsAddSlider(kTab, "Boost speed", nullptr, kPlay, "walk_boost_speed", 110, 200, "%d %%",
-                          "walk run speed boost sprint");
+    portSettingsAddSlider(kTab, "Boost speed", "How much faster Mario moves while the boost is held.", kPlay,
+                          "walk_boost_speed", 110, 200, "%d %%", "walk run speed boost sprint");
     portSettingsAddSection(kTab, "Boost key", nullptr, 0, boostKeys, "walk boost key keyboard button controller gamepad");
     static const char* const kTimes[] = {"x1", "x1.5", "x2", "x2.5", "x3"};
     portSettingsAddChoice(kTab, "Coins from battles",
-                          "A battle's coins, after Merlee, Money Money and co.", kPlay,
+                          "Multiplies the coins each battle pays (after Merlee and Money Money).", kPlay,
                           "coin_multiplier", kTimes, 5, "coin multiplier money battle drop");
-    portSettingsAddChoice(kTab, "Star Points from battles", "A battle's Star Points (still at most 100, a level).",
-                          kPlay, "exp_multiplier", kTimes, 5, "exp star points multiplier level");
+    portSettingsAddChoice(kTab, "Star Points from battles",
+                          "Multiplies the Star Points each battle gives (still at most 100 at once).", kPlay,
+                          "exp_multiplier", kTimes, 5, "exp star points multiplier level");
     static const char* const kCorners[] = {"Off", "Top left", "Top right", "Bottom left", "Bottom right"};
     portSettingsAddChoice(kTab, "Star Piece and Shine Sprite tracker",
-                          "The map's Star Pieces and Shine Sprites, in a corner.", 0,
-                          "collectible_tracker", kCorners, 5, "star piece shine sprite tracker collectible missing");
+                          "How many of this map's Star Pieces and Shine Sprites you've found, in the corner you "
+                          "pick.",
+                          0, "collectible_tracker", kCorners, 5, "star piece shine sprite tracker collectible missing");
     portSettingsAddSection(kTab, "On this map", "Star Pieces and Shine Sprites found here.", PORT_SETTING_IN_GAME,
                            collectibles, "star piece shine sprite map collectible");
     portSettingsAddToggle(kTab, "Faster text outside battle",
@@ -404,9 +405,9 @@ struct Register {
                                            "Tracks); pick a track to play it.", 0,
                           "jukebox", "jukebox sound test music bgm track");
     portSettingsAddSection(kTab, "Tracks", nullptr, PORT_SETTING_IN_GAME, jukebox, "jukebox sound test music bgm");
-    portSettingsAddToggle(kTab, "Junk-item helper in shops",
-                          "Selling, an item or badge Mario has more than one of shows how many (a worn badge is "
-                          "never marked).",
+    portSettingsAddToggle(kTab, "Mark duplicates when selling",
+                          "When selling, items and badges Mario has more than one of show how many he holds; worn "
+                          "badges are never marked.",
                           0, "sell_helper", "sell shop junk spare duplicate item badge");
     portSettingsAddOverlay(overlay, nullptr);
     portPauseAddForm(&kLoadoutForm);

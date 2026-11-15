@@ -9,8 +9,8 @@ Aide au timing par type de commande
 Action command timing in every battle
 Timing des commandes action dans chaque combat
 
-The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
-La fenêtre du dojo après chaque commande action, chaque Bloque et chaque commande Style, dans chaque combat : combien d'images trop tôt ou trop tard.
+After each action command, guard and Stylish move, in every battle, a note shows how many frames early or late you were.
+Après chaque commande action, chaque Bloque et chaque commande Style, dans chaque combat, une note montre de combien d'images vous étiez en avance ou en retard.
 
 By command type
 Par type de commande

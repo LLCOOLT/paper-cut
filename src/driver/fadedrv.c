@@ -24,8 +24,12 @@
 #endif
 #ifdef TARGET_PC
 #include "wide_x.h"
+#include "port/platform.h"
 #include "port/toggles.h"
 #include "port/widescreen.h"
+#include "port/screen_live.h"
+#include "driver/seqdrv.h"
+#include <stdio.h>
 #endif
 
 #if VERSION >= VERSION_US
@@ -163,6 +167,10 @@ void PORT_HOOKABLE(fadeEntry)(s32 type, s32 duration, GXColor color) {
         duration = 1000;
     }
     // no default: a type without a case here would go on with entry and id uninitialised
+#ifdef TARGET_PC
+    entry = NULL; /* (an unknown type from a script or a mod: no fade, not a write through the stack) */
+    id = 0;
+#endif
     switch (type) {
         case FADE_IN_IRIS:
         case FADE_OUT_IRIS:
@@ -262,6 +270,11 @@ void PORT_HOOKABLE(fadeEntry)(s32 type, s32 duration, GXColor color) {
             entry = &wp->entries[4];
             break;
     }
+#ifdef TARGET_PC
+    if (entry == NULL) {
+        return;
+    }
+#endif
     entry->flags = 0;
     entry->flags |= FADE_ENTRY_ACTIVE;
     entry->type = type;
@@ -556,6 +569,55 @@ int portFadeStory(void) {
             default:
                 break;
         }
+    }
+    return 0;
+}
+
+/* port/include/port/screen_live.h: the field on screen now, or what hides it */
+int portScreenLive(char* out, size_t size) {
+#if VERSION >= VERSION_JP
+    extern BOOL disableMapDraw; /* mapdrv.c (N_mapDispOff) */
+    const BOOL mapOff = disableMapDraw;
+#else
+    const BOOL mapOff = FALSE;
+#endif
+    const CameraEntry* cam = camGetPtr(CAMERA_3D);
+    const FadeEntry* last =
+        wp != NULL && wp->lastEntryId >= 0 && wp->lastEntryId < 5 ? &wp->entries[wp->lastEntryId] : NULL;
+    int covering = 0;
+    if (last != NULL && (last->flags & FADE_ENTRY_ACTIVE) && (last->flags & FADE_ENTRY_FINISHED)) {
+        switch (last->type) {
+            case FADE_OUT_IRIS:
+            case FADE_OUT_SPOT:
+            case FADE_OUT_SPOT_3D:
+            case FADE_OUT_BLACK:
+            case FADE_OUT_BLACK_2D:
+            case FADE_COVER_BLACK_2D:
+            case FADE_OUT_BLACK_3D:
+            case FADE_OUT_WHITE:
+            case FADE_OUT_WHITE_2D:
+            case FADE_OUT_WHITE_3D:
+                covering = 1; /* (a fade out that ended: the picture is its colour until a fade in) */
+                break;
+            default:
+                break;
+        }
+    }
+    if (seqGetSeq() != SEQ_GAME || seqCheckSeq()) {
+        snprintf(out, size, "not the field (sequence %d%s)", (int)seqGetSeq(), seqCheckSeq() ? ", changing" : "");
+    } else if (cam == NULL || (cam->flags & CAM_FLAG_HIDDEN)) {
+        snprintf(out, size, "black: the 3D camera is off");
+    } else if (mapOff) {
+        snprintf(out, size, "black: the map isn't drawn");
+    } else if (wp != NULL && (wp->flags & (FADE_WORK_BLACK_SCREEN | FADE_WORK_WHITE_OUT))) {
+        snprintf(out, size, "covered: %s", (wp->flags & FADE_WORK_BLACK_SCREEN) ? "the pipe's black" : "the white-out");
+    } else if (covering) {
+        snprintf(out, size, "covered: fade %d ended out", (int)last->type);
+    } else if (!fadeIsFinish()) {
+        snprintf(out, size, "fading (fade %d)", last != NULL ? (int)last->type : -1);
+    } else {
+        snprintf(out, size, "live");
+        return 1;
     }
     return 0;
 }
@@ -1317,29 +1379,40 @@ static void disp_texture(CameraId camId, void* param) {
     size = 304.0f;
 #ifdef TARGET_PC
     {
-        /* widescreen: a flat colour fade reaches the widened frame's edges on
-         * the cameras whose x is scaled (the white flash before the title is
-         * a 3D one); the iris and spot ones keep their hole's shape */
-        f32 sx = size;
+        /* widescreen: every fade here reaches the widened frame's edges, on
+         * the cameras whose x is scaled (the white flash before the title, the
+         * 3D spot wipe) and on the fade cameras that are not. The iris and
+         * spot ones keep a round hole where the 4:3 frame had it: the quad's
+         * texture runs past 0..1 by as much as the frame is wider (clamped:
+         * the wipe's own black), measured in the game's picture, which an
+         * unscaled camera's 608 units stretch across the whole frame */
+        const f32 sx = WIDE_X(size);
+        f32 u0 = 0.0f, u1 = 1.0f;
         switch (work->entries[0].type) {
-            case FADE_IN_BLACK:
-            case FADE_OUT_BLACK:
-            case FADE_IN_BLACK_2D:
-            case FADE_OUT_BLACK_2D:
-            case FADE_IN_BLACK_3D:
-            case FADE_OUT_BLACK_3D:
-            case FADE_COVER_BLACK_2D:
-                sx = WIDE_X(size);
+            case FADE_IN_IRIS:
+            case FADE_OUT_IRIS:
+            case FADE_IN_SPOT:
+            case FADE_OUT_SPOT:
+            case FADE_IN_SPOT_3D:
+            case FADE_OUT_SPOT_3D: {
+                const f32 scaled = portWidescreenScaleX();
+                f32 span = WIDE_X(1.0f); /* the quad's half width over the game's picture's */
+                if (scaled > 0.999f || scaled < -0.999f) {
+                    span *= WIDE_X(1.0f); /* unscaled camera: its 608 units are the whole frame */
+                }
+                u0 = 0.5f - 0.5f * span;
+                u1 = 0.5f + 0.5f * span;
                 break;
+            }
         }
         GXPosition3f32(-sx, size, 0.0f);
-        GXTexCoord2f32(0.0f, 0.0f);
+        GXTexCoord2f32(u0, 0.0f);
         GXPosition3f32(sx, size, 0.0f);
-        GXTexCoord2f32(1.0f, 0.0f);
+        GXTexCoord2f32(u1, 0.0f);
         GXPosition3f32(sx, -size, 0.0f);
-        GXTexCoord2f32(1.0f, 1.0f);
+        GXTexCoord2f32(u1, 1.0f);
         GXPosition3f32(-sx, -size, 0.0f);
-        GXTexCoord2f32(0.0f, 1.0f);
+        GXTexCoord2f32(u0, 1.0f);
         GXSetProjectionv(proj);
         return;
     }
@@ -1533,17 +1606,9 @@ static void disp_maku(CameraId camId, void* param) {
     PSMTXTrans(mtx2, -32.0f, 24.0f, 0.0f);
     PSMTXConcat(mtx, mtx2, mtx);
     sx = 608.0f / gp->fbWidth;
-#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
-    {
-        /* PC port: the 3D curtains (a Crystal Star's ending) are drawn under a camera narrowed to keep the
-         * game's shape on a wide picture, which left the sides open: stretched to the picture's edges,
-         * as the full-screen curtains already are (CAMERA_FADE isn't narrowed) */
-        extern float gPortWidescreenEdgeScale;
-        PSMTXScale(mtx2, camId == CAMERA_3D_IMAGE ? sx * gPortWidescreenEdgeScale : sx, 480.0f / gp->efbHeight, sx);
-    }
-#else
+    /* (PC port, widescreen: the 3D curtains reach the frame's edges by the WIDE_X scale below, once; a second
+     * stretch here made their pleats wider than the fade camera's curtains) */
     PSMTXScale(mtx2, sx, 480.0f / gp->efbHeight, sx);
-#endif
     PSMTXConcat(mtx, mtx2, mtx);
     PSMTXTrans(mtx2, 32.0f, -24.0f, 0.0f);
     PSMTXConcat(mtx, mtx2, mtx);
@@ -1629,6 +1694,11 @@ static void disp_tec(CameraId camId, void* param) {
         GXSetTevColor(GX_TEVREG0, (GXColor){0xE6, 0xE6, 0xE6, 0xFF});
     }
     if (wp->flags & (FADE_WORK_TEC_SOFT_IN | FADE_WORK_TEC_SOFT_OUT)) {
+#ifdef TARGET_PC
+        /* the soft edge fades in each draw: as it was after a frame drawn between the game's (else twice as fast) */
+        portInterpKeep(&wp->softness, sizeof(wp->softness));
+        portInterpKeep(&wp->flags, sizeof(wp->flags));
+#endif
         if (wp->flags & FADE_WORK_TEC_SOFT_IN) {
             wp->softness += 0.04f;
             if (wp->softness > 1.0f) {

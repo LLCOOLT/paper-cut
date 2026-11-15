@@ -681,9 +681,14 @@ int portTitleMenuMain(void) {
         char invite[16];
         if (!sFirstLook) {
             sFirstLook = 1;
-            if (getenv("TTYD_OPEN_MULTIPLAYER") != NULL || portOnlinePeekInvite(invite, sizeof(invite))) {
+            /* (and the room this game was in when it closed without a Leave: its Rejoin there, statesync.h's
+               portStateSyncResumeOffer) */
+            const int resume = portStateSyncResumeOffer(NULL, 0, NULL);
+            if (getenv("TTYD_OPEN_MULTIPLAYER") != NULL || portOnlinePeekInvite(invite, sizeof(invite)) || resume) {
                 printf("[title] the Multiplayer page at once%s\n",
-                       portOnlinePeekInvite(invite, sizeof(invite)) ? ": an invite link's room offered" : "");
+                       portOnlinePeekInvite(invite, sizeof(invite)) ? ": an invite link's room offered"
+                       : resume                                     ? ": the room the game closed in offered"
+                                                                    : "");
                 fflush(stdout);
                 sOpenPages = 1;
             }

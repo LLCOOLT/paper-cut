@@ -2,6 +2,9 @@
 // walks the maze maps (puniMapdata), falls, fights and is saved/restored through the LSW bytes; driven by the
 // evt_puni_* calls.
 #include "eff/eff_fukidashi.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "eff/eff_puniballoon.h"
 #include "version.h"
 #include "pc_call.h"
@@ -35,6 +38,10 @@
 #include "eff/eff_n64.h"
 #include "driver/envdrv.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include <stdlib.h>
+#include "port/statesync.h"
+#endif
 
 /* FAKE (demo matching): a (u32) round trip keeps a string's address out of constant propagation. On PC the cast
  * would cut a 64-bit pointer to its low half, so there the name is passed as it is. */
@@ -189,6 +196,11 @@ static void evt_icon_disp_func(CameraId camId, void* param) {
                 Vec b;
                 a = p->pos;
                 if (p->flags2 & PUNI_FLAG2_HEALED) {
+#ifdef TARGET_PC
+                    /* the healed mark's time runs in each draw: as it was after a frame drawn between the game's */
+                    portInterpKeep(&p->flag1Timer, sizeof(p->flag1Timer));
+                    portInterpKeep(&p->flags2, sizeof(p->flags2));
+#endif
                     p->flag1Timer++;
                     if ((s8)p->flag1Timer > 30) {
                         p->flag1Timer = 0;
@@ -7486,6 +7498,43 @@ USER_FUNC(evt_puni_zenmetsu_check) {
         start = 110;
         end = 210;
     }
+#ifdef TARGET_PC
+    if (portStateSyncCoopGuest()) {
+        /* PC port: an online co-op guest's Puni-versus-Jabbi fight (mri_08, mri_11) is the host's. Each game's own
+           is random (rand() and the frame clock), so this game's could end otherwise: its win's flag went to the
+           host while the host's own fight went on and was lost, the host thrown out with the fortress won and no
+           retry (netmatrix s51-043). Here the Jabbi fall when the host's win comes (its flag, then this game's
+           own win scene, as before), and the Punies never: a host's loss takes this game along to mri_06. */
+        const s32 won = strcmp(gp->currentMapName, "mri_11") == 0 ? swGet(GSWF_MRI11_JABBI_FIGHT2_WON)
+                                                                    : swGet(GSWF_MRI08_JABBI_FIGHT_WON);
+        evtSetValue(event, args[1], start == 110 && won ? 1 : 0);
+        return EVT_RETURN_DONE;
+    }
+    {
+        /* tests: $TTYD_TEST_PUNI_FIGHT=win|lose[:FRAMES]: this game's own fight ends so (the Jabbi or the Punies
+           all fallen) after FRAMES of its checks (default at once), in place of its random end; until then
+           neither side falls (online_coop_jabbi_fight_host_loses) */
+        static const char* sForced;
+        static int sRead, sWin, sAfter, sChecks;
+        if (!sRead) {
+            sRead = 1;
+            sForced = getenv("TTYD_TEST_PUNI_FIGHT");
+            if (sForced != NULL && (strncmp(sForced, "win", 3) == 0 || strncmp(sForced, "lose", 4) == 0)) {
+                sWin = sForced[0] == 'w';
+                sAfter = strchr(sForced, ':') != NULL ? atoi(strchr(sForced, ':') + 1) : 0;
+            } else {
+                sForced = NULL;
+            }
+        }
+        if (sForced != NULL) {
+            if (start == 1) {
+                sChecks++; /* (one each frame: the Punies' side is checked first) */
+            }
+            evtSetValue(event, args[1], sChecks > sAfter && (start == 110) == sWin ? 1 : 0);
+            return EVT_RETURN_DONE;
+        }
+    }
+#endif
     count = 0;
     for (i = start; i < end; i++) {
         if ((Punidat[i].flags & PUNI_FLAG_ACTIVE) && !(Punidat[i].flags & PUNI_FLAG_DEFEATED)) {

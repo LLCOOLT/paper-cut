@@ -1,0 +1,62 @@
+{
+ "desc": "host loss: the host's connection is down 30 s without a word (TTYD_NET_FAULTS offline_ms on the host, a Wi-Fi blip): the guest waits ('Waiting for <host> to come back...' after 3 s, 2 minutes at most, Leave the room there), its world held, never the old 10-second end; the host back, the same session goes on (resumed, not a new one), the same progress at the end",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 12000",
+     "give 149",
+     "coins 20",
+     "wait 2800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_EXIT_FRAMES": 15000,
+     "TTYD_NET_FAULTS": "offline_ms:1500-30000"
+    },
+    "log_must": [
+     "\\[netfaults\\] offline at frame",
+     "net: session resumed with player 2"
+    ],
+    "log_must_not": [
+     "end: "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 14900"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 15000
+    },
+    "log_must": [
+     "co-op: the host's game is gone: waiting 120 seconds for it",
+     "wait: Waiting for Test Host to come back\\.\\.\\.",
+     "co-op: the host's game is back after [0-9]+ ms: the wait is over",
+     "net: session resumed with player 1"
+    ],
+    "log_must_not": [
+     "end: ",
+     "net: session with player 1 \\(joined, new\\)[\\s\\S]*net: session with player 1 \\(joined, new\\)"
+    ]
+   }
+  ]
+ },
+ "timeout": 400
+}

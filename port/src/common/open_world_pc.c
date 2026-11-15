@@ -689,6 +689,32 @@ static void hubCatchUp(void) {
     }
 }
 
+/* What a chapter's way in needs that the game sets in a scene the open world never plays: Rogueport's stretch
+ * stops where the next chapter's way in starts, and the chapter's own story starts after the scenes there
+ * (kChapterStart), so neither plays them. Each is set as its room reads its chapter's story, before the room's
+ * scripts look at it (old files too). (Chapter 8's door in tik_00 is its script's own: tik_00.c's
+ * evt_door_stg7_open.) */
+static const struct {
+    const char* map;
+    int chapter;
+    int flag;
+} kWayInFlags[] = {
+    /* tik_03's secret passage to the Boggly Woods pipe: Punio's switch opens it in his scene (story 67 to 68);
+     * chapter 2 starts at 70, the pipe at the passage's far end (#65) */
+    {"tik_03", 2, GSWF_TIK03_SECRET_DOOR_OPEN},
+};
+
+static void wayInFlags(int chapter) {
+    size_t i;
+    for (i = 0; i < sizeof(kWayInFlags) / sizeof(kWayInFlags[0]); i++) {
+        if (kWayInFlags[i].chapter == chapter && isMap(kWayInFlags[i].map) && !swGet(kWayInFlags[i].flag)) {
+            swSet(kWayInFlags[i].flag);
+            printf("[open] chapter %d's way in: flag %d set (%s)\n", chapter, kWayInFlags[i].flag, kWayInFlags[i].map);
+            fflush(stdout);
+        }
+    }
+}
+
 int portOpenStoryGet(int raw) {
     int t;
     if (gp != NULL) {
@@ -696,6 +722,7 @@ int portOpenStoryGet(int raw) {
     }
     t = portOpenTrack();
     if (t != 0) {
+        wayInFlags(t);
         return trackValue(t);
     }
     if (portOpenOn() && raw >= STORY_STG0_19_BLOOPER_BATTLE) {
@@ -849,15 +876,40 @@ static int tokenPartner(int item) {
     return 0;
 }
 
-/* the partners' items named and drawn as the partners (the entries are unused by the game) */
+/* the partners' items named and drawn as the partners (the entries are unused by the game), only in
+ * Paper Cut's open world: elsewhere they are as the game has them. Archipelago uses the same ids for
+ * its own (0x71 is another world's item, 0x6F Bobbery's in the TTYD AP mod), which drawn as Vivian made
+ * every other world's item in a seed look like her. */
 static void prepareTokens(void) {
+    static ItemData sGame[sizeof(kTokens) / sizeof(kTokens[0])];
+    static int sSaved, sNamed;
     size_t i;
-    for (i = 0; i < sizeof(kTokens) / sizeof(kTokens[0]); i++) {
-        ItemData* d = &itemDataTable[kTokens[i].item];
-        d->name = kTokens[i].name;
-        d->description = "pc_open_partner_item";
-        d->menu_description = "pc_open_partner_item";
-        d->icon_id = (u16)kTokens[i].icon;
+    if (!sSaved) {
+        for (i = 0; i < sizeof(kTokens) / sizeof(kTokens[0]); i++) {
+            sGame[i] = itemDataTable[kTokens[i].item];
+        }
+        sSaved = 1;
+    }
+    if (!portOpenOn()) {
+        if (sNamed) { /* (an open-world file earlier in this run) */
+            for (i = 0; i < sizeof(kTokens) / sizeof(kTokens[0]); i++) {
+                ItemData* d = &itemDataTable[kTokens[i].item];
+                d->name = sGame[i].name;
+                d->description = sGame[i].description;
+                d->menu_description = sGame[i].menu_description;
+                d->icon_id = sGame[i].icon_id;
+            }
+            sNamed = 0;
+        }
+    } else {
+        for (i = 0; i < sizeof(kTokens) / sizeof(kTokens[0]); i++) {
+            ItemData* d = &itemDataTable[kTokens[i].item];
+            d->name = kTokens[i].name;
+            d->description = "pc_open_partner_item";
+            d->menu_description = "pc_open_partner_item";
+            d->icon_id = (u16)kTokens[i].icon;
+        }
+        sNamed = 1;
     }
     /* the four curses (items 2 to 5), which the game only gives in its black chests' scenes: named for a
      * place's pickup ("You got Paper Mode!", not its unused "Invalid Item"), the Mario tab's help as their
@@ -1277,6 +1329,20 @@ void portOpenSelfTest(void) {
     selfCheck(swByteGet(0) == STORY_STG1_END_TO_STAGE_2, "chapter 2 not begun reads as its start");
     swByteSet(0, STORY_STG2_09_FLURRIE_JOINS);
     selfCheck(swByteGet(0) == STORY_STG2_09_FLURRIE_JOINS && gp->gsw0 == raw, "chapter 2's story is its own");
+    if (raw >= STORY_STG0_19_BLOOPER_BATTLE) {
+        /* each way in's flags, set as its room reads its chapter (#65: tik_03's passage to Boggly Woods) */
+        size_t i;
+        for (i = 0; i < sizeof(kWayInFlags) / sizeof(kWayInFlags[0]); i++) {
+            const int had = swGet(kWayInFlags[i].flag);
+            swClear(kWayInFlags[i].flag);
+            strcpy(gp->currentMapName, kWayInFlags[i].map);
+            (void)swByteGet(0);
+            selfCheck(swGet(kWayInFlags[i].flag) != 0, "a chapter's way in has what its skipped scene set");
+            if (!had) {
+                swClear(kWayInFlags[i].flag);
+            }
+        }
+    }
     strcpy(gp->currentMapName, "hei_01");
     selfCheck(swByteGet(0) == (raw < STORY_STG0_19_BLOOPER_BATTLE ? raw : STORY_STG0_19_BLOOPER_BATTLE),
               "chapter 1 is where it starts");

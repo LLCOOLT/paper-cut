@@ -24,8 +24,8 @@ Le fichier ne peut plus être lu : il a été déplacé ou supprimé, ou Android
 The file isn't there any more.
 Le fichier n'est plus là.
 
-The game's text.
-Le texte du jeu.
+The language of the game's own text.
+La langue du texte du jeu.
 
 This is %s, and its build (ttyd-%s) isn't beside this one.
 C'est %s, et sa version (ttyd-%s) n'est pas à côté de celle-ci.
@@ -246,8 +246,8 @@ Pas dans un fichier hardcore
 On screen and a tap
 À l'écran et une vibration
 
-On-screen stick: past a small tilt, always a full one.
-Stick à l'écran : passé une petite inclinaison, toujours à fond.
+A small push of the on-screen stick is enough to run.
+Une petite poussée du stick à l'écran suffit pour courir.
 
 One hit
 Un seul coup
@@ -360,8 +360,8 @@ Test : un spectateur nommé test envoie chaque commande à tour de rôle.
 That slot is empty
 Cet emplacement est vide
 
-The on-screen stick stays in its place.
-Le stick à l'écran reste à sa place.
+The on-screen stick stays in one place instead of appearing under your thumb.
+Le stick à l'écran reste à un endroit au lieu d'apparaître sous votre pouce.
 
 This is %s. This app plays %s; the app for that version plays this disc.
 C'est %s. Cette app lit %s ; l'app de cette version-là lit ce disque.

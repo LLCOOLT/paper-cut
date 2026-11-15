@@ -1,0 +1,50 @@
+{
+ "desc": "Spin Attack (#51): Mario spins left into Petal Meadows' Koopa Troopa (hei_04, as firebreath_field_strike) with Spin Attack and Dizzy Attack worn: a first strike, the spin hammer's (its banner), and the front enemy dizzy as the battle starts (the battle shot once its first command menu is up: the Dizzy Attack is set at the battle's first act, after the first strike's entrance, which took longer than a fixed 200 frames)",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_04",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_BADGES": "0x1AF,0x19C",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "settings": {
+  "pm64_spin": 1,
+  "pm64_badges": 1
+ },
+ "input": [
+  "wait 150",
+  "where npcs",
+  "goto -150 0 -52",
+  "wait 2",
+  "stick -60 0 6",
+  "stick -60 0 2 l",
+  "wait 10",
+  "shot spin",
+  "wait 40",
+  "shot strike",
+  "wait_command any 1500",
+  "shot battle",
+  "where",
+  "end"
+ ],
+ "expect_shots": [
+  "battle"
+ ],
+ "log_must": [
+  "\\[spin\\] Mario spins at .*Spin Attack, Dizzy Attack",
+  "\\[spin\\] Mario's spin hits '[^']*': Spin Attack, a first strike, Dizzy Attack's dizzy",
+  "\\[spin\\] Dizzy Attack: the front enemy \\(unit \\d+\\) (dizzy for 3 turns|can't be made dizzy)"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 200
+}

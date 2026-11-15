@@ -1,0 +1,43 @@
+{
+ "desc": "\"!\" prompts (talk_prompts, Goombella out): Hooktail Castle's gon_03 has camera markers, unseen NPCs on the floor with nothing to say; walking in at the west door and past two of them, no Tattle \"!\" comes up (it did for each one)",
+ "groups": [
+  "prompts",
+  "maps_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "talk_prompts": 1,
+  "remake_pipe_a": 1
+ },
+ "env": {
+  "TTYD_MAP": "gon_03",
+  "TTYD_STORY": "64",
+  "TTYD_PROMPT_LOG": "1",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "timeout": 180,
+ "input": [
+  "wait 120",
+  "goto -330 10 -10",
+  "wait 60",
+  "where",
+  "goto -150 10 110",
+  "wait 60",
+  "where",
+  "goto 280 10 80",
+  "wait 60",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[input\\] where: map 'gon_03', Mario at -330 0 -10,.* partner 1 ",
+  "\\[input\\] where: map 'gon_03', Mario at -150 0 1[0-9][0-9],",
+  "\\[input\\] where: map 'gon_03', Mario at 2[5-9][0-9] 0 80,"
+ ],
+ "log_must_not": [
+  "\\[prompt\\] shown in gon_03 .*tattle"
+ ]
+}

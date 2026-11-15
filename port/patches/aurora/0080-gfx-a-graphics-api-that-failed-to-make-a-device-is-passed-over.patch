@@ -1,0 +1,357 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Thu, 12 Nov 2026 18:00:00 -0500
+Subject: [PATCH] gfx: a graphics API that failed to make a device is passed over
+
+A player's Intel UHD (Ice Lake, a 2020 driver) logged "D3D12CreateDevice
+failed with DXGI_ERROR_DRIVER_INTERNAL_ERROR (0x887A0020) - While
+initializing adapter" while Dawn listed D3D12's adapters. Dawn dropped that
+adapter and handed out the driver's other one, Aurora kept D3D12, and the
+driver crashed the process (a read of 0 in igd12umd64) in the next calls:
+neither the game nor its launcher ever opened.
+
+- A device-creation failure while a graphics API starts (Dawn's "...CreateDevice
+  failed" warning or error, a device lost while starting) now fails that API's
+  start: the next API in the order is tried (Vulkan, then D3D11 on Windows).
+  Such an API is taken again only as the last resort, once every other one
+  failed too, before Null.
+- A failed start lets go of its device, adapter and surface. A device-request
+  or surface failure left g_adapter set, and the next API's start skipped its
+  own adapter request (the loop runs while !g_adapter): the failed adapter was
+  used again under the next API's name.
+- Each API is tried once (the desired one was tried twice: alone, then again in
+  the order).
+- AuroraConfig.backendAttemptCallback: called before each API is tried; false
+  passes it over (an application notes which one is starting, so one that ended
+  the process while it started is passed over at the next start).
+- $AURORA_FAIL_BACKEND=d3d12[,vulkan,...] (tests): that API's start reports a
+  device-creation failure.
+- No graphics device at all: the message box says to update the graphics driver.
+---
+diff --git a/include/aurora/aurora.h b/include/aurora/aurora.h
+index 7a97618..41965e9 100644
+--- a/include/aurora/aurora.h
++++ b/include/aurora/aurora.h
+@@ -130,6 +130,13 @@ typedef struct {
+    * not pause the app. Not for desktops where a hidden window gets no surface (Wayland).
+    */
+   bool offscreen;
++
++  /*
++   * Called before each graphics API is tried at start (the desired one, then the preferred order); false passes it
++   * over. An application can note which one is starting, so that a driver that ends the process while it starts
++   * is passed over at the next start. NULL: every one is tried.
++   */
++  bool (*backendAttemptCallback)(AuroraBackend backend);
+ } AuroraConfig;
+ 
+ typedef struct {
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index c30a605..1858e8d 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -32,8 +32,10 @@
+ #include <SDL3/SDL_init.h>
+ #include <SDL3/SDL_messagebox.h>
+ #include <fmt/format.h>
++#include <algorithm>
+ #include <cstdio>
+ #include <cstdlib>
++#include <vector>
+ #include <magic_enum.hpp>
+ 
+ #include "system_info.hpp"
+@@ -110,7 +112,9 @@ bool g_initialFrame = false;
+   const char* app = g_config.appName != nullptr ? g_config.appName : "The game";
+   const std::string text = fmt::format(
+       "{} found no graphics device it can draw with.\n\n"
+-      "It needs Vulkan, Direct3D 12, Metal or OpenGL ES. On Linux without a GPU, install Mesa's software Vulkan "
++      "Update your graphics driver (from the maker of your graphics card or PC: Intel, AMD, NVIDIA), then start it "
++      "again: an old or damaged driver is the usual cause.\n\n"
++      "It needs Vulkan, Direct3D 12 or 11, Metal or OpenGL ES. On Linux without a GPU, install Mesa's software Vulkan "
+       "(lavapipe: mesa-vulkan-drivers or vulkan-swrast) and libEGL (libegl1).\n\n({})",
+       app, detail);
+   Log.error("{}", text);
+@@ -159,29 +163,64 @@ AuroraInfo initialize(int argc, char* argv[], const AuroraConfig& config) noexce
+   AURORA_ASSERT(window::initialize_event_watch(), "Error initializing SDL event watch");
+ 
+ #ifdef AURORA_ENABLE_GX
+-  /* Attempt to create a window using the calling application's desired backend */
++  /* Attempt to create a window using the calling application's desired backend, then the preferred order, each
++   * once; the application may pass one over (backendAttemptCallback: one that ended the process while it started
++   * last time). One whose device creation reported a failure is passed over too (webgpu::initialize), and taken
++   * again only as the last resort, before Null. */
+   AuroraBackend selectedBackend = config.desiredBackend;
+   bool windowCreated = false;
+-  if (selectedBackend != BACKEND_AUTO && window::create_window(selectedBackend)) {
+-    if (webgpu::initialize(selectedBackend, config.allowCpuAdapter)) {
+-      windowCreated = true;
+-    } else {
+-      window::destroy_window();
++  std::vector<AuroraBackend> tried;
++  std::vector<AuroraBackend> deviceFailed;
++  const auto attempt = [&](AuroraBackend backend, bool acceptDeviceErrors) {
++    if (g_config.backendAttemptCallback != nullptr && !g_config.backendAttemptCallback(backend)) {
++      return false;
++    }
++    selectedBackend = backend;
++    if (!window::create_window(backend)) {
++      return false;
++    }
++    if (webgpu::initialize(backend, config.allowCpuAdapter, acceptDeviceErrors)) {
++      return true;
++    }
++    if (!acceptDeviceErrors && webgpu::init_device_creation_failed()) {
++      deviceFailed.push_back(backend);
++    }
++    window::destroy_window();
++    return false;
++  };
++  const auto attemptOnce = [&](AuroraBackend backend) {
++    if (std::find(tried.begin(), tried.end(), backend) != tried.end()) {
++      return false;
++    }
++    tried.push_back(backend);
++    return attempt(backend, false);
++  };
++  if (selectedBackend != BACKEND_AUTO) {
++    windowCreated = attemptOnce(selectedBackend);
++  }
++  for (const auto backendType : PreferredBackendOrder) {
++    if (windowCreated) {
++      break;
++    }
++    if (backendType != BACKEND_NULL) {
++      windowCreated = attemptOnce(backendType);
+     }
+   }
+-
+-  if (!windowCreated) {
+-    for (const auto backendType : PreferredBackendOrder) {
+-      selectedBackend = backendType;
+-      if (!window::create_window(selectedBackend)) {
+-        continue;
+-      }
+-      if (webgpu::initialize(selectedBackend, config.allowCpuAdapter)) {
+-        windowCreated = true;
+-        break;
+-      } else {
+-        window::destroy_window();
+-      }
++  for (const auto backendType : deviceFailed) {
++    if (windowCreated) {
++      break;
++    }
++    const char* name = backendType == BACKEND_D3D12    ? "D3D12"
++                       : backendType == BACKEND_D3D11  ? "D3D11"
++                       : backendType == BACKEND_VULKAN ? "Vulkan"
++                       : backendType == BACKEND_METAL  ? "Metal"
++                                                       : "OpenGL";
++    Log.warn("Every other graphics API failed: {} again, although making its device failed", name);
++    windowCreated = attempt(backendType, true);
++  }
++  for (const auto backendType : PreferredBackendOrder) {
++    if (!windowCreated && backendType == BACKEND_NULL) {
++      windowCreated = attemptOnce(backendType);
+     }
+   }
+ 
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index c246559..4cca219 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -4,8 +4,10 @@
+ #include <atomic>
+ #include <array>
+ #include <chrono>
++#include <cctype>
+ #include <cmath>
+ #include <cstdint>
++#include <mutex>
+ #include <span>
+ #include <string>
+ #include <string_view>
+@@ -89,6 +91,31 @@ static std::atomic_uint32_t g_outOfMemory = 0;
+ 
+ uint32_t out_of_memory_count() noexcept { return g_outOfMemory.load(std::memory_order_acquire); }
+ 
++// A device-creation failure reported while a graphics API starts (initialize): Dawn's message (D3D12CreateDevice
++// failed with DXGI_ERROR_DRIVER_INTERNAL_ERROR on a 2020 Intel UHD driver, whose other adapter Dawn then handed
++// out and whose driver crashed the process on the next call), a device lost or $AURORA_FAIL_BACKEND's. That API
++// is passed over (aurora.cpp: the next one is tried), never kept.
++static std::atomic_bool g_initializing = false;
++static std::atomic_bool g_initDeviceFailure = false;
++static std::mutex g_initDeviceFailureLock;
++static std::string g_initDeviceFailureMessage;
++
++static void note_init_device_failure(std::string_view message) noexcept {
++  std::lock_guard lock{g_initDeviceFailureLock};
++  if (!g_initDeviceFailure.exchange(true)) {
++    g_initDeviceFailureMessage = std::string{message};
++  }
++}
++
++bool init_device_creation_failed() noexcept { return g_initDeviceFailure.load(); }
++
++// Dawn's message says a device could not be made ("D3D12CreateDevice failed", "D3D11CreateDevice failed",
++// "vkCreateDevice failed")
++static bool is_device_creation_failure(std::string_view message) noexcept {
++  const auto has = [&](std::string_view word) { return message.find(word) != std::string_view::npos; };
++  return (has("CreateDevice") || has("createDevice")) && (has("failed") || has("Failed"));
++}
++
+ // An OutOfMemory error: the object made is an error object (its draws are dropped), the GX caches holding it are
+ // let go at the frame's end (gx/texture.cpp), and the application's guard is told through the count. The run goes
+ // on; validation errors from the error objects are warnings from now on (a frame's work dropped, not the game).
+@@ -119,6 +146,10 @@ AuroraLogLevel wgpu_log_level(wgpu::LoggingType type) {
+ 
+ void wgpu_log(wgpu::LoggingType type, wgpu::StringView message) {
+   Log.report(wgpu_log_level(type), "WebGPU message: {}", message);
++  if (g_initializing.load() && (type == wgpu::LoggingType::Warning || type == wgpu::LoggingType::Error) &&
++      is_device_creation_failure(std::string_view{message})) {
++    note_init_device_failure(std::string_view{message});
++  }
+ }
+ #endif
+ 
+@@ -1398,7 +1429,79 @@ static void log_adapter_capabilities(const wgpu::Limits& limits) {
+            limits.minUniformBufferOffsetAlignment, limits.minStorageBufferOffsetAlignment);
+ }
+ 
+-bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
++// $AURORA_FAIL_BACKEND=d3d12[,vulkan,...] (tests): that graphics API's start reports a device-creation failure, as
++// a driver in a bad state makes Dawn report one ("D3D12CreateDevice failed with DXGI_ERROR_DRIVER_INTERNAL_ERROR")
++static bool fail_backend_asked(wgpu::BackendType backend) noexcept {
++  const char* value = SDL_getenv("AURORA_FAIL_BACKEND");
++  if (value == nullptr || value[0] == '\0') {
++    return false;
++  }
++  std::string name{magic_enum::enum_name(backend)};
++  std::ranges::transform(name, name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
++  std::string_view list{value};
++  while (!list.empty()) {
++    const size_t end = list.find_first_of(", ");
++    std::string word{list.substr(0, end)};
++    std::ranges::transform(word, word.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
++    if (word == name) {
++      return true;
++    }
++    list = end == std::string_view::npos ? std::string_view{} : list.substr(end + 1);
++  }
++  return false;
++}
++
++// A device-creation failure noted while this API started: false (not used) unless acceptDeviceErrors (aurora.cpp's
++// last resort, once every other graphics API failed too)
++static bool device_creation_check(wgpu::BackendType backend, bool acceptDeviceErrors) noexcept {
++  if (!g_initDeviceFailure.load()) {
++    return true;
++  }
++  std::string message;
++  {
++    std::lock_guard lock{g_initDeviceFailureLock};
++    message = g_initDeviceFailureMessage;
++  }
++  if (acceptDeviceErrors) {
++    Log.warn("{}: used although making a device failed while it started ({}): every other graphics API failed",
++             magic_enum::enum_name(backend), message);
++    return true;
++  }
++  Log.warn("{}: making a device failed while it started ({}): not used (a driver in that state can end the game "
++           "on its next call); the next graphics API is tried",
++           magic_enum::enum_name(backend), message);
++  return false;
++}
++
++static bool initialize_backend(AuroraBackend auroraBackend, bool allowCpu, bool acceptDeviceErrors);
++
++// What a failed start made, let go: the next graphics API starts from nothing (an adapter left behind was taken as
++// the next API's, so its own was never asked for and the failed driver was asked again)
++static void release_failed_start() noexcept {
++  g_queue = {};
++  g_device = {};
++  g_adapter = {};
++  g_adapterInfo = {};
++  window::SurfaceLock surfaceLock;
++  release_surface_locked();
++}
++
++bool initialize(AuroraBackend auroraBackend, bool allowCpu, bool acceptDeviceErrors) {
++  {
++    std::lock_guard lock{g_initDeviceFailureLock};
++    g_initDeviceFailure = false;
++    g_initDeviceFailureMessage.clear();
++  }
++  g_initializing = true;
++  const bool ok = initialize_backend(auroraBackend, allowCpu, acceptDeviceErrors);
++  g_initializing = false;
++  if (!ok) {
++    release_failed_start();
++  }
++  return ok;
++}
++
++static bool initialize_backend(AuroraBackend auroraBackend, bool allowCpu, bool acceptDeviceErrors) {
+   if (!g_instance) {
+     Log.info("Creating WebGPU instance");
+     const std::array requiredInstanceFeatures{
+@@ -1581,6 +1684,17 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+   const auto backendName = magic_enum::enum_name(g_backendType);
+   Log.info("Graphics adapter information\n  API: {}\n  Device: {} ({})\n  Driver: {}", backendName, adapterName,
+            magic_enum::enum_name(g_adapterInfo.adapterType), description);
++  if (fail_backend_asked(backend)) {
++    const std::string simulated =
++        fmt::format("{}CreateDevice failed (simulated: $AURORA_FAIL_BACKEND)", magic_enum::enum_name(backend));
++    Log.warn("WebGPU message: {}", simulated);
++    note_init_device_failure(simulated);
++  }
++  // Dawn reported a device it could not make while finding this API's adapters (another adapter of the same
++  // driver handed out instead): that driver is in no state to be used
++  if (!device_creation_check(backend, acceptDeviceErrors)) {
++    return false;
++  }
+   g_deviceLocalMemory = 0;
+ #ifndef __EMSCRIPTEN__
+   if (g_adapter.HasFeature(wgpu::FeatureName::AdapterPropertiesMemoryHeaps)) {
+@@ -1900,6 +2014,11 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+             FATAL("Device lost: {}", message);
+           } else {
+             Log.warn("Device lost: {}", message);
++            // lost while the API starts (not let go on purpose): that API passed over (device_creation_check)
++            if (g_initializing.load() && reason != wgpu::DeviceLostReason::Destroyed &&
++                reason != wgpu::DeviceLostReason::CallbackCancelled) {
++              note_init_device_failure(fmt::format("device lost: {}", std::string_view{message}));
++            }
+           }
+         });
+     const auto future =
+@@ -1922,6 +2041,9 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+ #ifdef WEBGPU_DAWN
+     g_device.SetLoggingCallback(wgpu_log);
+ #endif
++    if (!device_creation_check(backend, acceptDeviceErrors)) {
++      return false;
++    }
+   }
+   g_queue = g_device.GetQueue();
+ 
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index 83b4171..1ed8cfa 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -100,7 +100,11 @@ extern bool g_immediatesSupported;
+ uint32_t out_of_memory_count() noexcept;
+ void note_out_of_memory(std::string_view message) noexcept;
+ 
+-bool initialize(AuroraBackend backend, bool allowCpu);
++// false: this graphics API can't be used; init_device_creation_failed() then says whether it was because its
++// device creation reported a failure (a driver error while starting, logged by Dawn or $AURORA_FAIL_BACKEND), which
++// passes it over unless acceptDeviceErrors (the last resort, once every other API failed too)
++bool initialize(AuroraBackend backend, bool allowCpu, bool acceptDeviceErrors = false);
++bool init_device_creation_failed() noexcept;
+ void set_post_filter(int mode) noexcept; // aurora_set_post_filter
+ void set_vrr(bool enabled) noexcept;     // aurora_set_vrr
+ void shutdown();
+-- 
+2.45.0
+

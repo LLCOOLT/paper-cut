@@ -2,10 +2,12 @@
 #include "battle/battle_weapon_power.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/brothers.h"
 #include "port/crowd.h"
 #include "port/rules.h"
 #include "port/versus.h"
 #include "port/view.h"
+#include <stdio.h>
 #endif
 #include "version.h"
 #include "wide_x.h"
@@ -896,6 +898,11 @@ BOOL PORT_HOOKABLE(BattleAudience_CheckReactionPerPhase)(void) {
                         }
                         break;
                     case 4:
+#ifdef TARGET_PC
+                        if (portRulesNoAudienceStageActs(4)) { // a shared online battle: no Boo on a unit
+                            break;
+                        }
+#endif
                         for (i = 0; i <= 59; i++) {
                             PHASE_EVT_IF(i, 2, ) {
                                 BattleAudienceAddPhaseEvtList(4);
@@ -936,6 +943,11 @@ BOOL PORT_HOOKABLE(BattleAudience_CheckReactionPerPhase)(void) {
                         }
                         break;
                     case 9:
+#ifdef TARGET_PC
+                        if (portRulesNoAudienceStageActs(9)) { // a shared online battle: no Shy Guy on the stage
+                            break;
+                        }
+#endif
                         if (!(audience->flags & AUDIENCE_FLAG_NO_HAZARDS)) {
                             for (i = 0; i <= 59; i++) {
                                 PHASE_EVT_IF(i, 5, ) {
@@ -2467,8 +2479,10 @@ static void BattleAudienceWinCtrlProcess(void) {
 #endif
     win->y = -160.0f;
 #ifdef TARGET_PC
-    if (portVersusOn()) {
-        win->y = -114.0f; /* a versus battle: up a little, Luigi's HUD under it (port/src/aurora/versus_aurora.c) */
+    if (portVersusOn() || portBrothersOn()) {
+        /* a versus battle, or Brothers mode: up a little, Luigi's HUD under it (port/src/aurora/versus_aurora.c,
+           brothers_aurora.c) */
+        win->y = -114.0f;
     }
 #endif
     win->z = 0.0f;
@@ -5557,6 +5571,71 @@ void PORT_HOOKABLE(BattleAudience_SetPresentItemType)(s32 type) {
 s32 PORT_HOOKABLE(BattleAudience_GetPresentItemType)(void) {
     return BattleAudienceBaseGetPtr()->presentItemType;
 }
+
+#ifdef TARGET_PC
+/* port/include/port/crowd.h: BattleAudience_GetItemOn's test, without its remembering the holder */
+int portAudienceThrowPending(void) {
+    BattleAudienceMember* member;
+    int i;
+    if (_battleWorkPointer == NULL) {
+        return 0;
+    }
+    for (i = 0, member = BattleAudienceGetPtr(0); i < AUDIENCE_MEMBER_MAX; i++, member++) {
+        if ((member->flags & MEMBER_FLAG_ACTIVE) && !(member->flags & MEMBER_FLAG_WIDE_TAIL) &&
+            !(member->flags & MEMBER_FLAG_REMOVED) && member->itemId != -1) {
+            const BattleAudienceItem* item = BattleAudienceItemGetPtr(member->itemId);
+            if (item->state <= 4 || item->state == 7) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void portLogAudienceAttack(int id) {
+    printf("[audience] X: Mario goes for member %d, who wound up a throw\n", id);
+    fflush(stdout);
+}
+
+int portAudienceThrowTest(void) {
+    int i;
+    if (_battleWorkPointer == NULL) {
+        return -1;
+    }
+    for (i = 0; i < AUDIENCE_MEMBER_MAX; i++) {
+        if (BattleAudienceItemOn(i, 0, 1) == TRUE) {
+            return i;
+        }
+    }
+    {
+        /* why no one could (tests): who is there, in the centre seats, of a kind that throws, not busy */
+        int there = 0, centre = 0, kind = 0, idle = 0;
+        BattleAudienceMember* member = BattleAudienceGetPtr(0);
+        for (i = 0; i < AUDIENCE_MEMBER_MAX; i++, member++) {
+            if (!AUD_U8CALL(BattleAudience_GetExist, i)) {
+                continue;
+            }
+            there++;
+            if (!(member->flags & MEMBER_FLAG_CENTER_SEAT) || i % 20 < 4 || i % 20 > 15) {
+                continue;
+            }
+            centre++;
+            if (audience_kind[member->type].itemTable->type == 0) {
+                continue;
+            }
+            kind++;
+            /* (BattleAudienceItemOn's busy statuses: holding, throwing, asleep, arriving, leaving ...) */
+            idle += member->status != 7 && member->status != 8 && (member->status < 10 || member->status > 13) &&
+                    member->status != 17 && member->status != 18 && member->status != 21;
+        }
+        printf("[audience] no throw: %d there, %d in the centre seats, %d of a kind that throws, %d free;%s%s\n",
+               there, centre, kind, idle, (BattleAudienceBaseGetPtr()->flags & AUDIENCE_FLAG_FROZEN) ? " frozen" : "",
+               portRulesNoAudienceThrows() ? " throws off" : "");
+        fflush(stdout);
+    }
+    return -1;
+}
+#endif
 
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_audience.inc"

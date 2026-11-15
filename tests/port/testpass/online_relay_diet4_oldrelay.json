@@ -1,0 +1,74 @@
+{
+ "desc": "As online_relay_diet4 on a relay from before 0.5.1 (no \"caps split\"): the host sends each player's batch on its own as before, at each one's pace; the four still play the battle together (the host at most 2,400 messages a minute of play)",
+ "groups": [
+  "online",
+  "relaydiet"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 6600
+ },
+ "online": {
+  "pace": 60,
+  "link": "relay",
+  "relay_args": [
+   "--no-caps"
+  ],
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here3 6000",
+     "wait_peer field3 4000",
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait 5300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must_not": [
+     "the relay takes one message for every player"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ]
+   },
+   {
+    "role": "guest3",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 5500"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "relay_per_min": 2400
+  }
+ },
+ "log_must_not": [
+  "\\| sent \\d+ got \\d+ resent [1-9]"
+ ],
+ "timeout": 480
+}

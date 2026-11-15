@@ -32,6 +32,7 @@
 #include "libc_decls.h"
 #ifdef TARGET_PC
 #include "port/open_world.h"
+#include "port/statesync.h" /* (a scene's text boxes shown to the players pulled into it) */
 #endif
 #ifdef PORT_MODS
 #include "port/hooks/src_driver_itemdrv.h"
@@ -1476,6 +1477,9 @@ static void itemseq_GetItem(ItemEntry* entry) {
                 swSet(GSWF_ITEM_TUTORIAL_SEEN);
                 entry->subState = 3;
                 wp->msgWindowId = msgWindow_Entry(msgSearch("item_first_hit"), 0, 0);
+#ifdef TARGET_PC
+                portStateSyncSceneText("item_first_hit", NULL, "", wp->msgWindowId);
+#endif
                 break;
             }
             effSoftDelete(wp->effect);
@@ -1783,6 +1787,9 @@ static void itemseq_GetItem(ItemEntry* entry) {
                 swSet(GSWF_ITEM_TUTORIAL_SEEN);
                 entry->subState = 4;
                 wp->msgWindowId = msgWindow_Entry(msgSearch("item_first_hit"), 0, 0);
+#ifdef TARGET_PC
+                portStateSyncSceneText("item_first_hit", NULL, "", wp->msgWindowId);
+#endif
                 break;
             }
             effSoftDelete(wp->effect);

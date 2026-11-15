@@ -6,5 +6,5 @@ Fit everyone
 Follow Mario
 マリオを追う
 
-With players 2 to 4 in the field. Fit everyone: the camera pans and pulls back a little to keep everyone in view, inside each room's own camera limits, and a player at the picture's edge is held there. Online, your screen follows your own character around the room. Follow Mario: the camera stays on Mario, as in one player's game. Scenes and battles keep the game's own camera.
-フィールドに2～4Pがいるとき。みんなを映す：全員が画面に入るよう、各部屋のカメラの範囲内でカメラが動き、少し引きます。画面の端まで来たプレイヤーはそこで止まります。オンラインでは、画面が自分のキャラクターを追うので、部屋を自由に見て回れます。マリオを追う：一人プレイと同じく、カメラはマリオを映します。イベントとバトルはゲームのカメラのままです。
+With players 2 to 4 in the field. Fit everyone: the camera pulls back to keep all players in view (online, it follows your own character). Follow Mario: it stays on Mario, as in a one-player game.
+フィールドに2～4Pがいるとき。みんなを映す：全員が画面に入るようにカメラが引きます（オンラインでは自分のキャラクターを追います）。マリオを追う：一人プレイと同じくマリオを映します。

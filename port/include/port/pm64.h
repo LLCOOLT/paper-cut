@@ -131,7 +131,7 @@ int portPm64NpcSpriteCount(void);
 const Pm64Sprite* portPm64NpcSprite(int index);
 /* PM64's sizes beside Mario (port/src/common/pm64_partner_pc.c): the factor on a PM64 sprite (drawn at half a unit a
  * pixel) that makes it stand beside TTYD Mario as it stood beside PM64's Mario (about 0.855; the partners, the
- * enemies and the bosses all use it); an NPC sprite's row's drawn height in pixels (0: none); PM64 Mario's (Mario1
+ * enemies, the bosses, Rowf and Mario's own PM64 look all use it: that look is TTYD Mario's height); an NPC sprite's row's drawn height in pixels (0: none); PM64 Mario's (Mario1
  * Idle, about 51). */
 float portPm64Size(void);
 float portPm64NpcSpriteHeight(int sprite, int anim);
@@ -143,6 +143,10 @@ int portPm64SpriteAnimCount(const Pm64Sprite* s);
 const Pm64Sprite* portPm64SpriteAdopt(uint8_t* data, size_t size);
 int portPm64SpriteRasterCount(const Pm64Sprite* s);
 int portPm64SpritePaletteCount(const Pm64Sprite* s);
+/* palette pal's 16 colours (RGBA, 0..255; alpha 0 or 255); 0 if there's no such palette */
+int portPm64SpritePaletteRGBA(const Pm64Sprite* s, int pal, uint8_t out[16][4]);
+/* the palette raster i was drawn with (-1 if no raster i) */
+int portPm64SpriteRasterPalette(const Pm64Sprite* s, int i);
 /* Raster i's size and the palette it was drawn with; 0 if there's no raster i. */
 int portPm64SpriteRaster(const Pm64Sprite* s, int i, int* width, int* height, int* palette);
 /* Raster i in palette pal (-1: its own) as RGBA8, 4 bytes a pixel, rows of
@@ -156,6 +160,14 @@ int portPm64SpriteEyes(const Pm64Sprite* s, int i, float* x, float* y, float* wi
  * (the bytes never change once made, so a queued draw may point at them);
  * NULL if there's no such raster. */
 const void* portPm64RasterTexture(const Pm64Sprite* s, int i, int pal, int* texW, int* texH);
+/* The same with only the pixels of the palette indices in mask kept (bit n: index n; 0 or 0xFFFF: all), the rest
+ * clear: a part of a drawing (a face, an eye) cut out by its colours (the PM64 partners' per-part poses). Made on
+ * first use and kept for the sprite's life (at most a few hundred); NULL as above. */
+const void* portPm64RasterTextureMasked(const Pm64Sprite* s, int i, int pal, unsigned mask, int* texW, int* texH);
+/* ... and with the pixels of the indices in edge (an outline's colour) kept too where they touch a kept pixel and
+ * none of notNear's (Bombette's feet: their outline, not the ball's) */
+const void* portPm64RasterTextureCut(const Pm64Sprite* s, int i, int pal, unsigned mask, unsigned edge,
+                                     unsigned notNear, int* texW, int* texH);
 
 /* An animation playing: the sprite's components (parts) and where each is. */
 #define PM64_MAX_PARTS 16
@@ -171,6 +183,7 @@ typedef struct Pm64Part {
     int loops;
     int parent;
     float ox, oy, oz; /* the part's own SetPosition offset */
+    float cx, cy, cz; /* that offset, its parent's added (PM64's compPos; kept from step to step) */
     float bx, by, bz; /* the component's base position */
 } Pm64Part;
 typedef struct Pm64Anim {
@@ -184,6 +197,27 @@ typedef struct Pm64Anim {
 void portPm64AnimStart(Pm64Anim* a, const Pm64Sprite* s, int anim);
 /* Steps it by frames 60 Hz frames (the waits are in 60ths of a second). */
 void portPm64AnimStep(Pm64Anim* a, float frames);
+
+/* Cool Mode: where the glasses sit on a sprite as it animates, kept per drawn thing (zeroed to start). The face is
+ * held on one component (part): its eyes where a frame's raster shows them, else the last place on that component,
+ * so the glasses follow the head as it bobs, turns and blinks; on another animation, the component nearest the last
+ * place. */
+typedef struct Pm64Face {
+    const Pm64Sprite* sprite;
+    int anim;    /* (of the list's first animation) */
+    int part;    /* list index * PM64_MAX_PARTS + component; -1: none yet */
+    float u, v;  /* the glasses' middle on that component's box, shares from its left and its feet */
+    float width; /* the glasses' width (half units: a sprite pixel is half a unit, as drawn) */
+    float x, y;  /* the middle where it was last (half units) */
+    int have;
+} Pm64Face;
+/* The glasses' place on the n animations drawn together (rows over one another, as one sprite), for
+ * portFunCoolSprite: the component's box (x0, x1, y0, y1, half units as the draws place them), the shares on it,
+ * and which of the n it's on. detect: find the eyes on the rasters (else the seed alone, followed: hand-set
+ * places). seed: the first place on the frame's whole box while no eyes are seen (shares, as portFunCoolSprite's
+ * at; NULL: none until eyes are seen). 0: no place. */
+int portPm64AnimFace(const Pm64Anim* const* list, int n, Pm64Face* f, int detect, const float seed[3], float box[4],
+                     float at[3], int* which);
 
 /* --- messages */
 
@@ -352,6 +386,41 @@ int portPm64DrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, float
 /* The same for another player's ghost (statesync_ghost_pc.c): drawn as that
  * player's PM64 partner p, whatever this game's own choice is. */
 int portPm64DrawPoseAs(int poseId, float (*mtx)[4], int xluMode, float rotY, float scale, int pm64Partner);
+/* The partners' own TTYD models (port/src/common/pm64_models_pc.c; the Lab "pm64_integration"): made from the
+ * disc at startup (both backends, after portLuigiModelInit); partner p's model file name while the Lab is on
+ * and it was made, else NULL (the ROM's sprite); each frame's loading of the stand-ins asked for (portLooksFrame);
+ * host pose poseId drawn as partner p's model in animation anim (1; 0: not this frame, draw the sprite); a
+ * host pose let go. period: the PM64 sprite's loop in frames, which one loop of anim then takes (0: its own);
+ * alpha: see-through below 1. */
+void portPm64ModelsInit(void);
+const char* portPm64PartnerModel(int pm64Partner);
+void portPm64ModelsFrame(void);
+int portPm64ModelDraw(int poseId, int pm64Partner, const char* anim, float (*mtx)[4], int xluMode, float rotY,
+                      float scale, float period, float alpha);
+void portPm64ModelRelease(int poseId);
+/* The per-part poses (pm64_<name>_poses.inc, tools/port/pm64_poses.py; baked onto the models at startup): on with
+ * $TTYD_PM64_POSES=1 and the Lab pm64_integration (the default stays the sprites until the owner approves).
+ * portPm64PoseAnim: partner p's posed animation for sprite row `row` (battle: the battle sprite's rows, else the
+ * field's), its frames and loop, and whether the owner listed it to stay a sprite in play; NULL if it has none.
+ * portPm64PoseEvents: the row's events between frames from (excluded) and to (included) logged ($TTYD_PM64_LOG).
+ * portPm64ModelDrawAt: as portPm64ModelDraw, the model's clock set to `frame` (whole sprite frames: the sprite row's
+ * own clock, so model and sprite show the same frame; below 0: period's timing, as portPm64ModelDraw); flags
+ * PM64_MODEL_FIXED: no paper turn, the model facing as drawn unturned (-x: as the PM64 sprites do; the gallery).
+ * portPm64PoseRowAt: partner p's i-th posed row (0 past the last). */
+#define PM64_MODEL_FIXED 1
+int portPm64PosesOn(void);
+const char* portPm64PoseAnim(int pm64Partner, int battle, int row, int* frames, int* loop, int* sprite);
+void portPm64PoseEvents(int pm64Partner, int battle, int row, float from, float to);
+int portPm64ModelDrawAt(int poseId, int pm64Partner, const char* anim, float (*mtx)[4], int xluMode, float rotY,
+                        float scale, float period, float frame, float alpha, int flags, const Pm64Anim* sprite);
+/* (sprite: the PM64 sprite row playing beside it, at that frame: the poses' "parts" take its pixels; NULL none)
+ * portPm64ShapeTex: animdrv.c's shape draw asks whether shape shapeId of pose (an AnimationPose) is drawn in the PM64
+ * sprite's pixels this frame; if so it has loaded them (texture map 0, coordinate 0) and says 1 */
+int portPm64ShapeTex(const void* pose, int shapeId, int texCount, const void* boxTex);
+/* a GX texture (RGB5A3, IA8, RGBA8, I8, CMPR; up to 1024 a side) as straight RGBA rows into out (w*h*4); 0 if not */
+int portPm64DecodeTexture(const void* src, int fmt, int w, int h, unsigned char* out);
+/* (boxTex: the shape's own texture as animdrv.c's animBoxTexOf finds it, a PortBoxTex, for the poses' recolour) */
+int portPm64PoseRowAt(int pm64Partner, int i, int* battle, int* row);
 /* Ms. Mowz's slot (party 7) held by Watt alone: he joined there (after chapter 4, his boss beaten) with Ms. Mowz
  * herself not recruited. The slot is marked joined in the pouch while the PM64 partners are on, always wearing
  * Watt; she isn't on the wheel, and the partner counts and the open world's checks leave her out (partyChkJoin(7)

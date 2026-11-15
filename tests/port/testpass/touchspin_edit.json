@@ -1,0 +1,47 @@
+{
+ "desc": "the layout editor lists the touch Spin Dash button (Spin Dash on, a ROM linked; a faked 16:9 phone sideways): dragged on its own 15 mm left and 10 mm up, chosen (its panel: Spin Dash, size, opacity, Hide, Reset), then Done; the layout saved with it (touch_layout.txt's \"v4\" line and its entry) and the game played with it there ($TTYD_TOUCH_EDIT_DO, Aurora built with TTYD_TOUCH_OVERLAY=ON; ui_shots: touch_835_ui.png mid-drag, touch_865_ui.png its panel, touch_920_ui.png after)",
+ "groups": [
+  "touchsize",
+  "touchedit",
+  "touchspin",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_TOUCH_DEVICE": "1920x1080@400",
+  "TTYD_TOUCH_SHOT": "835,865,920",
+  "TTYD_TOUCH_EDIT": "800-890",
+  "TTYD_TOUCH_EDIT_DO": "810:drag=16,-15,-10,30;860:select=16",
+  "TTYD_EXIT_FRAMES": 960
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 960",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] grab: control 16 ",
+  "\\[touch\\] saved: control 16 \\(sideways\\) moved -[0-9.]+,-[0-9.]+ size 1\\.00",
+  "\\[touch\\] layout editor closed \\(saved\\)",
+  "\\[touch\\] test: shot touch_920"
+ ],
+ "log_must_not": [
+  "saved: control (1|2|12) "
+ ],
+ "file_must": {
+  "user/touch_layout.txt": [
+   "^v3\\r?\\nv4\\r?\\n",
+   "(?m)^0 16 -"
+  ]
+ },
+ "timeout": 180,
+ "ui_shots": true
+}

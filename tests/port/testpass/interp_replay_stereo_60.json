@@ -1,0 +1,36 @@
+{
+ "desc": "Stereoscopic 3D (red-cyan) at 60 Hz by replay: the left eye is the right's recording replayed, no draw-list entry drawn twice (the old left eye ran the game's draw code again)",
+ "groups": [
+  "interp",
+  "stereo"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_INTERP_MODE": "replay",
+  "TTYD_DRAWONCE_STRICT": 1
+ },
+ "settings": {
+  "stereo_3d": 5
+ },
+ "input": "tests/port/input/gor_01_walk.txt",
+ "stereo_check": {
+  "layout": "red_cyan",
+  "shots": [
+   "walk_0_start",
+   "walk_1_right"
+  ],
+  "depth": true
+ },
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "^\\[drawonce\\] FAIL",
+  "^\\[interp-replay\\] a frame not replayed"
+ ],
+ "timeout": 180
+}

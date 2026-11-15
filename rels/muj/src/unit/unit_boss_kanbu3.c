@@ -420,7 +420,11 @@ static EVT_BEGIN(damage_event)
     CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_KANBU3_GROUP, LW(0))
     IF_INT_EQUAL(LW(0), 0)
         // With the first group in play, the first hit that leaves him at 15 HP or less makes him call it off.
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
         CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
         IF_INT_LESS_OR_EQUAL(LW(0), 15)
             CALL(btlevtcmd_WaitAttackEnd)
             WAIT_FRAMES(90)

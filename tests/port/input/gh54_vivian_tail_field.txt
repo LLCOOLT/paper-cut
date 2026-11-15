@@ -1,0 +1,19 @@
+# Vivian's tail stays with her as she sinks into her shadow (GitHub #54; tests/port/testpass/gh54_vivian_tail_field.json).
+# Vivian out in the Rogueport Sewers (tik_01): her Veil (X) takes Mario into the shadow and out again. While they
+# sink (the paper "p_bibi" capture drawn offscreen at the middle of the screen) no piece of her tail ribbon is left
+# there: 0.5.0 left the ribbon out of the capture's box, so its pixels outside it stayed on screen.
+wait 160
+shot before
+press x
+wait 12
+shot sinking
+wait 30
+shot under
+wait 60
+shot hidden
+press x
+wait 12
+shot rising
+wait 90
+shot after
+end

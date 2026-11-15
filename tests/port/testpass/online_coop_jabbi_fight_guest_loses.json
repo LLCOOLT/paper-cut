@@ -1,0 +1,100 @@
+{
+ "desc": "Online co-op at the Punies' first Jabbi fight (mri_08, the full run's 33_jabbies, two players), the other way round from online_coop_jabbi_fight_host_loses: the host's own fight is won after 600 frames and the guest's would be lost at once ($TTYD_TEST_PUNI_FIGHT). The guest's fight is the host's: its Punies never fall by its own count, and its Jabbi fall when the host's win's flag comes, so both games end the fight won in mri_08, the fortress gone, with no DRIFT (0.5.1 before: the guest's own loss played, Punio's line and mri_06 on the guest's screen alone)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "33_jabbies"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 30000,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_STORY_WATCH": 300,
+  "TTYD_GOD_POWER": 2
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SET_playable_luigi": 0,
+     "TTYD_TEST_PUNI_FIGHT": "win:600"
+    },
+    "input": [
+     "wait_seq 2 3000",
+     "press_until_control a 3000",
+     "wait_peer coop1 12000",
+     "wait 120",
+     "press_until_control a 3000",
+     "walk_to e_bero02 1800",
+     "press_until_control a 6000",
+     "walk_to 150 0 1200",
+     "press_until_control a 6000",
+     "walk_to 200 0 200",
+     "wait_flag GSWF_MRI08_JABBI_FIGHT_WON mri_06 4000",
+     "press_until_control a 6000",
+     "wait 2400",
+     "where flag GSWF_MRI08_JABBI_FIGHT_WON",
+     "wait 300",
+     "where coop 2400",
+     "wait 300",
+     "end"
+    ],
+    "log_must": [
+     "^\\[input\\] where: map 'mri_08'",
+     "^\\[input\\] where flag GSWF_MRI08_JABBI_FIGHT_WON \\(2849\\) = 1"
+    ]
+   },
+   {
+    "role": "guest",
+    "env": {
+     "TTYD_SYNC_AT": 818,
+     "TTYD_SYNC_END_PICK": "own",
+     "TTYD_SET_playable_luigi": 0,
+     "TTYD_TEST_PUNI_FIGHT": "lose"
+    },
+    "start_delay": 0.33,
+    "input": [
+     "wait_seq 2 4000",
+     "wait_peer here 12000",
+     "wait_peer map=mri_08 60000",
+     "wait 4500",
+     "where flag GSWF_MRI08_JABBI_FIGHT_WON",
+     "where coop 2400",
+     "wait 300",
+     "end"
+    ],
+    "log_must": [
+     "^\\[input\\] where: map 'mri_08'",
+     "^\\[input\\] where flag GSWF_MRI08_JABBI_FIGHT_WON \\(2849\\) = 1"
+    ],
+    "log_must_not": [
+     "co-op: the host went to mri_06"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true,
+   "drift": true,
+   "names": true,
+   "progress": true,
+   "same_where": true
+  },
+  "pace": 300
+ },
+ "timeout": 900
+}

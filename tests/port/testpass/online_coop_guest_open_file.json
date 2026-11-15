@@ -1,0 +1,54 @@
+{
+ "desc": "Online co-op, a guest whose own file is an open-world one (TTYD_OPEN_SEED) joins a host on a plain file in Rogueport's harbour (gor_00, where the seed moves an item): as it takes the host's progress its room is entered again, so the area's items are the host's file's, not its seed's, and no room drift is found (0.5.1 before: the seed's item stayed in the guest's copy of the room, \"an item here is gone there\", a DRIFT: nm51f l51-024)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 4800
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop 3000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 3000",
+     "where coop 1200",
+     "wait 1800"
+    ],
+    "env": {
+     "TTYD_OPEN_SEED": "COOPKIND1"
+    },
+    "log_must": [
+     "co-op: gor_00 entered again as the host's file has it",
+     "\\[mp\\] where: map 'gor_00' .*\\| settled$"
+    ],
+    "log_must_not": [
+     "DRIFT",
+     "refused:",
+     "room: item .* gone here in gor_00: sent"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 300
+}

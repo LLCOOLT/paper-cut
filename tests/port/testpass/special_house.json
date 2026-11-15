@@ -1,0 +1,84 @@
+{
+ "desc": "GitHub #48, special places: from Rogueport's plaza (story 405, fast travel on), the Journal's map, {X}, Mario's house; then the list again and its way back. The save words must be as before the visit, the trip back to the plaza",
+ "groups": [
+  "travel",
+  "special",
+  "gh48"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 4200
+ },
+ "settings": {
+  "fast_travel": 1
+ },
+ "input": [
+  "wait 120",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 120",
+  "shot s00_map_tab",
+  "press x",
+  "wait 60",
+  "shot s01_list",
+  "press a",
+  "wait 400",
+  "shot s02_house",
+  "stick 0 -100 40",
+  "wait 60",
+  "press start",
+  "wait 45",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press right",
+  "wait 60",
+  "press a",
+  "wait 60",
+  "press a",
+  "wait 120",
+  "press x",
+  "wait 60",
+  "shot s03_list_back",
+  "press a",
+  "wait 400",
+  "shot s04_home",
+  "end"
+ ],
+ "log_must": [
+  "^\\[special\\] list: [2-9] rows",
+  "^\\[special\\] trip: Mario's house \\(aaa_00 dokan_1\\), back to gor_01 ",
+  "^\\[special\\] back: gor_01 ",
+  "^\\[special\\] home: save words as before the visit"
+ ],
+ "log_must_not": [
+  "save words DIFFER"
+ ],
+ "expect_shots": [
+  "s01_list",
+  "s02_house",
+  "s04_home"
+ ],
+ "timeout": 300
+}

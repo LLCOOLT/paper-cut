@@ -36,6 +36,9 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- HTTPS: the update check (port/settings/http.cpp). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Online play: the system's word that the network changed (Wi-Fi to cellular), so a room's
+         connection is made again at once (TtydActivity.watchNetwork). A normal permission: no prompt. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Updates: a downloaded, checked APK of this app handed to Android's own
          installer, which asks the player (TtydActivity.installApk). The player
          allows it once, in Android's "Install unknown apps" screen. -->
@@ -50,6 +53,9 @@
         android:hardwareAccelerated="true"
         android:allowNativeHeapPointerTagging="false"
         android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+
+        <!-- No frame-rate override or downscaling by the system's game modes (res/xml/game_mode_config.xml) -->
+        <meta-data android:name="android.game_mode_config" android:resource="@xml/game_mode_config" />
 
         <activity
             android:name=".TtydActivity"

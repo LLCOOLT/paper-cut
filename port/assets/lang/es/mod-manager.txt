@@ -249,8 +249,8 @@ Recargar mods
 Reads the mods folder again: a mod added or changed.
 Vuelve a leer la carpeta de mods: un mod añadido o cambiado.
 
-Shows the mods folder on the desktop.
-Muestra la carpeta de mods en el escritorio.
+Shows the mods folder, in the user folder: the system's folder for app data, or User beside the program with portable.txt. The full page shows its path.
+Muestra la carpeta de mods, en la carpeta de usuario: la carpeta del sistema para datos de apps, o User junto al programa con portable.txt. La página completa muestra su ruta.
 
 Its code follows at the next start.
 Su código cambia en el próximo inicio.

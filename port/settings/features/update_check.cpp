@@ -276,14 +276,22 @@ std::string sumIn(const std::string& text, const std::string& name) {
   return std::string();
 }
 
-void check() {
+// a check under way (the start's, or the player's ask: one at a time); the player's ask (portUpdateCheckNow):
+// 0 none, 1 under way, 2 answered
+std::atomic<bool> sChecking{false};
+std::atomic<int> sAsked{0};
+
+void checkOnce(bool asked) {
   // the settings are read from settings.txt once Aurora is up: wait for them
   for (int i = 0; i < 300 && portSettingsUserPath()[0] == '\0'; i++) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
-  std::this_thread::sleep_for(std::chrono::seconds(1)); // the folder is known a moment before the file is read
+  if (!asked) {
+    std::this_thread::sleep_for(std::chrono::seconds(1)); // the folder is known a moment before the file is read
+  }
   const char* api = SDL_getenv("TTYD_UPDATE_API"); // tests: a release on this computer
-  if (*sOn == 0 || (SDL_getenv("TTYD_FAST") != nullptr && api == nullptr)) { // not in test runs
+  // (the setting is the start's: a player's ask is checked whatever it says; never in test runs)
+  if ((*sOn == 0 && !asked) || (SDL_getenv("TTYD_FAST") != nullptr && api == nullptr)) {
     return;
   }
   const char* repo = SDL_getenv("TTYD_UPDATE_REPO"); // tests: another repository's releases
@@ -332,6 +340,22 @@ void check() {
               sAssetUrl.empty() ? "" : (" (" + want + " there)").c_str());
   std::fflush(stdout);
   sFound = true;
+}
+
+void check() {
+  checkOnce(false);
+  sChecking = false;
+  if (sAsked == 1) {
+    sAsked = 2; // (asked while the start's was under way: this was the answer)
+  }
+}
+
+void checkAsked() {
+  checkOnce(true);
+  sChecking = false;
+  sAsked = 2;
+  std::printf("[update] asked: %s\n", sFound ? sVersion.c_str() : "no newer release found");
+  std::fflush(stdout);
 }
 
 void setMessage(int state, const std::string& text, const std::string& hash = std::string(),
@@ -746,21 +770,20 @@ void testOverlay(int) {
 struct UpdateCheckSettings {
   UpdateCheckSettings() {
     sOn = portSettingsDeclare("update_check", 1, 0, 1);
-    portSettingsAddToggle("General", "Check for updates at start", "Asks GitHub for the latest release of Paper Cut.",
-                          0, "update_check", "update version release new github");
+    portSettingsAddToggle("General", "Check for updates at start",
+                          "At start, checks online whether a newer Paper Cut is out.", 0, "update_check",
+                          "update version release new github");
     sAuto = portSettingsDeclare("update_auto", 0, 0, 1);
 #ifdef __ANDROID__
     // (Android: downloaded and checked; installing is the player's, in Android's own dialog)
     portSettingsAddToggle("General", "Install updates automatically",
-                          "A new version found at start is downloaded in the background and checked against the "
-                          "release's checksum; then Android asks before it installs. Never during online play or a "
-                          "replay.",
+                          "A new version found at start downloads in the background and is checked; then Android "
+                          "asks before installing it. Never while playing online.",
                           0, "update_auto", "update automatic auto install download background");
 #else
     portSettingsAddToggle("General", "Install updates automatically",
-                          "A new version found at start is downloaded in the background, checked against the "
-                          "release's checksum, and put in place the next time the game starts. Never during online "
-                          "play or a replay.",
+                          "A new version found at start downloads in the background, is checked, and is put in place "
+                          "the next time the game starts. Never while playing online.",
                           0, "update_auto", "update automatic auto install download background");
 #endif
     portSettingsSetShown("update_auto", autoShown); // (where Download and install is: not iOS, Flatpak, AppImage)
@@ -772,12 +795,44 @@ struct UpdateCheckSettings {
       portSettingsAddOverlay(testOverlay, nullptr);
     }
 #ifndef __EMSCRIPTEN__ // (the browser: no threads, and the page is always the latest)
+    sChecking = true;
     portDetach(check);
 #endif
   }
 } sUpdateCheck;
 
 } // namespace
+
+extern "C" void portUpdateCheckNow(void) {
+  if (sFound || sAsked == 1) {
+    return;
+  }
+  sAsked = 1;
+  std::printf("[update] asked for the newest release (an online refusal: the friend's is newer)\n");
+  std::fflush(stdout);
+  bool idle = false;
+  if (sChecking.compare_exchange_strong(idle, true)) {
+#ifdef __EMSCRIPTEN__
+    sChecking = false;
+    sAsked = 2; // (the browser's page is always the latest)
+#else
+    portDetach(checkAsked);
+#endif
+  } // (else the start's check under way answers: check)
+}
+
+extern "C" int portUpdateCheckState(char* version, size_t cap) {
+  if (version != nullptr && cap > 0) {
+    version[0] = '\0';
+  }
+  if (sFound) {
+    if (version != nullptr && cap > 0) {
+      std::snprintf(version, cap, "%s", sVersion.c_str());
+    }
+    return 3;
+  }
+  return sAsked == 1 ? 1 : sAsked == 2 ? 2 : 0;
+}
 
 extern "C" void portUpdateDrawNotice(void) {
   if (!sFound) {

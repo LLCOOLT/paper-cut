@@ -25,8 +25,10 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/toggles.h"
+#include "port/enemy_variant.h"
 #include "port/play_as_voice.h"
 #include "port/rules.h"
+#include "battle/battle_event_cmd.h"
 #endif
 #include "unit/party/unit_party_vivian.h"
 #include "battle/battle_actrecord.h"
@@ -134,7 +136,11 @@ BattleUnit* PORT_HOOKABLE(BtlUnit_Entry)(BattleUnitSetup* setup) {
     unit->kissHitOffset = unit->kindParams->kissHitOffset;
     unit->baseMaxHp = setup->unitKindParams->maxHp;
 #ifdef TARGET_PC
+    // the kind's own HP, which its scripts' HP numbers are in (btlevtcmd_port_GetKindHp, battle_event_cmd.h)
+    portBtlUnitKindHpSet(unit->unitId, unit->baseMaxHp);
     if (unit->alliance == 1) {
+        // a Paper Mario 64 enemy's own HP in place of its host's, before the rules below (port/enemy_variant.h)
+        unit->baseMaxHp = portEnemyVariantEntryHp((int)unit->currentKind, unit->baseMaxHp);
         unit->baseMaxHp = portEnemyHp(unit->baseMaxHp); // the Gameplay tab's difficulty
         unit->baseMaxHp = portLevelSyncHp(unit->baseMaxHp, unit->kindParams->level); // level sync (port/toggles.h)
         unit->level = portLevelSyncLevel(unit->level);

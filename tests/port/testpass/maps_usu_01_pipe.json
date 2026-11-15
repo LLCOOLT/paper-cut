@@ -12,7 +12,8 @@
  "env": {
   "TTYD_MAP": "usu_01",
   "TTYD_STORY": "405",
-  "TTYD_EXIT_FRAMES": 3000
+  "TTYD_EXIT_FRAMES": 3000,
+  "TTYD_GSW": "2031:1"
  },
  "settings": {
   "remake_warp_pipes": 1,
@@ -27,6 +28,10 @@
   "remake_merchants": 1
  },
  "input": [
+  "wait 60",
+  "goto 330 45 130",
+  "wait 60",
+  "where",
   "wait 5",
   "goto 240 10 150",
   "wait 120",
@@ -39,6 +44,7 @@
  ],
  "timeout": 200,
  "log_must": [
-  "\\[map edits\\] usu_01: pipe"
+  "\\[map edits\\] usu_01: pipe",
+  "\\[input\\] where: map 'usu_01', Mario at 330 30 130,"
  ]
 }

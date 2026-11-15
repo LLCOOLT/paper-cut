@@ -24,8 +24,8 @@ The file can't be read any more: it was moved or deleted, or Android took back P
 The file isn't there any more.
 ファイルがもうありません。
 
-The game's text.
-ゲームの文章。
+The language of the game's own text.
+ゲームの文章の言語。
 
 This is %s, and its build (ttyd-%s) isn't beside this one.
 これは%sです。そのビルド（ttyd-%s）がこのビルドの隣にありません。
@@ -234,8 +234,8 @@ Not on a hardcore file
 On screen and a tap
 画面と振動
 
-On-screen stick: past a small tilt, always a full one.
-画面のスティック：少しかたむけると、いつも最大までたおれます。
+A small push of the on-screen stick is enough to run.
+画面のスティックを少したおすだけで走ります。
 
 One hit
 一撃
@@ -345,8 +345,8 @@ Test: a viewer named test sends each command in turn.
 That slot is empty
 そのスロットは空です
 
-The on-screen stick stays in its place.
-画面のスティックは同じ場所にとどまります。
+The on-screen stick stays in one place instead of appearing under your thumb.
+画面のスティックが、指を置いた所に出るのではなく、同じ場所にとどまります。
 
 This is %s. This app plays %s; the app for that version plays this disc.
 これは%sです。このアプリで遊べるのは%sで、そのバージョンのアプリならこのディスクで遊べます。

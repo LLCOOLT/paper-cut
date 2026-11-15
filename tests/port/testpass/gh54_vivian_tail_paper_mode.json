@@ -1,0 +1,31 @@
+{
+ "desc": "GitHub #54 (a comment: also in Paper Mode): Rogueport Sewers (tik_01), Vivian out, the Paper Curse given. Mario holds R and turns to paper (Vivian goes through the paper capture too), walks side-on, turns back; her tail ribbon counts in the capture's box, so no piece of it stays in the middle of the screen. Shots: before, turning, paper_walk, paper_still, after, back",
+ "groups": [
+  "gh54",
+  "partners"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "6,1,2,3,4,5,7",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "input": "tests/port/input/gh54_vivian_tail_paper_mode.txt",
+ "expect_shots": [
+  "turning",
+  "paper_walk",
+  "paper_still"
+ ],
+ "log_must": [
+  "^\\[input\\] where: map 'tik_01', .*partner 6 \\(Vivian\\), motion 21,",
+  "^\\[paper\\] tail ribbon counted in the paper capture's box \\(c_vivian\\)"
+ ],
+ "log_must_not": [
+  "\\[anim\\] "
+ ],
+ "timeout": 240
+}

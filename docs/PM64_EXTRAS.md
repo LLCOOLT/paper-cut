@@ -133,7 +133,9 @@ first), beating a boss there or from the **Paper Mario 64 boss list** is how its
 ([PM64_LINK.md](PM64_LINK.md#the-partners)); off, the partners join with their TTYD counterparts.
 
 Walking into a boss in Rogueport (or talking to it) is an ordinary story battle, right there: Mario as he is, with
-his own partners and items, no running away. Losing it is a Game Over, as with any of the game's own bosses. Jr.
+his own partners and items. It's optional, so Run Away works as in any ordinary battle: you drop some coins and
+the boss is still there for another go. The boss list and the board's fights can be fled too (back where you
+started); the boss rush can't. Losing a Rogueport fight is a Game Over, as with any of the game's own bosses. Jr.
 Troopa, met in the prologue, fights as in his first Paper Mario fight (plain Jr. Troopa, a few HP); the boss list
 and the board ask whether you want his first fight or his last one (his last, with all three forms, unless you say
 otherwise).
@@ -160,9 +162,30 @@ coins. Their names, descriptions, BP and icons are your ROM's; Rowf is drawn as 
 | Damage Dodge | Mario's Defense goes up by 1 |
 | Peekaboo | every enemy's HP shows, tattled or not |
 | Pay-Off | after a battle won, a coin for each point of damage Mario took |
+| Speedy Spin | the Spin Dash goes faster and further (with Paper Mario Spin Dash on) |
+| Spin Attack | a Spin Dash into an enemy is a first strike: the spin hammer's, with its banner (with Paper Mario Spin Dash on) |
+| Dizzy Attack | a Spin Dash into an enemy leaves the front enemy dizzy for 3 turns (with Paper Mario Spin Dash on) |
 
 Online, they're only there when every player has a ROM linked. Without a ROM the badges you bought stay in
 your bag with the game's look, and do nothing.
+
+## Spin Dash
+
+Settings > Enhancements > **Paper Mario Spin Dash** (off by default, off in Console-accurate mode): Mario dashes
+forward spinning, as Z does in Paper Mario, from standing, walking or running on the ground. The stick bends it
+a little; a wall, a jump, the hammer, the partner's move or a fall ends it at once. It meets walls, slopes and
+exits as a run does, and once it is over Mario walks or runs on as the stick asks.
+
+- **Controls**: Z on the keyboard (Spin Dash in Controls > Bindings, where a controller button can be given
+  too), or a tap of the game's L, which Mario doesn't use in the field: a controller's left trigger, the touch
+  controls' L. With the paper notes on, L is theirs too, so a spin takes a tap of it where no note is near (a
+  hold is the notes' quick wheel). On a touch screen, the swirl button just left of Y (shown while the Spin Dash
+  is on; move it in the layout editor): steer with the left thumb and tap it with the right.
+- **Brothers mode**: Luigi spins too, by his player's L or binding. Online, a guest's Luigi spins in its own
+  game at once, and what he hits is the host's game's, as with his hammer.
+- **Badges**: with Paper Mario 64 badges on, Rowf sells Speedy Spin, Spin Attack and Dizzy Attack (above).
+  Without either of the last two, a spin into an enemy is a plain touch, as in Paper Mario.
+- **Online**: the host's setting, and only when every player has a ROM linked. The sound is the ROM's own.
 
 ## Tayce T.'s recipes
 
@@ -207,7 +230,12 @@ sold (docs/SAVE_FILES.md).
 - **Star Spirits** (Settings > Cosmetics > Paper Mario 64 Star Spirits, on): while Mario does a Special move,
   one of the seven Star Spirits looks on from the top of the screen, each Special its own.
 - **Paper Mario 64 look** (the Start menu's Wardrobe, under Mario, with a ROM linked): Mario drawn as his Paper
-  Mario sprite, in the field and in battle.
+  Mario sprite, in the field and in battle, as tall as TTYD's Mario (the Paper Mario 64 partners and enemies keep
+  their Paper Mario sizes beside him); his hammer swings are Paper Mario's own, the hammer in his hands, step by
+  step at Paper Mario's timing: in battle the hammer set down, pulled back, held over his head (shaking once the
+  command's gauge is full) and swung down; Hammer Throw throws Paper Mario's hammer; the Spin Hammer (in the field
+  and in battle) is Paper Mario's Spin Smash; Fire Drive and the other hammer badges TTYD has and Paper Mario
+  hasn't swing as the Hammer does. In his paper forms (plane, boat, tube, paper-thin, the Spring Jump) he is TTYD's Mario.
 
 These read one more part of the ROM, the item icons, and the player's sprites (in the sprite section). Tayce T.'s
 recipes read the item table too. A ROM linked with an earlier Paper Cut needs linking once more for them.

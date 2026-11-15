@@ -557,12 +557,10 @@ struct SecondPlayerSettings {
   SecondPlayerSettings() {
     sOn = portSettingsDeclare("second_player", 1, 0, 1); // (on: nothing changes until a second controller joins)
     portSettingsAddToggle("Multiplayer", "Co-op (up to 4 players)",
-                          "Players 2 to 4 join with {START} on their own controller. Player 2 plays the partner (Luigi "
-                          "with Brothers mode on); players 3 and 4 play companions. In battle: their moves, action "
-                          "commands and guards. In the field: the stick walks them, {A} hops, {B} talks or hits, {X} is "
-                          "the partner's ability, {L} or {R} the next partner; Mario's {Y} calls them back. On a "
-                          "handheld its own controls are player 1, so one paired controller is enough for two; on a "
-                          "phone or tablet the first paired controller is player 1.",
+                          "Players 2 to 4 join with {START} on their own controller: player 2 plays the partner "
+                          "(Luigi in Brothers mode), players 3 and 4 play companions, in the field and in battle. In "
+                          "the field, {A} hops, {B} talks or hits and {X} uses the partner's ability. On a handheld "
+                          "or phone, its built-in controls are player 1.",
                           PORT_SETTING_CHANGES_PLAY, "second_player",
                           "second player two players three four 3 4 up to 4 co-op coop multiplayer partner companion "
                           "controller 2 p2 p3 p4 join");

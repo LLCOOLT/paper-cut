@@ -1,0 +1,41 @@
+{
+ "desc": "Turned on in Rogueport's plaza, no room change: the Paper Cut badge set's merchant comes at once and goes at once when it is off again; Retry on Game Over takes its retry point there and then",
+ "groups": [
+  "settings",
+  "items"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "pc_badges": 0,
+  "gameover_retry": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 1200
+ },
+ "input": [
+  "wait 200",
+  "setting pc_badges 1",
+  "wait 60",
+  "where npcs",
+  "shot merchant",
+  "setting pc_badges 0",
+  "wait 60",
+  "where npcs",
+  "setting gameover_retry 1",
+  "wait 30",
+  "end"
+ ],
+ "expect_shots": [
+  "merchant"
+ ],
+ "log_must": [
+  "\\[input\\] setting pc_badges = 1[\\s\\S]*\\[battlex\\] badge merchant in gor_01: [1-9]\\d* badges[\\s\\S]*\\[input\\] setting pc_badges = 0[\\s\\S]*\\[battlex\\] badge merchant in gor_01: none left to sell, gone",
+  "\\[input\\] setting gameover_retry = 1[\\s\\S]*\\[gameplus\\] Retry on Game Over: from here, in gor_01"
+ ],
+ "timeout": 150
+}

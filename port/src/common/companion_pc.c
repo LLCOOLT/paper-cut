@@ -9,6 +9,7 @@
 #include <iconv.h>
 #endif
 #include "port/companion.h"
+#include "port/fast_travel.h"
 #include "port/gameplus.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -577,21 +578,47 @@ int portCompanionText(char* out, int size) {
 
 /* --- Taps: queued, then one a frame into controller 1's read --- */
 
-#define QUEUE 8
+#define QUEUE 16
+/* a byte of a longer value, ahead of its tap (portCompanionTapValue): no kind of its own, never acted on */
+#define TAP_MORE 15
 static struct {
     unsigned char kind, arg, target;
 } sQueue[QUEUE];
 static int sQueueHead, sQueueCount;
 
+/* (a badge's place, a sort's mode and every tap from 6 on take the whole byte: no target) */
+static int wideKind(int kind) {
+    return kind == PORT_COMPANION_TAP_BADGE || kind == PORT_COMPANION_TAP_SORT || kind >= PORT_COMPANION_TAP_FORM;
+}
+
+static void push(int kind, int arg, int target) {
+    const int at = (sQueueHead + sQueueCount++) % QUEUE;
+    sQueue[at].kind = (unsigned char)kind;
+    sQueue[at].arg = (unsigned char)arg;
+    sQueue[at].target = (unsigned char)target;
+}
+
 void portCompanionTap(int kind, int arg, int target) {
     lock();
-    /* (a badge's place and a sort's mode take the whole byte: no target) */
-    const int wide = kind == PORT_COMPANION_TAP_BADGE || kind == PORT_COMPANION_TAP_SORT;
-    if (sQueueCount < QUEUE && kind > 0 && kind < 16 && arg >= 0 && arg < (wide ? 256 : 32)) {
-        const int at = (sQueueHead + sQueueCount++) % QUEUE;
-        sQueue[at].kind = (unsigned char)kind;
-        sQueue[at].arg = (unsigned char)arg;
-        sQueue[at].target = (unsigned char)(wide ? 0 : kind == PORT_COMPANION_TAP_ITEM_ON ? target & 7 : target != 0);
+    const int wide = wideKind(kind);
+    if (sQueueCount < QUEUE && kind > 0 && kind < TAP_MORE && arg >= 0 && arg < (wide ? 256 : 32)) {
+        push(kind, arg, wide ? 0 : kind == PORT_COMPANION_TAP_ITEM_ON ? target & 7 : target != 0);
+    }
+    unlock();
+}
+
+void portCompanionTapValue(int kind, unsigned value) {
+    int bytes = 1, i;
+    while (bytes < 4 && (value >> (8 * bytes)) != 0) {
+        bytes++;
+    }
+    lock();
+    /* (all its bytes or none: a value cut short would be another value) */
+    if (kind >= PORT_COMPANION_TAP_FORM && kind < TAP_MORE && sQueueCount + bytes <= QUEUE) {
+        for (i = bytes - 1; i > 0; i--) {
+            push(TAP_MORE, (int)((value >> (8 * i)) & 0xFF), 0);
+        }
+        push(kind, (int)(value & 0xFF), 0);
     }
     unlock();
 }
@@ -612,11 +639,22 @@ void portCompanionApplyPad(PADStatus* pad) {
 
 /* this frame's tap, as the game read it */
 static int sTapKind, sTapArg, sTapTarget;
+static unsigned sTapValue; /* the whole value (portCompanionTapValue): its upper bytes, then this frame's */
+static unsigned sTapHigh;  /* the upper bytes read so far */
 
 void portCoopNotice(const char* english); /* second_player_pc.c: a notice over the picture (keeps the pointer) */
 
 /* a tap the game couldn't take now (a battle, a scene, sailing...): said, not dropped unseen */
+static int sMailboxWanted; /* the Mailbox SP asked for when the game couldn't take it: added at the next free point */
+
 static void notNow(void) {
+    if (sTapKind == PORT_COMPANION_TAP_ASK && sTapArg == PORT_COMPANION_ASK_MAILBOX) {
+        /* (the second screen's own, never said: kept for the next point the Start menu could open) */
+        sMailboxWanted = 1;
+        printf("[companion] the Mailbox SP: wanted, added once the game is free\n");
+        fflush(stdout);
+        return;
+    }
     printf("[companion] tap refused (not now)\n");
     fflush(stdout);
     portCoopNotice("Not now.");
@@ -629,11 +667,18 @@ void portCompanionRoute(void) {
         notNow(); /* last frame's tap, never taken: nothing read it there (not the field, or not Mario) */
     }
     sTapKind = sTapArg = sTapTarget = 0;
+    sTapValue = 0;
     if ((a & 0xF0) == PAD_MARK) {
+        if ((a & 0x0F) == TAP_MORE) {
+            sTapHigh = (sTapHigh << 8) | b; /* (a byte of the next tap's value: no tap this frame) */
+            return;
+        }
         sTapKind = a & 0x0F;
-        sTapArg = sTapKind == PORT_COMPANION_TAP_BADGE || sTapKind == PORT_COMPANION_TAP_SORT ? b : b & 0x1F;
-        sTapTarget = sTapKind == PORT_COMPANION_TAP_BADGE || sTapKind == PORT_COMPANION_TAP_SORT ? 0 : (b >> 5) & 7;
-        printf("[companion] tap %d %d %d\n", sTapKind, sTapArg, sTapTarget);
+        sTapArg = wideKind(sTapKind) ? b : b & 0x1F;
+        sTapTarget = wideKind(sTapKind) ? 0 : (b >> 5) & 7;
+        sTapValue = (sTapHigh << 8) | b;
+        sTapHigh = 0; /* (a value's bytes come in a row, its tap last: a frame without one between them is fine) */
+        printf("[companion] tap %d %d %d (%u)\n", sTapKind, sTapArg, sTapTarget, sTapValue);
         fflush(stdout);
     }
 }
@@ -752,6 +797,86 @@ int portCompanionFieldItem(void) {
     pouchSetAP((s16)(pouchGetAP() + itemDataTable[id].sp_restored));
     pouchRemoveItemIndex((ItemType)id, idx);
     printf("[companion] item %d (slot %d) used on %s\n", id, idx, sTapTarget ? "the partner" : "Mario");
+    fflush(stdout);
+    return 1;
+}
+
+/* --- The rest of the second screen's menu, done at the same point (win_main.c) --- */
+
+/* a refusal (English, a constant): said over the picture, as the Start menu's help box would say it */
+static void said(const char* why) {
+    if (why != NULL) {
+        printf("[companion] refused: %s\n", why);
+        fflush(stdout);
+        portCoopNotice(why);
+    }
+}
+
+int portCompanionFieldMore(void) {
+    const int kind = sTapKind;
+    if (kind == 0 && sMailboxWanted) {
+        /* the Mailbox SP asked for while the game was busy: now (a tap of this frame first) */
+        sTapKind = PORT_COMPANION_TAP_ASK;
+        sTapArg = PORT_COMPANION_ASK_MAILBOX;
+        return portCompanionFieldMore();
+    }
+    if (kind < PORT_COMPANION_TAP_FORM ||(kind == PORT_COMPANION_TAP_ASK && sTapArg == PORT_COMPANION_ASK_DIARY)) {
+        return 0; /* (the diary: portCompanionDiary, which opens it as the Start menu does) */
+    }
+    sTapKind = 0;
+    switch (kind) {
+    case PORT_COMPANION_TAP_MAIL: {
+        /* as the item list's letter read (win_item.c, state 200): marked read, and the first letter's flag */
+        const int id = sTapArg;
+        if (id < 0 || id >= (int)(sizeof(pouchGetPtr()->emailReadFlags) * 8) || pouchCheckMail(id) == 0) {
+            notNow();
+            return 0;
+        }
+        if (pouchCheckMail(id) == 1) {
+            pouchOpenMail(id);
+        }
+        swSet(GSWF_MAIL_OPENED_ONCE);
+        printf("[companion] mail %d read\n", id);
+        fflush(stdout);
+        return 1;
+    }
+    case PORT_COMPANION_TAP_ASK:
+        if (sTapArg == PORT_COMPANION_ASK_MAILBOX) {
+            /* as the item list's opening (win_item.c winItemInit) */
+            sMailboxWanted = 0;
+            if (!pouchCheckItem(ITEM_MAILBOX_SP)) {
+                pouchGetItem(ITEM_MAILBOX_SP);
+                printf("[companion] the Mailbox SP: added to the pouch\n");
+                fflush(stdout);
+            }
+            return 1;
+        }
+        break;
+    case PORT_COMPANION_TAP_TRAVEL:
+        /* as the Journal's map's {A} on a way in (warp_map_aurora.c's warpNow): the trip's own checks */
+        said(portTravelRequest((int)sTapValue));
+        return 1;
+    default:
+        break;
+    }
+    if (portCompanionPortTap(kind, kind == PORT_COMPANION_TAP_ASK ? (unsigned)sTapArg : sTapValue)) {
+        return 1;
+    }
+    printf("[companion] tap %d: not one this game knows\n", kind);
+    fflush(stdout);
+    return 1;
+}
+
+int portCompanionDiary(void) {
+    if (sTapKind != PORT_COMPANION_TAP_ASK || sTapArg != PORT_COMPANION_ASK_DIARY) {
+        return 0;
+    }
+    sTapKind = 0;
+    if (!pouchCheckItem(ITEM_RAGGED_DIARY)) {
+        notNow();
+        return 0;
+    }
+    printf("[companion] the Ragged Diary read\n");
     fflush(stdout);
     return 1;
 }

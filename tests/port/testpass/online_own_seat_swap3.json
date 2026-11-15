@@ -1,0 +1,94 @@
+{
+ "desc": "A seat changing hands, the guests' clocks apart: three games together in the plaza, guest 1's clock 10 minutes ahead of guest 2's (TTYD_NET_MS_OFFSET: a computer booted that much earlier). Guest 2 (seat 3) asks for seat 2 and guest 1 says yes, so seats 2 and 3 swap at the next calm moment; the host forgets seat 2's own-character reports when its holder changes, so guest 2's reports (on a clock behind guest 1's) count from the first and its game walks the partner itself (it once refused every one of them as older: the seat stayed held and the partner never walked). Guest 1 then walks seat 3's companion too.",
+ "groups": [
+  "online",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 4800
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop2 4000",
+     "wait_peer room2 4000",
+     "wait 4000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: player 3 to seat 2 \\(seat 2's player 2 to seat 3\\)",
+     "co-op: the seats changed: 1:1 2:3 3:2 4:0",
+     "co-op: seat 2's own-character reports forgotten \\(its holder changed\\)",
+     "co-op: seat 2's character walked by player 3's own game",
+     "co-op: seat 3's character walked by player 2's own game"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here2 4000",
+     "wait_peer room2 4000",
+     "wait 2000",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_NET_MS_OFFSET": 600000,
+     "TTYD_SYNC_SEAT_YES": 1
+    },
+    "log_must": [
+     "test: this player says yes to player 3 for seat 2",
+     "co-op: this guest walks its own character \\(seat 3\\)"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here2 4000",
+     "wait_peer room2 4000",
+     "wait 2000",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 90",
+     "stick 127 0 30",
+     "wait 90",
+     "stick -127 0 30",
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_SYNC_SEAT_ASK_AT": "1500:2"
+    },
+    "log_must": [
+     "test: this player asks for seat 2",
+     "co-op: this guest walks its own character \\(seat 2\\)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 420
+}

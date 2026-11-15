@@ -9,8 +9,8 @@ Chaque combat gagné est noté de D à S selon ses commandes Style, ses Contres,
 Paper Cut badge set
 Collection de badges Paper Cut
 
-Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
-Douze nouveaux badges, chacun plié à partir de deux ou trois badges du jeu, vendus par un marchand Toad sur la place de Port-Lacanaïe une fois le prologue terminé. Un fichier qui en contient n'est plus pour le jeu GameCube.
+Twelve new badges, each mixing two or three of the game's, sold by a Toad in Rogueport's plaza after the prologue. A save holding them no longer works on a GameCube.
+Douze nouveaux badges, chacun mêlant deux ou trois badges du jeu, vendus par un Toad sur la place de Port-Lacanaïe après le prologue. Une sauvegarde qui en contient ne marche plus sur une GameCube.
 
 Paper Cut badges
 Badges Paper Cut

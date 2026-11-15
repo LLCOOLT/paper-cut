@@ -26,11 +26,14 @@
 #include "port/button_markup.h"
 #include "port/text_fit.h"
 #include "port/menu_crawl.h"
+#include "port/companion.h"
 #include "port/companion_menu.h"
 #include "port/menu_tap.h"
 #include "port/menu_typing.h"
 #include "port/online.h"
 #include "port/online_menu.h"
+#include "port/online_status.h"
+#include "port/update_check.h"
 #include "port/notes.h"
 #include "port/pause_notes.h"
 #include "port/pause_settings.h"
@@ -103,6 +106,10 @@ enum {
     ROW_RULE,        /*   one (arg: its place in portStateSyncRuleDiffAt) */
     ROW_RETRY,       /* the online service couldn't be reached: Try again */
     ROW_GIVE_UP,     /*   and Back */
+    ROW_DIAG,        /* Copy diagnostics (port/include/port/online_status.h) */
+    ROW_UPDATE,      /* refused, the friend's Paper Cut newer: Check for updates (port/include/port/update_check.h) */
+    ROW_RESUME,      /* the room this game was in when it closed (a crash, the system): back in it */
+    ROW_RESUME_NO,   /*   and not */
 };
 
 /* the page's lists: the front, Invite online, Who's who, the dungeon master's commander */
@@ -149,6 +156,7 @@ static int sAnswerN;
 /* Multiplayer settings...: the Settings tab's Multiplayer page shown and run here (pause_settings_aurora.c's
    portPauseSettingsOpenOn) until B; sSettingsAsk: chosen, opened once act's caller has the window */
 static int sSettings, sSettingsAsk;
+static const char* sSettingsCat = "Multiplayer"; /* the page sSettingsAsk opens (Check for updates: General's) */
 static char sHelp[1024];
 
 /* the colours: the tab's orange, dark for headings */
@@ -1201,11 +1209,41 @@ static void buildMain(void) {
         add(ROW_RETRY, "Try again", PORT_SYNC_NO_SERVICE, 0);
         add(ROW_GIVE_UP, "Back", "Play on this computer: the room is let go.", 0);
     }
+    if (portStateSyncPhase() == PORT_SYNC_FAILED || portOnlineJoinSlow()) {
+        /* a join that failed or takes long: the way forward first (the status above says which step) */
+#ifndef __EMSCRIPTEN__
+        if (portOnlineRefusedNewer()) {
+            add(ROW_UPDATE, "Check for updates",
+                "Your friend's Paper Cut is newer: {A} asks for the newest version. Once it's found, {A} opens "
+                "Settings, General, where New version downloads it.",
+                0);
+        }
+#endif
+        add(ROW_DIAG, "Copy diagnostics",
+            "A short text about this connection for a report: your build, the join's steps, the last online lines "
+            "(no names, no room code). Only to the clipboard: nothing is sent anywhere.",
+            0);
+    }
     {
         /* an invite link that came (invite.cpp): its room first, asked, never joined by itself */
         static char sInvite[16];
         if (!inRoom() && portOnlinePeekInvite(sInvite, sizeof(sInvite))) {
             add(ROW_INVITE, "Join the invite's room", "An invite link came for this room: join it.", 0);
+        }
+    }
+    {
+        /* the room this game was in when it closed without a Leave (a crash, the system ending it): offered
+           for 15 minutes, never joined by itself (statesync_pc.c portStateSyncResumeOffer) */
+        int hosted = 0;
+        if (!inRoom() && portStateSyncResumeOffer(NULL, 0, &hosted)) {
+            if (hosted) {
+                add(ROW_RESUME, "Open your room again",
+                    "The game closed while you hosted: the same code, and your friends come back to their seats.", 0);
+            } else {
+                add(ROW_RESUME, "Rejoin the room",
+                    "The game closed while you were in this room: back in it, in your seat.", 0);
+            }
+            add(ROW_RESUME_NO, "Forget that room", "It isn't offered again.", 0);
         }
     }
     if (portTogetherSeatAsked(who, sizeof(who), &seat)) {
@@ -1265,6 +1303,10 @@ static void buildInvite(void) {
             portStateSyncPhase() == PORT_SYNC_LINKED);
         add(ROW_GHOSTS, "See-through players",
             "The other players are drawn see-through, so they never hide you or the way ahead.", 0);
+        add(ROW_DIAG, "Copy diagnostics",
+            "A short text about this connection for a report: your build, the join's steps, the last online lines "
+            "(no names, no room code). Only to the clipboard: nothing is sent anywhere.",
+            0);
         return;
     }
     if (serviceFailed()) {
@@ -1311,6 +1353,10 @@ static void buildInvite(void) {
 #endif
     add(ROW_GHOSTS, "See-through players",
         "The other players are drawn see-through, so they never hide you or the way ahead.", 0);
+    add(ROW_DIAG, "Copy diagnostics",
+        "A short text about this connection for a report: your build, the join's steps, the last online lines "
+        "(no names, no room code). Only to the clipboard: nothing is sent anywhere.",
+        0);
 }
 
 static void buildSeats(void) {
@@ -1535,6 +1581,15 @@ static void valueText(const Row* r, char* out, size_t size) {
             }
             break;
         }
+        case ROW_RESUME: {
+            /* (whose room: the host's name; this player's own when it hosted) */
+            char host[64];
+            int hosted = 0;
+            if (portStateSyncResumeOffer(host, sizeof(host), &hosted) && !hosted && host[0] != '\0') {
+                gameText(host, out, size);
+            }
+            break;
+        }
         case ROW_ASKED_YES: {
             int seat;
             portTogetherSeatAsked(out, size, &seat);
@@ -1561,8 +1616,8 @@ static void valueText(const Row* r, char* out, size_t size) {
             int s, seat = r->arg == 1 ? 1 : 0;
             size_t n;
             for (s = 2; s <= PORT_SEATS && seat == 0; s++) {
-                if (portStateSyncSeatPlayer(s) == r->arg) {
-                    seat = s;
+                if (portStateSyncSeatPlayer(s) == r->arg && !portStateSyncSeatSub(s)) {
+                    seat = s; /* (its own controller's: not the seat its second controller plays) */
                 }
             }
             if (seat > 0) {
@@ -1575,8 +1630,24 @@ static void valueText(const Row* r, char* out, size_t size) {
                 snprintf(out + n, size - n, "  %s", portTrGame(kOs[os]));
             }
             if (q > 0 && q <= 3) {
+                /* (and the round trip measured here: the slowest tenth of the last 10 seconds) */
+                const int ms = portOnlineLinkRttP90(r->arg == portStateSyncMe() ? 1 : r->arg);
                 n = strlen(out);
-                snprintf(out + n, size - n, "  %s", portTrGame(kLink[q]));
+                if (ms >= 0 && portStateSyncPlayerRtt(r->arg) >= 0) {
+                    snprintf(out + n, size - n, "  %s %d ms", portTrGame(kLink[q]), ms);
+                } else {
+                    snprintf(out + n, size - n, "  %s", portTrGame(kLink[q]));
+                }
+                if (ssNetRoom()) {
+                    /* (and its way: direct when the direct connection is up, port/online_ice.h; only for this
+                       game's own links: the host's to each guest, a guest's to the host) */
+                    const int me = portStateSyncMe();
+                    const int link = ssNetIsHost() ? (r->arg != me ? r->arg : 0) : (r->arg == 1 || r->arg == me ? 1 : 0);
+                    if (link > 0) {
+                        n = strlen(out);
+                        snprintf(out + n, size - n, ", %s", portTrGame(ssNetDirect(link) ? "direct" : "relay"));
+                    }
+                }
             }
             if (sRemoveStep > 0 && sRemoveWho == r->arg) {
                 n = strlen(out);
@@ -1595,6 +1666,18 @@ static void valueText(const Row* r, char* out, size_t size) {
             ruleValue(c, own, a, sizeof(a));
             ruleValue(c, host, b, sizeof(b));
             snprintf(out, size, "%s > %s", a, b);
+            break;
+        }
+        case ROW_UPDATE: {
+            char v[48];
+            const int st = portUpdateCheckState(v, sizeof(v));
+            if (st == 1) {
+                snprintf(out, size, "%s", portTrGame("Checking..."));
+            } else if (st == 2) {
+                snprintf(out, size, "%s", portTrGame("None found"));
+            } else if (st == 3) {
+                snprintf(out, size, portTrGame("Paper Cut %s is out"), v);
+            }
             break;
         }
         case ROW_RULES: {
@@ -1627,6 +1710,13 @@ static void valueText(const Row* r, char* out, size_t size) {
 /* a pick from the page: its answer for the help box (*ok: it was made) */
 static const char* choose(int pick, int arg, int* ok) {
     const char* why = NULL;
+    if (gPortCompanionMenu && pick != PORT_PICK_TOGETHER && pick > 0 && pick < 0x100 && arg >= 0 && arg <= 0xFFFF) {
+        /* the second screen's: the game picks it, at the point its own Start menu could open, with the same
+           rules (online, the host picks: its refusal said over the picture) */
+        portCompanionTapValue(PORT_COMPANION_TAP_PICK, ((unsigned)pick << 16) | (unsigned)arg);
+        *ok = 1;
+        return "Sent to the game: it happens there as soon as Mario is free.";
+    }
     *ok = portTogetherChoose(pick, arg, &why);
     if (!*ok) {
         return why;
@@ -1702,6 +1792,31 @@ static const char* act(const Row* r, int dir) {
                 sSub = SUB_MAIN;
             }
             return NULL;
+        case ROW_DIAG:
+            if (dir == 0) {
+                static char sText[12288];
+                const size_t n = portOnlineDiagnostics(sText, sizeof(sText));
+                const int ok = n > 0 && SDL_SetClipboardText(sText);
+                printf("[online] diagnostics %s from the Multiplayer page (%u bytes)\n", ok ? "copied" : "not copied",
+                       (unsigned)n);
+                fflush(stdout);
+                return ok ? "Copied: paste it into your report. Nothing was sent anywhere." : "Couldn't copy it.";
+            }
+            return NULL;
+        case ROW_UPDATE:
+            if (dir == 0) {
+                char v[48];
+                const int st = portUpdateCheckState(v, sizeof(v));
+                if (st == 3) {
+                    /* (found: Settings, General here, where New version downloads and installs it) */
+                    sSettingsCat = "General";
+                    sSettingsAsk = 1;
+                    return NULL;
+                }
+                portUpdateCheckNow();
+                return st == 1 ? "Still asking for the newest Paper Cut..." : "Asking for the newest Paper Cut...";
+            }
+            return NULL;
         case ROW_SEATS:
         case ROW_INVITE_PAGE:
             if (dir == 0) {
@@ -1730,9 +1845,9 @@ static const char* act(const Row* r, int dir) {
             }
             {
                 const char* why = NULL;
-                /* (the host online: the marked seat's player onto this seat, swapping with its holder) */
-                const int with = inRoom() ? portStateSyncSeatPlayer(sMark) : sMark;
-                const int ok = inRoom() ? portTogetherSeatSwap(r->arg, with, &why)
+                /* (the host online: the two seats' players swapped, each with its controller: a guest's second
+                   controller's seat moves as a seat, never as that guest's own) */
+                const int ok = inRoom() ? portStateSyncSeatSwap(sMark, r->arg, &why)
                                         : portTogetherSeatSwap(sMark, r->arg, &why);
                 sMark = 0;
                 return ok ? "Swapped at the next calm moment: in the field, no scene or battle." : why;
@@ -1774,6 +1889,7 @@ static const char* act(const Row* r, int dir) {
             return NULL;
         case ROW_MP_SETTINGS:
             if (dir == 0) {
+                sSettingsCat = "Multiplayer";
                 sSettingsAsk = 1;
             }
             return NULL;
@@ -1914,6 +2030,16 @@ static const char* act(const Row* r, int dir) {
                 if (!portStateSyncJoin(code)) {
                     return portStateSyncNote()[0] != '\0' ? portStateSyncNote() : "Couldn't join.";
                 }
+            }
+            return NULL;
+        case ROW_RESUME:
+            if (dir == 0 && !portStateSyncResume()) {
+                return portStateSyncNote()[0] != '\0' ? portStateSyncNote() : "That room can't be joined again now.";
+            }
+            return NULL;
+        case ROW_RESUME_NO:
+            if (dir == 0) {
+                portStateSyncResumeForget();
             }
             return NULL;
         case ROW_LEAVE:
@@ -2142,6 +2268,14 @@ s32 portPauseOnlineMain(WindowWork* wp) {
     const s32 wasRow = sRow;
     const int wasPage = sKb.open * 2 + sList.open;
     logView();
+    if (portStateSyncMenuCloseWanted() && frontList() && !gPortCompanionMenu) {
+        /* joined from here: the whole menu closes, as the page's Close does, and the game follows the host's */
+        printf("[online] joined: the Start menu closes for the host's game\n");
+        fflush(stdout);
+        sAnswer = NULL;
+        sConfirm = 0;
+        return -2;
+    }
     if (backTapped()) {
         /* the page's Back (or Close) tapped or clicked: B on a page inside; the whole menu from the front */
         if (frontList()) {
@@ -2163,7 +2297,7 @@ s32 portPauseOnlineMain(WindowWork* wp) {
             portPauseSettingsCloseHosted();
             sSettings = 0;
             sAnswer = NULL;
-            sWasKind = ROW_MP_SETTINGS;
+            sWasKind = strcmp(sSettingsCat, "General") == 0 ? ROW_UPDATE : ROW_MP_SETTINGS;
             sWasArg = -1;
             logView();
             build();
@@ -2254,9 +2388,9 @@ s32 portPauseOnlineMain(WindowWork* wp) {
             if (sSettingsAsk) {
                 /* Multiplayer settings...: the Settings tab's Multiplayer page here, B back to this list */
                 sSettingsAsk = 0;
-                if (portPauseSettingsOpenOn(wp, "Multiplayer")) {
+                if (portPauseSettingsOpenOn(wp, sSettingsCat)) {
                     sSettings = 1;
-                    printf("[online] Multiplayer settings opened from the Multiplayer page\n");
+                    printf("[online] %s settings opened from the Multiplayer page\n", sSettingsCat);
                     fflush(stdout);
                     logView();
                     return 0;
@@ -2326,8 +2460,18 @@ static void syncStatusDisp(WindowWork* wp, f32 x, f32 y) {
                          portTrGame(code[0] != '\0' ? "Tell your friends this code: Online, then Join by code."
                                                     : "Give your friends this address: Online, then Join by "
                                                       "address."));
-            } else if (note[0] != '\0') {
-                snprintf(detail, sizeof(detail), "%s", portTrGame(note));
+            } else {
+                /* joining: the step under way (online_status_pc.c), what to do once it takes long, the relay's word */
+                const char* advice = portOnlineJoinAdvice();
+                portOnlineJoinLine(detail, sizeof(detail));
+                if (advice != NULL) {
+                    snprintf(detail + strlen(detail), sizeof(detail) - strlen(detail), "%s%s",
+                             detail[0] != '\0' ? "\n" : "", portTrGame(advice));
+                }
+                if (note[0] != '\0') {
+                    snprintf(detail + strlen(detail), sizeof(detail) - strlen(detail), "%s%s",
+                             detail[0] != '\0' ? "\n" : "", portTrGame(note));
+                }
             }
             break;
         case PORT_SYNC_LINKED: {
@@ -2364,12 +2508,30 @@ static void syncStatusDisp(WindowWork* wp, f32 x, f32 y) {
                 snprintf(detail, sizeof(detail), "%s",
                          portTrGame("Everyone plays your adventure. Party... starts a game for all of you."));
             }
+            {
+                /* a guest still joining (the host's adventure, its world): that step, as above */
+                char line[200];
+                const char* advice = portOnlineJoinAdvice();
+                if (portOnlineJoinLine(line, sizeof(line))) {
+                    snprintf(detail, sizeof(detail), "%s%s%s", line, advice != NULL ? "\n" : "",
+                             advice != NULL ? portTrGame(advice) : "");
+                }
+            }
             break;
         }
-        case PORT_SYNC_FAILED:
+        case PORT_SYNC_FAILED: {
+            const int step = portOnlineJoinStepNow();
             snprintf(title, sizeof(title), "%s", portTrGame("Not connected"));
-            snprintf(detail, sizeof(detail), "%s", portTrGame(note));
+            detail[0] = '\0';
+            if (step > PORT_JOIN_NONE && step < PORT_JOIN_DONE) {
+                /* (a join's failure: at which step, online_status_pc.c) */
+                snprintf(detail, sizeof(detail), portTrGame("Joining stopped at step %d of %d: %s."), step,
+                         PORT_JOIN_DONE - 1, portTrGame(portOnlineJoinStepName(step)));
+            }
+            snprintf(detail + strlen(detail), sizeof(detail) - strlen(detail), "%s%s", detail[0] != '\0' ? "\n" : "",
+                     portTrGame(note));
             break;
+        }
         default: {
             const int players = portCoopPlayers();
             const int* coop = portSettingsFind("second_player");
@@ -2410,6 +2572,14 @@ static void syncStatusDisp(WindowWork* wp, f32 x, f32 y) {
             }
         }
     }
+    if ((sSub == SUB_MAIN || sSub == SUB_INVITE) && phase != PORT_SYNC_FAILED) {
+        /* a room's host on a relay whose free day is mostly used: said under the rest (online_status_pc.c) */
+        char busy[400];
+        if (portOnlineBusyLine(busy, sizeof(busy)) && strlen(detail) + strlen(busy) + 2 < sizeof(detail)) {
+            snprintf(detail + strlen(detail), sizeof(detail) - strlen(detail), "%s%s", detail[0] != '\0' ? "\n" : "",
+                     busy);
+        }
+    }
     if (sSub == SUB_SEATS || sSub == SUB_DM || sSub == SUB_RUSH) {
         snprintf(title, sizeof(title), "%s",
                  portTrGame(sSub == SUB_SEATS ? "Who's who" : sSub == SUB_RUSH ? "Boss rush" : "Who commands the enemies?"));
@@ -2417,6 +2587,14 @@ static void syncStatusDisp(WindowWork* wp, f32 x, f32 y) {
             snprintf(detail, sizeof(detail), "%s",
                      portTrGame("A swap waits for the next calm moment: in the field, no scene or battle."));
         }
+    }
+    if (sSub == SUB_PLAYERS && phase == PORT_SYNC_LINKED) {
+        /* the way the games reach each other, and what the numbers are (the round trips) */
+        snprintf(detail, sizeof(detail), "%s",
+                 portTrGame(ssNetRoom() ? "Connected through the relay. Times are round trips over the last 10 "
+                                          "seconds (the slowest tenth)."
+                                        : "Connected directly, by address. Times are round trips over the last 10 "
+                                          "seconds (the slowest tenth)."));
     }
     {
         /* refused for another protocol: both builds under the note, for information */

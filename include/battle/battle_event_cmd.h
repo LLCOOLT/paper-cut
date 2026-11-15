@@ -329,3 +329,18 @@ USER_FUNC(btlevtcmd_SetJumpSound);
 USER_FUNC(btlevtcmd_BtlStageObjFlagOnOff);
 USER_FUNC(btlevtcmd_BtlStageObjSetRotate);
 USER_FUNC(btlevtcmd_BtlStageObjGetRotate);
+
+#ifdef TARGET_PC
+/* PC port: an enemy's HP in its kind's own scale. The difficulty, level sync, Master Quest, a raid or a Paper
+ * Mario 64 enemy change an enemy's maximum HP, but its scripts compare its HP with the kind's own numbers (the
+ * Gold Fuzzy calls the horde at 7 of 10 HP, the Shadow Queen changes at 90 of 150): the same-size stand-ins for
+ * btlevtcmd_GetHp / SetHp below read and write the HP in that scale (args as theirs), so a phase or an exit
+ * comes at the same share of the HP whatever the scale. */
+struct BattleUnit;
+USER_FUNC(btlevtcmd_port_GetKindHp); /* the HP, rounded up: "HP <= 7" holds while it is at most 7/10 of the max */
+USER_FUNC(btlevtcmd_port_SetKindHp); /* sets the HP to args[1] of the kind's HP, at least 1, at most the max */
+/* battle_unit.c BtlUnit_Entry: the kind's own maximum HP (before any rule) of unit id */
+void portBtlUnitKindHpSet(s32 id, s32 hp);
+/* the kind's own maximum HP of unit (its maximum HP when unknown) */
+s32 portBtlUnitKindMaxHp(struct BattleUnit* unit);
+#endif

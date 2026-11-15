@@ -178,11 +178,14 @@ void portTestEnding(void) {
 }
 
 void portStateSyncExitDrain(void); /* statesync_pc.c */
+void portStackReport(void);        /* stack_report_pc.c: $TTYD_STACK_REPORT */
 
 void portTestExit(int code) {
     if (code == 0) {
         portStateSyncExitDrain(); /* (online: what's on the way delivered before the game goes) */
     }
+    portShotSavesWait(5000); /* (a screenshot being saved: written before _Exit ends its thread) */
+    portStackReport();
     portTestFlush();
     _Exit(code);
 }

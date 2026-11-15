@@ -1,0 +1,64 @@
+{
+ "desc": "Spin Dash (#51) cut short with the stick held, as a player does, in Rogueport's plaza (no enemies): by the hammer, by the partner's move (Goombella's Tattle, read through) and by the Start menu late in the spin's slowing; after each Mario is his own again at once and runs on as the stick asks (the hammer and the partner's move were taken for a script's walk and left him in the spin's forced run, frozen in the run's pose for over a second; the Start menu late in the slowing left him crawling on at a tenth of the run)",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "30",
+  "TTYD_PARTY": "1",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 200",
+  "goto -300 0 200",
+  "wait 2",
+  "stick 127 0 4",
+  "stick 127 0 2 l",
+  "stick 127 0 10",
+  "stick 127 0 4 b",
+  "stick 127 0 60",
+  "where",
+  "goto 300 0 200",
+  "wait 20",
+  "stick -127 0 4",
+  "stick -127 0 2 l",
+  "stick -127 0 10",
+  "stick -127 0 4 x",
+  "stick -127 0 60",
+  "press_until_control b 900",
+  "stick -127 0 40",
+  "where",
+  "goto -300 0 200",
+  "wait 20",
+  "stick 127 0 4",
+  "stick 127 0 2 l",
+  "stick 127 0 38",
+  "stick 127 0 4 start",
+  "stick 127 0 60",
+  "press_until_control b 600",
+  "stick 127 0 40",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[spin\\] Mario's spin ends \\(another move\\)",
+  "\\[spin\\] Mario's spin ends \\(a scene or a battle\\): \\d+ units in 4\\d frames, at \\([^)]*\\), then runs",
+  "\\[input\\] where: map 'gor_01', Mario at -?\\d+ 0 \\d+, .*control 1, .*motion 2, pose M_R_1"
+ ],
+ "log_must_not": [
+  "a script's walk",
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 200
+}

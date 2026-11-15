@@ -1,0 +1,121 @@
+# After a crash: crash-safe snapshots, undoing a setting, Report a problem (port/settings/features/soft_crash.cpp, report_problem.cpp, crash_report.cpp): see tools/port/gen_lang.py
+
+Crash-safe snapshots
+Absturzsichere Schnappschüsse
+
+Keeps a copy of where you are every few minutes and at room changes; after a crash, the next start offers to continue from it. Not online, in leaderboard runs, the daily seed or bingo, or on a Hardcore file.
+Behält alle paar Minuten und bei jedem Raumwechsel eine Kopie deines Spielstands; nach einem Absturz bietet der nächste Start an, dort weiterzuspielen. Nicht online, in Bestenlisten-Läufen, dem Tages-Seed oder Bingo und nicht auf einer Hardcore-Datei.
+
+Undone: it is back as it was. A setting used at start takes effect from the next start.
+Rückgängig gemacht: Es ist wieder wie vorher. Eine Einstellung, die beim Start gilt, wirkt ab dem nächsten Start.
+
+Paper Cut closed after you changed %s. Undo it?
+Paper Cut wurde beendet, nachdem du %s geändert hast. Rückgängig machen?
+
+Paper Cut closed after you changed %s and %d other settings. Undo them?
+Paper Cut wurde beendet, nachdem du %s und %d weitere Einstellungen geändert hast. Rückgängig machen?
+
+Last time the game stopped with no crash report: the system or the graphics driver ended it.
+Beim letzten Mal hat das Spiel ohne Absturzbericht aufgehört: Das System oder der Grafiktreiber hat es beendet.
+
+Load your save as usual
+Spielstand wie gewohnt laden
+
+at %s
+um %s
+
+Continue from a few minutes ago: %s, %s.
+Von vor ein paar Minuten weiterspielen: %s, %s.
+
+An earlier snapshot: %s, %s.
+Ein früherer Schnappschuss: %s, %s.
+
+Continue from a few minutes ago
+Von vor ein paar Minuten weiterspielen
+
+Continue from the earlier one
+Vom früheren weiterspielen
+
+No snapshots were made while playing online: the world was the host's, not yours to come back to alone.
+Beim Online-Spiel wurden keine Schnappschüsse gemacht: Die Welt gehörte dem Gastgeber, nicht dir, um allein zurückzukehren.
+
+No snapshots were made during a replay or a ghost race: it plays from its own start.
+Während einer Wiederholung oder eines Geisterrennens wurden keine Schnappschüsse gemacht: Sie spielt von ihrem eigenen Anfang.
+
+No snapshots were made during a leaderboard run: its replay is what counts.
+Während eines Bestenlisten-Laufs wurden keine Schnappschüsse gemacht: Seine Wiederholung zählt.
+
+No snapshots were made on the daily seed: its clock is a race against everyone's.
+Beim täglichen Seed wurden keine Schnappschüsse gemacht: Seine Uhr ist ein Rennen gegen alle anderen.
+
+No snapshots were made in a bingo lockout room: it is a race against the others.
+In einem Bingo-Lockout-Raum wurden keine Schnappschüsse gemacht: Es ist ein Rennen gegen die anderen.
+
+No snapshots were made on a hardcore file: it has one life.
+Auf einer Hardcore-Datei wurden keine Schnappschüsse gemacht: Sie hat nur ein Leben.
+
+the version, the build, the system and the graphics card
+die Version, der Build, das System und die Grafikkarte
+
+the last crash report
+der letzte Absturzbericht
+
+what the graphics were doing as the last run ended
+was die Grafik tat, als der letzte Lauf endete
+
+the memory record of the last run (phones and tablets)
+das Speicherprotokoll des letzten Laufs (Handys und Tablets)
+
+the online diagnostics: the connection, no names or codes
+die Online-Diagnose: die Verbindung, keine Namen oder Codes
+
+your settings' values (numbers only)
+die Werte deiner Einstellungen (nur Zahlen)
+
+the settings you changed lately, and when
+die Einstellungen, die du zuletzt geändert hast, und wann
+
+the last lines of this run's log
+die letzten Zeilen des Protokolls dieses Laufs
+
+%d bytes
+%d Bytes
+
+%d KB
+%d KB
+
+The zip couldn't be made in the save folder.
+Die Zip-Datei konnte im Speicherordner nicht erstellt werden.
+
+Made %s in the save folder. Add what happened on the GitHub page and attach the zip there.
+%s wurde im Speicherordner erstellt. Beschreibe auf der GitHub-Seite, was passiert ist, und hänge die Zip-Datei dort an.
+
+Saved a copy of the zip.
+Eine Kopie der Zip-Datei wurde gespeichert.
+
+Report a problem...
+Problem melden...
+
+One zip of what helps a bug report, shown before it is made. Nothing is sent: you attach it on GitHub yourself.
+Eine Zip-Datei mit allem, was einem Fehlerbericht hilft, wird vor dem Erstellen gezeigt. Nichts wird gesendet: Du hängst sie selbst auf GitHub an.
+
+The zip will hold:
+Die Zip-Datei enthält:
+
+Taken out first: your name in folder paths, online names, the secret half of room codes and IP addresses. Nothing is sent anywhere: you attach the zip to the GitHub issue yourself.
+Vorher entfernt: dein Name in Ordnerpfaden, Online-Namen, die geheime Hälfte von Raumcodes und IP-Adressen. Nichts wird irgendwohin gesendet: Du hängst die Zip-Datei selbst an das GitHub-Issue an.
+
+Make the zip and open GitHub
+Zip erstellen und GitHub öffnen
+
+Save a copy of the zip...
+Eine Kopie der Zip-Datei speichern...
+
+It is here: %s
+Sie liegt hier: %s
+
+Report a problem
+Problem melden
+
+One zip of what helps a bug report (the records, your settings' values, the last log lines), shown before it is made; then GitHub's page for a new issue, to attach it to.
+Eine Zip-Datei mit allem, was einem Fehlerbericht hilft (die Protokolle, die Werte deiner Einstellungen, die letzten Logzeilen), wird vor dem Erstellen gezeigt; danach die GitHub-Seite für ein neues Issue, um sie anzuhängen.

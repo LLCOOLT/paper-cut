@@ -1,0 +1,39 @@
+{
+ "desc": "Every recipe of Zess T.'s own tables (each one-ingredient and two-ingredient entry) through her own lookups, under all eight combinations of the recipe options (Paper Mario 64's, Paper Cut's, the Japanese release's), Paper Mario 64 linked: each gives the table's dish; only the four pairs Paper Mario 64's recipes take give its dish, and only with them on (4 pairs x the 4 combinations with them on: 16) (a player's report: with Paper Mario 64 linked and its recipes on, every recipe of the game's own gave a Mistake)",
+ "groups": [
+  "cooking",
+  "pm64_recipes"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 600,
+  "TTYD_STORY_KICK": "rel_gor__cook_sweep_evt",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "settings": {
+  "pm64_recipes": 1,
+  "pc_recipes": 1,
+  "pg_jp_recipes": 1
+ },
+ "input": [
+  "wait 400",
+  "end"
+ ],
+ "log_must": [
+  "^\\[cook\\] sweep: \\d+ one-ingredient and \\d+ two-ingredient lookups, Paper Mario 64 linked, 16 taken by its recipes, 0 wrong$"
+ ],
+ "log_must_not": [
+  "^\\[cook\\] sweep: options "
+ ],
+ "timeout": 180
+}

@@ -9,6 +9,12 @@ Tuberías de viaje en el subsuelo
 The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
 Las salas de tuberías del Director's Cut se abren desde la sala ante las Cien Mazmorras, y su última tubería pregunta adónde ir: la plaza de Villa Viciosa y la ciudad de cada capítulo cuando tienes su Cristal Estelar. «Viajar a» sigue igual.
 
+The remake's pipe room
+La sala de tuberías del remake
+
+The sewers' two warp pipe rooms, with the pipes to the towns of chapters 1, 2, 5 and 6, get the rest of the remake's pipe room: a pipe to Rogueport once chapter 1 is over, and one to the town of chapters 3, 4 and 7 each once that chapter is over.
+Las dos salas de tuberías de viaje del subsuelo, con las tuberías a los lugares de los capítulos 1, 2, 5 y 6, reciben el resto de la sala de tuberías del remake: una tubería a Villa Viciosa al terminar el capítulo 1, y una al lugar de los capítulos 3, 4 y 7 al terminar cada uno.
+
 The remake's shortcut pipes
 Las tuberías atajo del remake
 
@@ -30,8 +36,8 @@ Tuberías para los largos caminos de ida y vuelta: Villa Sombría y el Templo L�
 Keelhaul Key and the Grotto
 Isla Trópico y la cueva
 
-Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
-Trampolines entre el campamento de los náufragos y la roca con forma de calavera cuando Bombard se une, el barril flotante de la Cueva de los Piratas vuelve tras el capítulo 5, y los Fuzzy de la selva se quedan.
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrels back after chapter 5 (two, as in the remake), and the jungle's Fuzzies stay. The barrels and the Fuzzies from the next room.
+Trampolines entre el campamento de los náufragos y la roca con forma de calavera cuando Bombard se une, los barriles flotantes de la Cueva de los Piratas vuelven tras el capítulo 5 (dos, como en el remake), y los Fuzzy de la selva se quedan. Los barriles y los Fuzzy desde la siguiente sala.
 
 Jump down the Steeple's stairs
 Saltar de las escaleras del templo
@@ -54,8 +60,8 @@ Los Bloques de Guardado y Bloques Corazón que añadió el remake: Bosque Maravi
 New ambush battles
 Nuevas emboscadas
 
-The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
-Las nuevas emboscadas del remake: en el camino a la Fortaleza de Piedra, en la Cueva de los Piratas y un Soldado de Élite en la Base de los Mega X.
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress. From the next room.
+Las nuevas emboscadas del remake: en el camino a la Fortaleza de Piedra, en la Cueva de los Piratas y un Soldado de Élite en la Base de los Mega X. Desde la siguiente sala.
 
 Charlieton and a Grotto salesman
 Ahmed y un vendedor en la cueva

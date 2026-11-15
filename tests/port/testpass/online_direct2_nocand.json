@@ -1,0 +1,74 @@
+{
+ "desc": "Direct connection wanted but no way through (each game ignores the other's candidates, as across two strict NATs): the try ends after 15 s, the room plays on through the relay as before, the same progress",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2700,
+  "TTYD_SYNC_STUN": "none",
+  "TTYD_SYNC_DIRECT": "force",
+  "TTYD_SYNC_UDP_FAULTS": "nocand"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "story 20",
+     "join 2",
+     "wait 900",
+     "give 149",
+     "coins 77",
+     "wait 300",
+     "give 150",
+     "flag 1001",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "no direct connection to player 2"
+    ],
+    "log_must_not": [
+     "WIRE:",
+     "direct connection to player 2 up"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 1000",
+     "give 240",
+     "coins 10",
+     "wait 300",
+     "give 155",
+     "flag 1002",
+     "wait 900"
+    ],
+    "env": {},
+    "log_must": [
+     "trying the direct connection the host offers"
+    ],
+    "log_must_not": [
+     "WIRE:",
+     "direct connection to player 1 up"
+    ]
+   }
+  ],
+  "link": "relay",
+  "pace": 60
+ },
+ "timeout": 300
+}

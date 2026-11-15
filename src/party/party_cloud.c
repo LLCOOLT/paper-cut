@@ -400,6 +400,14 @@ void PORT_HOOKABLE(cloud_exit)(PartyEntry* party) {
         __memFree(HEAP_DEFAULT, party->useStruct);
         party->useStruct = NULL;
     }
+#ifdef TARGET_PC
+    if (party != partyGetPtr(marioGetPartyId())) {
+        /* a co-op companion's Flurrie (player 3's or 4's, not Mario's partner) going: Mario's stance isn't hers
+           to reset. It turned him to face the camera and stood him still the frame player 4 left, so the A he
+           pressed at the Glitz Pit's match terminal was a jump: no match booked (st51f s51-050) */
+        return;
+    }
+#endif
     mario->dispFlags &= ~MARIO_DISP_FLAG_DIR_LOCK;
     mario->dispFlags &= ~MARIO_DISP_FLAG_FRONT_POSE;
     marioAdjustMoveDir();
@@ -1186,6 +1194,11 @@ void PORT_HOOKABLE(cloud_exit)(PartyEntry* party) {
         __memFree(HEAP_DEFAULT, party->useStruct);
         party->useStruct = NULL;
     }
+#ifdef TARGET_PC
+    if (party != partyGetPtr(marioGetPartyId())) {
+        return; /* (a co-op companion's Flurrie going: Mario's stance isn't hers to reset, as above) */
+    }
+#endif
     mario->dispFlags &= ~MARIO_DISP_FLAG_DIR_LOCK;
     mario->dispFlags &= ~MARIO_DISP_FLAG_FRONT_POSE;
     marioAdjustMoveDir();

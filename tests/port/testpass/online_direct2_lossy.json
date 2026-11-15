@@ -1,0 +1,72 @@
+{
+ "desc": "Direct connection over a bad network: 5% of UDP packets lost, 3% doubled, each 5-80 ms late (so they reorder): the reliable messages come through in order exactly once (held, acknowledged with the mask, the holes sent again), the same progress",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2700,
+  "TTYD_SYNC_STUN": "none",
+  "TTYD_SYNC_DIRECT": "force",
+  "TTYD_SYNC_UDP_FAULTS": "drop:5,dup:3,delay:5-80"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "story 20",
+     "join 2",
+     "wait 900",
+     "give 149",
+     "coins 77",
+     "wait 300",
+     "give 150",
+     "flag 1001",
+     "wait 900"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "direct connection to player 2 up"
+    ],
+    "log_must_not": [
+     "WIRE:"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 1000",
+     "give 240",
+     "coins 10",
+     "wait 300",
+     "give 155",
+     "flag 1002",
+     "wait 900"
+    ],
+    "env": {},
+    "log_must": [
+     "direct connection to player 1 up"
+    ],
+    "log_must_not": [
+     "WIRE:"
+    ]
+   }
+  ],
+  "link": "relay",
+  "pace": 60
+ },
+ "timeout": 300
+}

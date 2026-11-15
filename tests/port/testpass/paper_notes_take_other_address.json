@@ -1,0 +1,65 @@
+{
+ "desc": "Paper notes: a note this device's notes.txt calls yours, but left from another address (another device, or this one on another network: the relay knows a note's author only by its address's hash), can't be taken back (TTYD_NOTES_PAGE, TTYD_NOTES_TEST 'o': no relay, the test answers with the relay's rules). On the page it is chosen twice: the answer is 'It can only be taken back from where it was left.', notes.txt keeps it (the address may come back), and Refresh still finds it, still yours",
+ "groups": [
+  "notes",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "35 0 15 3 3 1 o;170 0 -40 10 32 0",
+  "TTYD_NOTES_PAGE": "1",
+  "TTYD_EXIT_FRAMES": 1300,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "shot refused",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot refreshed",
+  "end"
+ ],
+ "expect_shots": [
+  "refused",
+  "refreshed"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[notes\\] test: t0 at .* \\(mine, left from another address\\)$",
+  "^\\[notes\\] page: take back t0$",
+  "^\\[notes\\] test: take gor_00 t0: It can only be taken back from where it was left\\.$",
+  "^\\[notes\\] test: refresh: 2 notes in gor, 1 yours$"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] forgot t0",
+  "Your note is taken back"
+ ],
+ "new": true
+}

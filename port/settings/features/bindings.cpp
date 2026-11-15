@@ -20,6 +20,7 @@
 // PADKeyAxisBinding, PADButtonMapping, PADAxisMapping), as before; the second
 // keys, Paper Cut's actions and the digital triggers are Paper Cut's settings.
 #include "port/bindings.h"
+#include "port/pad_keyboard.h"
 #include "port/button_markup.h"
 #include "port/companion_menu.h"
 #include "port/menu_buttons.h"
@@ -217,18 +218,24 @@ struct ActionRow {
   int pad;          // the default controller binding (kPadNone, a button, combo(); kPadLegacy: the old one's)
   const char* keySetting = nullptr; // the first key's setting, when not bind_<id>_key
 };
+// A controller's defaults for Paper Cut's actions: one button where it is free (Back, the sticks pressed in,
+// the left shoulder, Share), else Back held with another button (Back + Start, Back + Y...): Back alone is
+// Settings, on its release when no combo came, and the game never sees a combo's buttons (portKeyboardApplyPad:
+// not while both are held, nor the one still held after the other is let go). The D-pad and the face buttons are
+// the game's: only ever with Back. Back + the right shoulder (the game's Z) is left free (the tests' save state).
+constexpr int kBack = SDL_GAMEPAD_BUTTON_BACK;
 const ActionRow kActions[PORT_BIND_COUNT] = {
     {"settings", "Settings (open, close)", kPress, SDL_SCANCODE_F1, SDL_GAMEPAD_BUTTON_BACK},
     {"fast_forward", "Fast-forward", kHold, SDL_SCANCODE_TAB, SDL_GAMEPAD_BUTTON_RIGHT_STICK},
     {"ff_toggle", "Fast-forward on and off", kPress, 0, kPadNone},
     {"rewind", "Rewind (held)", kHold, SDL_SCANCODE_BACKSPACE, kPadLegacy, "rewind_key"},
     {"photo", "Photo mode", kPress, SDL_SCANCODE_P, combo(SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK)},
-    {"screenshot", "Screenshot", kPress, SDL_SCANCODE_F12, kPadNone},
-    {"save_state", "Save state", kPress, SDL_SCANCODE_F5, kPadNone},
-    {"load_state", "Load state", kPress, SDL_SCANCODE_F8, kPadNone},
-    {"frame_hold", "Frame advance (on, off)", kPress, SDL_SCANCODE_F6, kPadNone},
-    {"frame_step", "Frame advance: one frame", kPress, SDL_SCANCODE_F7, kPadNone},
-    {"message_log", "Message log", kPress, SDL_SCANCODE_L, kPadNone},
+    {"screenshot", "Screenshot", kPress, SDL_SCANCODE_F12, combo(kBack, SDL_GAMEPAD_BUTTON_NORTH)},
+    {"save_state", "Save state", kPress, SDL_SCANCODE_F5, combo(kBack, SDL_GAMEPAD_BUTTON_DPAD_UP)},
+    {"load_state", "Load state", kPress, SDL_SCANCODE_F8, combo(kBack, SDL_GAMEPAD_BUTTON_DPAD_DOWN)},
+    {"frame_hold", "Frame advance (on, off)", kPress, SDL_SCANCODE_F6, combo(kBack, SDL_GAMEPAD_BUTTON_DPAD_LEFT)},
+    {"frame_step", "Frame advance: one frame", kPress, SDL_SCANCODE_F7, combo(kBack, SDL_GAMEPAD_BUTTON_DPAD_RIGHT)},
+    {"message_log", "Message log", kPress, SDL_SCANCODE_L, combo(kBack, SDL_GAMEPAD_BUTTON_WEST)},
     {"display_mode", "Window or full screen", kPress, SDL_SCANCODE_F11, kPadNone},
     {"volume_down", "Volume down", kPress, SDL_SCANCODE_F9, kPadNone},
     {"volume_up", "Volume up", kPress, SDL_SCANCODE_F10, kPadNone},
@@ -237,17 +244,53 @@ const ActionRow kActions[PORT_BIND_COUNT] = {
     {"walk_boost", "Walk-speed boost", kPolled, -1, kPadLegacy},
     {"ping", "Co-op ping (hold to aim)", kPolled, SDL_SCANCODE_G, SDL_GAMEPAD_BUTTON_MISC1},
     {"lua_console", "Lua console", kPress, SDL_SCANCODE_F4, kPadNone},
-    {"partner_hint", "Partner hint", kPress, SDL_SCANCODE_H, kPadNone},
-    {"launcher", "Back to the launcher", kPress, SDL_SCANCODE_F2, kPadNone},
-    // (the left shoulder: no game button in the controllers' defaults, the game's L being the left trigger)
+    {"partner_hint", "Partner hint", kPress, SDL_SCANCODE_H, combo(kBack, SDL_GAMEPAD_BUTTON_SOUTH)},
+    // (Back + Start: as many games have it; it asks first. A Linux handheld's Select + Start still quits:
+    // PortMaster's own exit, handheld_aurora.c)
+    {"launcher", "Back to the launcher", kPress, SDL_SCANCODE_F2, combo(kBack, SDL_GAMEPAD_BUTTON_START)},
+    // (the left shoulder: no game button in the controllers' defaults, the game's L being the left trigger;
+    // held about half a second where no note is near: the notes' quick wheel, notes_aurora.c)
     {"notes_read", "Read a paper note", kPolled, SDL_SCANCODE_C, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER},
+    // (Paper Mario 64's Z: the Z key, free. A controller's way is the game's L, its left trigger, which Mario doesn't
+    // use in the field: tapped where no note is near, a hold being the notes' quick wheel: pm64_spin_pc.c)
+    {"spin_dash", "Spin Dash", kPolled, SDL_SCANCODE_Z, kPadNone},
 };
+// Where a player without the key finds each action (a controller's or a touch screen's way to it besides a
+// binding): every action has a controller binding by default or one of these (tools/port/pad_parity.py checks
+// it; $TTYD_BINDINGS_PARITY=1 lists them). English, for the tests' log only.
+const char* const kMenuWay[PORT_BIND_COUNT] = {
+    "touch: the settings button, a three-finger tap",
+    "touch: the fast-forward button",
+    "Settings > Gameplay: Fast-forward (held or on and off); touch: the fast-forward button",
+    "Settings > Gameplay: Rewind (on) and Controls > Bindings",
+    "touch: the camera button",
+    "Photo mode: A takes the picture (touch: the camera button)",
+    "Settings > Practice > Save states: Save",
+    "Settings > Practice > Save states: Load",
+    "Settings > Practice > Frame advance",
+    "Settings > Practice > Frame advance",
+    "Start menu > Settings > Accessibility > Message log; Settings > Accessibility > Message log",
+    "Settings > Display > Window",
+    "Settings > Audio > Volume",
+    "Settings > Audio > Volume",
+    "Settings > Audio > Volume: Mute everything",
+    "touch: the partner button",
+    "Controls > Bindings",
+    "touch: a tap on the picture",
+    "Settings > Mods > Lua mods: Open the Lua console",
+    "Settings > Enhancements > Ask your partner: Where to next?",
+    "Settings > General > Back to the launcher; Start menu > Settings > General",
+    "touch: a tap on the note; hold the touch L for the quick wheel",
+    "the game's L tapped (a controller's left trigger; touch: the L button), where no paper note is near",
+};
+
 // the old settings' choices (gameplus2.cpp, rewind.cpp), for -1 and kPadLegacy
 constexpr SDL_Scancode kWalkKeys[] = {SDL_SCANCODE_LSHIFT, SDL_SCANCODE_LCTRL, SDL_SCANCODE_LALT, SDL_SCANCODE_RSHIFT};
 constexpr int kWalkPads[] = {SDL_GAMEPAD_BUTTON_RIGHT_STICK, SDL_GAMEPAD_BUTTON_LEFT_STICK,
                              SDL_GAMEPAD_BUTTON_LEFT_PADDLE1, SDL_GAMEPAD_BUTTON_MISC1};
-constexpr int kRewindPads[] = {kPadNone, SDL_GAMEPAD_BUTTON_MISC1, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1,
-                               SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1};
+// (rewind_pad's first choice was none: now Back + B, rewind's default, which works only with Rewind on)
+constexpr int kRewindPads[] = {combo(kBack, SDL_GAMEPAD_BUTTON_EAST), SDL_GAMEPAD_BUTTON_MISC1,
+                               SDL_GAMEPAD_BUTTON_LEFT_PADDLE1, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1};
 
 PortBindHandler sHandlers[PORT_BIND_COUNT]; // (zero before any static initializer runs)
 
@@ -326,7 +369,7 @@ Bind actionPad(int a, int n = 0) {
 Bind actionDefault(int a, int col) {
   const ActionRow& r = kActions[a];
   if (col == 2) {
-    return padBind(r.pad == kPadLegacy ? (a == PORT_BIND_REWIND ? kPadNone : kWalkPads[0]) : r.pad);
+    return padBind(r.pad == kPadLegacy ? (a == PORT_BIND_REWIND ? kRewindPads[0] : kWalkPads[0]) : r.pad);
   }
   return col == 0 ? keyBind(r.key < 0 ? kWalkKeys[0] : r.key) : Bind{};
 }
@@ -456,7 +499,90 @@ void setGamePad(u32 port, int row, const Bind& b, bool save = true) {
   }
 }
 
-// a row's controller binding as Aurora's defaults have it (all rows worked
+// --- Nintendo's layout: the game's A, B, X and Y on the buttons printed with those letters ---------
+// SDL names a controller's face buttons by place (SOUTH is the bottom one), and Aurora's defaults put the game's
+// A, B, X and Y by place too: the bottom, right, left and top buttons, an Xbox pad's A, B, X and Y. A Switch Pro
+// Controller, a Joy-Con pair, an NSO SNES pad or an 8BitDo in Switch mode has the letters the other way round
+// (B at the bottom, A on the right, Y on the left, X at the top), so the game's A was the button printed B and
+// a lesson's "Y" the button printed X (GitHub #60). On those the game's buttons start on the printed letters;
+// the prompts draw a button by place (button_glyphs.cpp), so they show those letters too. An Xbox or
+// PlayStation pad, the GameCube's (an adapter, Nintendo's NSO one, another maker's) and any other keep Aurora's.
+
+SDL_Gamepad* padOfPort(u32 port) {
+  const s32 index = PADGetIndexForPort(port);
+  return index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
+}
+
+// a controller with Nintendo's letters (by SDL's labels for its buttons, so a mapping that names them by
+// letter instead of by place is never turned round twice); not one made as a GameCube's, an N64's or a
+// Mega Drive's (NSO pads SDL counts as Switch Pro Controllers, their buttons not lettered so)
+bool printedNintendo(SDL_Gamepad* p) {
+  if (p == nullptr) {
+    return false;
+  }
+  const SDL_GamepadType t = SDL_GetGamepadType(p);
+  if (t != SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO && t != SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR) {
+    return false;
+  }
+  const Uint16 v = SDL_GetGamepadVendor(p), pr = SDL_GetGamepadProduct(p);
+  if (v == 0x057E && (pr == 0x0337 || pr == 0x2073 || pr == 0x2019 || pr == 0x201E)) {
+    return false;
+  }
+  const char* n = SDL_GetGamepadName(p);
+  if (n != nullptr && (SDL_strcasestr(n, "gamecube") != nullptr || SDL_strcasestr(n, "ngc") != nullptr)) {
+    return false;
+  }
+  return SDL_GetGamepadButtonLabel(p, SDL_GAMEPAD_BUTTON_EAST) == SDL_GAMEPAD_BUTTON_LABEL_A &&
+         SDL_GetGamepadButtonLabel(p, SDL_GAMEPAD_BUTTON_SOUTH) == SDL_GAMEPAD_BUTTON_LABEL_B &&
+         SDL_GetGamepadButtonLabel(p, SDL_GAMEPAD_BUTTON_WEST) == SDL_GAMEPAD_BUTTON_LABEL_Y &&
+         SDL_GetGamepadButtonLabel(p, SDL_GAMEPAD_BUTTON_NORTH) == SDL_GAMEPAD_BUTTON_LABEL_X;
+}
+
+struct Face {
+  u16 pad;
+  u32 native;
+};
+// the game's A, B, X and Y on the buttons printed A, B, X and Y
+constexpr Face kPrinted[4] = {{PAD_BUTTON_A, SDL_GAMEPAD_BUTTON_EAST},
+                              {PAD_BUTTON_B, SDL_GAMEPAD_BUTTON_SOUTH},
+                              {PAD_BUTTON_X, SDL_GAMEPAD_BUTTON_NORTH},
+                              {PAD_BUTTON_Y, SDL_GAMEPAD_BUTTON_WEST}};
+// and where Aurora's defaults put them on such a controller (by place)
+constexpr Face kByPlace[4] = {{PAD_BUTTON_A, SDL_GAMEPAD_BUTTON_SOUTH},
+                              {PAD_BUTTON_B, SDL_GAMEPAD_BUTTON_EAST},
+                              {PAD_BUTTON_X, SDL_GAMEPAD_BUTTON_WEST},
+                              {PAD_BUTTON_Y, SDL_GAMEPAD_BUTTON_NORTH}};
+
+void putFaces(u32 port, const Face (&faces)[4]) {
+  for (const Face& f : faces) {
+    if (PADButtonMapping* m = buttonMap(port, f.pad)) {
+      PADButtonMapping n = *m;
+      n.nativeButton = f.native;
+      PADSetButtonMapping(port, n);
+    }
+  }
+}
+
+// a port's game face buttons as faces has them
+bool facesAre(u32 port, const Face (&faces)[4]) {
+  for (const Face& f : faces) {
+    const PADButtonMapping* m = buttonMap(port, f.pad);
+    if (m == nullptr || m->nativeButton != f.native) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// a port's controller back to its defaults: Aurora's, with the face buttons on their letters on Nintendo's layout
+void restoreDefaults(u32 port) {
+  PADRestoreDefaultMapping(port);
+  if (printedNintendo(padOfPort(port))) {
+    putFaces(port, kPrinted);
+  }
+}
+
+// a row's controller binding as the defaults have it (all rows worked
 // out once a frame: the defaults put in, read, and the player's put back)
 Bind gamePadDefault(u32 port, int row) {
   static Bind sDefault[kGameRowCount];
@@ -475,7 +601,7 @@ Bind gamePadDefault(u32 port, int row) {
     }
     std::vector<PADButtonMapping> savedB(maps, maps + nb);
     std::vector<PADAxisMapping> savedA(axes, axes + na);
-    PADRestoreDefaultMapping(port);
+    restoreDefaults(port);
     for (int i = 0; i < kGameRowCount; i++) {
       sDefault[i] = gamePad(port, i);
     }
@@ -591,18 +717,22 @@ std::string modsName(int m, bool game) {
   return s;
 }
 
-// a binding's name in the menu language
+// a binding's name in the menu language: for this page (portTr, UTF-8) or the game's font (game: portTrGame, its
+// encoding, Shift JIS on the Japanese disc; a UTF-8 name there drew as the font's replacement glyphs: textfit_ja,
+// the Start menu's "Rewind button" row's "View + B")
 std::string bindName(const Bind& b, GlyphStyle st, bool game = false) {
+  auto tr = [game](const char* s) { return std::string(game ? portTrGame(s) : portTr(s)); };
   switch (b.type) {
   case Bind::Key: {
     const char* n = SDL_GetScancodeName(static_cast<SDL_Scancode>(b.a));
     return modsName(b.b, game) + (n != nullptr && n[0] != '\0' ? n : "?");
   }
-  case Bind::Button: return portTr(nativeButtonLabel(st, static_cast<u32>(b.a), 0));
-  case Bind::Combo:
-    return std::string(portTr(nativeButtonLabel(st, static_cast<u32>(b.a), 0))) + " + " +
-           portTr(nativeButtonLabel(st, static_cast<u32>(b.b), 0));
-  case Bind::Axis: return portTr(axisName(st, b.a, b.b));
+  case Bind::Button: return tr(nativeButtonLabel(st, static_cast<u32>(b.a), 0));
+  case Bind::Combo: {
+    const std::string first = tr(nativeButtonLabel(st, static_cast<u32>(b.a), 0));
+    return first + " + " + tr(nativeButtonLabel(st, static_cast<u32>(b.b), 0));
+  }
+  case Bind::Axis: return tr(axisName(st, b.a, b.b));
   default: return "";
   }
 }
@@ -1058,6 +1188,14 @@ void releaseAll() {
   sCombos.clear();
 }
 
+bool settingsOnPad(SDL_Gamepad* gp); // (below)
+
+// a combo on Start and Back: the settings page's safety chord (settingsSafety)
+bool startBackChord(const Bind& p) {
+  return p.type == Bind::Combo && ((p.a == SDL_GAMEPAD_BUTTON_START && p.b == SDL_GAMEPAD_BUTTON_BACK) ||
+                                   (p.a == SDL_GAMEPAD_BUTTON_BACK && p.b == SDL_GAMEPAD_BUTTON_START));
+}
+
 int buttonDown(SDL_JoystickID id, int b) {
   SDL_Gamepad* gp = SDL_GetGamepadFromID(id);
   PadState& st = padState(id);
@@ -1074,6 +1212,17 @@ int buttonDown(SDL_JoystickID id, int b) {
       const int other = p.a == b ? p.b : p.b == b ? p.a : -1;
       if (other < 0 || !held(gp, other) || (!sPageOpen && gameButtonIs(gp, p.a) && gameButtonIs(gp, p.b))) {
         continue;
+      }
+      if (startBackChord(p) && !settingsOnPad(gp)) {
+        // (no button of this controller opens the settings page: Start and Back held are the way back to it
+        // (settingsSafety), so a combo on those two, Back to the launcher's by default, gives way; it asked
+        // its question on the page at once and the plain page never came: padbind_page_menu)
+        continue;
+      }
+      if (st.comboUsed[p.a] && st.comboUsed[p.b]) {
+        // (both pressed in one frame: the first one's event found the other held and did it already; once)
+        used = true;
+        break;
       }
       for (int x : {p.a, p.b}) {
         st.comboUsed[x] = true;
@@ -1436,7 +1585,7 @@ void resetAll() {
   const u32 port = static_cast<u32>(sPlayer);
   portMenuResetButtons(); // (the menus' confirm and back too: a way out of a pick that doesn't suit)
   if (haveController(port)) {
-    PADRestoreDefaultMapping(port);
+    restoreDefaults(port);
     PADSerializeMappings();
   }
   if (sPlayer == 0) {
@@ -1988,8 +2137,49 @@ void setProfileDefault(int i, int port, bool on) {
   writeDefaults();
 }
 
+// each frame (the game's and the launcher's): a Nintendo-lettered controller that has just become a player's,
+// the first time this model is seen, gets its face buttons on their letters (restoreDefaults' rule) if they
+// are still where Aurora's defaults put them by place: a new one, or one saved by a release before (GitHub
+// #60). Once per model (<user>/bindings/printed_letters.ini): a player who puts them back by place keeps that.
+void printedFaces() {
+  static SDL_JoystickID sSeen[4];
+  for (u32 port = 0; port < 4; port++) {
+    SDL_Gamepad* gp = padOfPort(port);
+    const SDL_JoystickID id = gp != nullptr ? SDL_GetGamepadID(gp) : 0;
+    if (id == sSeen[port]) {
+      continue;
+    }
+    sSeen[port] = id;
+    if (id == 0 || !haveController(port) || !printedNintendo(gp)) {
+      continue;
+    }
+    char model[16];
+    std::snprintf(model, sizeof(model), "%04x_%04x", unsigned(SDL_GetGamepadVendor(gp)), unsigned(SDL_GetGamepadProduct(gp)));
+    const std::string path = profileDir() + "/printed_letters.ini";
+    auto done = readPairs(path);
+    if (std::any_of(done.begin(), done.end(), [&](const auto& d) { return d.first == model; })) {
+      continue;
+    }
+    const bool turned = facesAre(port, kByPlace);
+    if (turned) {
+      putFaces(port, kPrinted);
+      PADSerializeMappings();
+    }
+    std::string text = "# Paper Cut: Nintendo-lettered controllers whose A, B, X and Y were put on their letters once\n";
+    for (const auto& d : done) {
+      text += d.first + "=" + d.second + "\n";
+    }
+    text += std::string(model) + "=1\n";
+    writeText(path, text);
+    std::printf("[bindings] %s (%s, player %u): A, B, X and Y %s\n", SDL_GetGamepadName(gp) != nullptr ? SDL_GetGamepadName(gp) : "?",
+                model, port + 1, turned ? "put on their printed letters" : "left as the player has them");
+    std::fflush(stdout);
+  }
+}
+
 // each frame: a controller that has just become a player's gets its kind's default profile
 void watchControllers() {
+  printedFaces(); // (first: a default profile loaded for its kind is the player's own choice)
   static SDL_JoystickID sSeen[4];
   for (int port = 0; port < 4; port++) {
     const s32 index = PADGetIndexForPort(static_cast<u32>(port));
@@ -2480,7 +2670,12 @@ extern "C" void portBindingsPageEvent(const void* sdlEvent) {
 }
 
 // the launcher's frames (launcher_ui.cpp): tests ($TTYD_PADBIND_TEST), whatever its tab shows
-extern "C" void portBindingsLauncherFrame(void) { padTestFrame(); }
+extern "C" void portBindingsLauncherFrame(void) {
+  printedFaces(); // (the launcher's Settings > Controls rebinds before a game's frames run)
+  padTestFrame();
+}
+
+extern "C" void portPadRestoreDefaults(unsigned port) { restoreDefaults(port); }
 
 extern "C" void portBindingsSetHandler(int action, PortBindHandler handler) {
   if (action >= 0 && action < PORT_BIND_COUNT) {
@@ -2624,6 +2819,26 @@ extern "C" const char* portBindingsPadName(int action) {
     return "";
   }
   sName[action] = bindName(actionPad(action), styleFor(0));
+  return sName[action].c_str();
+}
+
+// the same two in the game's encoding, for its font (the Start menu's forms: Rewind's, Boost's)
+extern "C" const char* portBindingsKeyNameGame(int action) {
+  static std::string sName[PORT_BIND_COUNT];
+  if (action < 0 || action >= PORT_BIND_COUNT) {
+    return "";
+  }
+  const Bind k = keyValueBind(actionKey(action, 0));
+  sName[action] = k.type == Bind::Key ? bindName(k, styleFor(0), true) : "";
+  return sName[action].c_str();
+}
+
+extern "C" const char* portBindingsPadNameGame(int action) {
+  static std::string sName[PORT_BIND_COUNT];
+  if (action < 0 || action >= PORT_BIND_COUNT) {
+    return "";
+  }
+  sName[action] = bindName(actionPad(action), styleFor(0), true);
   return sName[action].c_str();
 }
 
@@ -2999,31 +3214,57 @@ extern "C" void portKeyboardApplyPad(PADStatus* pad) {
     if (pad[port].err == PAD_ERR_NONE) {
       applySecondButtons(port, gp, pad[port]);
     }
+    // a controller button's game button (and its second button's) taken out of what the game reads
+    auto mask = [&](int nb) {
+      u32 count = 0;
+      const PADButtonMapping* maps = PADGetButtonMappings(port, &count);
+      for (u32 i = 0; maps != nullptr && i < count; i++) {
+        if (maps[i].nativeButton == static_cast<u32>(nb)) {
+          pad[port].button &= static_cast<u16>(~maps[i].padButton);
+          if (maps[i].padButton == PAD_TRIGGER_L) {
+            pad[port].triggerLeft = 0;
+          } else if (maps[i].padButton == PAD_TRIGGER_R) {
+            pad[port].triggerRight = 0;
+          }
+        }
+      }
+      for (int i = 0; i < kGameRowCount; i++) { // (a second button that is one of the combo's)
+        const Bind b = pad2Bind(*sPad2[i][port]);
+        if (b.type == Bind::Button && b.a == nb && !kGameRows[i].axis) {
+          pad[port].button &= static_cast<u16>(~kGameRows[i].target);
+        }
+      }
+    };
     for (int a = 0; a < PORT_BIND_COUNT; a++) {
       for (int n = 0; n < 2; n++) {
         const Bind p = actionPad(a, n);
         if (p.type != Bind::Combo || !held(gp, p.a) || !held(gp, p.b)) {
           continue;
         }
-        u32 count = 0;
-        const PADButtonMapping* maps = PADGetButtonMappings(port, &count);
-        for (u32 i = 0; maps != nullptr && i < count; i++) {
-          if (maps[i].nativeButton == static_cast<u32>(p.a) || maps[i].nativeButton == static_cast<u32>(p.b)) {
-            pad[port].button &= static_cast<u16>(~maps[i].padButton);
-            if (maps[i].padButton == PAD_TRIGGER_L) {
-              pad[port].triggerLeft = 0;
-            } else if (maps[i].padButton == PAD_TRIGGER_R) {
-              pad[port].triggerRight = 0;
-            }
-          }
-        }
-        for (int i = 0; i < kGameRowCount; i++) { // (a second button that is one of the combo's)
-          const Bind b = pad2Bind(*sPad2[i][port]);
-          if (b.type == Bind::Button && (b.a == p.a || b.a == p.b) && !kGameRows[i].axis) {
-            pad[port].button &= static_cast<u16>(~kGameRows[i].target);
-          }
+        mask(p.a);
+        mask(p.b);
+      }
+    }
+    // a combo's button still held after the other was let go (Back let go first, Start or Y still down): still
+    // not the game's until it is let go too, else the game would take it as a fresh press (the pause menu, a jump)
+    const SDL_JoystickID id = SDL_GetGamepadID(gp);
+    for (const PadState& st : sPads) {
+      if (st.id != id) {
+        continue;
+      }
+      for (int b = 0; b < SDL_GAMEPAD_BUTTON_COUNT; b++) {
+        if (st.comboUsed[b] && held(gp, b)) {
+          mask(b);
         }
       }
+    }
+  }
+  if (portPadKeyboardShown()) { // the on-screen keyboard has the controllers (pad_keyboard.cpp): the game none
+    for (u32 port = 0; port < 4; port++) {
+      pad[port].button = 0;
+      pad[port].stickX = pad[port].stickY = pad[port].substickX = pad[port].substickY = 0;
+      pad[port].triggerLeft = pad[port].triggerRight = 0;
+      pad[port].analogA = pad[port].analogB = 0;
     }
   }
   for (u32 port = 0; port < 4; port++) {
@@ -3086,21 +3327,56 @@ namespace {
 // held and R pressed (the game must not see R; "[bindings] save state" from
 // the action); Back alone (Settings on its release); the right stick (fast-
 // forward held); a remap of A to the north button through the page's own
-// path; the stick swapped and the stick's Y inverted. Each step prints what
-// the game reads ("[bindings] <step>: buttons ... stick ...").
+// path; the stick swapped and the stick's Y inverted; the photo combo, on and
+// off; Back + Start (Back to the launcher's question, Start not the game's,
+// nor while still held after Back is let go; no Settings from Back's release);
+// Back + Y (a screenshot). Each step prints what the game reads ("[bindings]
+// <step>: buttons ... stick ..."). =<frame> (over 60): the controller plugged
+// in at that presented frame (a game in the field), the steps a second later.
+// $TTYD_BINDINGS_PARITY=1 (tests; tools/port/pad_parity.py checks the same in the source): each action's key,
+// controller binding and menu way once, "[bindings] parity: <id> | <key> | <controller> | <menu>", and
+// "[bindings] parity: <id> has no controller way" for one with neither a controller binding nor a menu way
+void parityList() {
+  static bool sDone;
+  if (sDone || SDL_getenv("TTYD_BINDINGS_PARITY") == nullptr) {
+    return;
+  }
+  sDone = true;
+  int missing = 0;
+  for (int a = 0; a < PORT_BIND_COUNT; a++) {
+    const Bind k = keyValueBind(actionKey(a, 0)), p = actionPad(a, 0);
+    const bool menu = kMenuWay[a] != nullptr && kMenuWay[a][0] != '\0';
+    std::printf("[bindings] parity: %s | %s | %s | %s\n", kActions[a].id, bindName(k, GlyphStyle::Keyboard).c_str(),
+                bindName(p, GlyphStyle::Xbox).c_str(), menu ? kMenuWay[a] : "-");
+    if (p.type == Bind::None && !menu) {
+      std::printf("[bindings] parity: %s has no controller way\n", kActions[a].id);
+      missing++;
+    }
+  }
+  std::printf("[bindings] parity: %d actions, %d without a controller way\n", PORT_BIND_COUNT, missing);
+  std::fflush(stdout);
+}
+
 void testFrame() {
   static const char* spec = SDL_getenv("TTYD_BINDINGS_TEST");
   static int frame;
   static SDL_Joystick* joy;
+  parityList();
   if (spec == nullptr) {
     return;
   }
   frame++;
   auto btn = [&](int b, bool down) { SDL_SetJoystickVirtualButton(joy, b, down); };
-  if (frame == 60) {
+  // (=<frame> over 60: the controller plugged in that presented frame, the steps a second after: in the field)
+  const int base = std::max(60, std::atoi(spec));
+  if (frame == base) {
+    // (an offscreen run's window never has the focus: SDL drops a controller's presses without it)
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
     SDL_VirtualJoystickDesc desc;
     SDL_INIT_INTERFACE(&desc);
     desc.type = SDL_JOYSTICK_TYPE_GAMEPAD;
+    desc.vendor_id = 0x045E; // (an Xbox controller's: its own buttons' names, Back and Start as View and Menu)
+    desc.product_id = 0x02EA;
     desc.naxes = SDL_GAMEPAD_AXIS_COUNT;
     desc.nbuttons = SDL_GAMEPAD_BUTTON_COUNT;
     desc.button_mask = (1u << SDL_GAMEPAD_BUTTON_COUNT) - 1;
@@ -3119,29 +3395,17 @@ void testFrame() {
   if (joy == nullptr) {
     return;
   }
+  // (again each frame: the settings page's closing applies "Controllers in the background", which turns it off)
+  SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
   // the steps, 10 frames apart
-  const int k = (frame - 120) / 10, at = (frame - 120) % 10;
-  if (frame < 120 || k > 12) {
+  const int k = (frame - base - 60) / 10, at = (frame - base - 60) % 10;
+  if (frame < base + 60 || k > 15) {
     return;
   }
   auto read = [](const char* step) {
-    u32 count = 0;
     PADStatus st[PAD_CHANMAX];
     PADRead(st);
-    // (what DEMOPadRead would hand the game, the combos' buttons taken out)
-    const s32 index = PADGetIndexForPort(0);
-    SDL_Gamepad* gp = index >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(index)) : nullptr;
-    for (int a = 0; a < PORT_BIND_COUNT && gp != nullptr; a++) {
-      const Bind p = actionPad(a);
-      if (p.type == Bind::Combo && held(gp, p.a) && held(gp, p.b)) {
-        const PADButtonMapping* maps = PADGetButtonMappings(0, &count);
-        for (u32 i = 0; maps != nullptr && i < count; i++) {
-          if (maps[i].nativeButton == static_cast<u32>(p.a) || maps[i].nativeButton == static_cast<u32>(p.b)) {
-            st[0].button &= static_cast<u16>(~maps[i].padButton);
-          }
-        }
-      }
-    }
+    portKeyboardApplyPad(st); // (what DEMOPadRead hands the game: the combos' buttons taken out, as after every PADRead)
     std::printf("[bindings] %-30s buttons %04x stick %d,%d c-stick %d,%d ff %d page %d\n", step, st[0].button,
                 st[0].stickX, st[0].stickY, st[0].substickX, st[0].substickY, portSpeedActive(), int(sPageOpen));
     std::fflush(stdout);
@@ -3283,11 +3547,53 @@ void testFrame() {
     } else if (at == 5) {
       btn(SDL_GAMEPAD_BUTTON_LEFT_STICK, false);
       btn(SDL_GAMEPAD_BUTTON_RIGHT_STICK, false);
+    } else if (at == 7) { // (and out of photo mode again, the same way)
+      btn(SDL_GAMEPAD_BUTTON_LEFT_STICK, true);
+      btn(SDL_GAMEPAD_BUTTON_RIGHT_STICK, true);
+    } else if (at == 9) {
+      btn(SDL_GAMEPAD_BUTTON_LEFT_STICK, false);
+      btn(SDL_GAMEPAD_BUTTON_RIGHT_STICK, false);
     }
     break;
-  case 10: // everything back as it was (only ever in a test user dir)
+  case 10: // Back held, then Start (the defaults): Back to the launcher's question, Start not the game's; Back let
+           // go first: Start, still held, still not the game's (no pause menu); no Settings from Back's release
     if (at == 0) {
-      PADRestoreDefaultMapping(0);
+      btn(SDL_GAMEPAD_BUTTON_BACK, true);
+    } else if (at == 2) {
+      btn(SDL_GAMEPAD_BUTTON_START, true);
+    } else if (at == 4) {
+      read("Back + Start held (launcher)");
+    } else if (at == 5) {
+      btn(SDL_GAMEPAD_BUTTON_BACK, false);
+    } else if (at == 7) {
+      read("Start still held (Back let go)");
+    } else if (at == 8) {
+      btn(SDL_GAMEPAD_BUTTON_START, false);
+    }
+    break;
+  case 11: // the question is up on the page: closed again (the test's way: the page shut)
+    if (at == 5) {
+      read("after Back + Start");
+      if (sPageOpen) {
+        portSettingsToggle();
+      }
+    }
+    break;
+  case 12: // Back + Y (the defaults): a screenshot, Y not the game's
+    if (at == 0) {
+      btn(SDL_GAMEPAD_BUTTON_BACK, true);
+    } else if (at == 2) {
+      btn(SDL_GAMEPAD_BUTTON_NORTH, true);
+    } else if (at == 4) {
+      read("Back + Y held (screenshot)");
+    } else if (at == 6) {
+      btn(SDL_GAMEPAD_BUTTON_NORTH, false);
+      btn(SDL_GAMEPAD_BUTTON_BACK, false);
+    }
+    break;
+  case 13: // everything back as it was (only ever in a test user dir)
+    if (at == 0) {
+      restoreDefaults(0);
       *sSet[PORT_BIND_SAVE_STATE].pad = kPadNone;
       std::printf("[bindings] test: done\n");
       std::fflush(stdout);
@@ -3434,6 +3740,23 @@ void padTestFrame() {
                   portMenuButtonsAsOwn(0, PAD_BUTTON_Y), portMenuText("{A}: change. {B}: back. {X}: reset."));
     say(line);
     say("before: A " + name(cellGet(aPad)) + ", B " + name(cellGet(bPad)));
+    {
+      // the game's A, B, X and Y on this controller, by the letters printed on it (GitHub #60: on a Switch Pro
+      // Controller the game's "Y" was the button printed X), and the defaults the page offers
+      printedFaces(); // (this frame: the test just made it player 1's)
+      const GlyphStyle ps = styleFor(0);
+      auto letter = [&](u16 padButton, bool def) {
+        const PADButtonMapping* m = buttonMap(0, padButton);
+        const int row = padButton == PAD_BUTTON_A ? 0 : padButton == PAD_BUTTON_B ? 1 : padButton == PAD_BUTTON_X ? 2 : 3;
+        const u32 native = def ? (gamePadDefault(0, row).type == Bind::Button ? u32(gamePadDefault(0, row).a) : PAD_NATIVE_BUTTON_INVALID)
+                               : (m != nullptr ? m->nativeButton : PAD_NATIVE_BUTTON_INVALID);
+        return std::string(nativeButtonLabel(ps, native, padButton));
+      };
+      say(std::string(kind) + ": the game's A on " + letter(PAD_BUTTON_A, false) + ", B on " + letter(PAD_BUTTON_B, false) +
+          ", X on " + letter(PAD_BUTTON_X, false) + ", Y on " + letter(PAD_BUTTON_Y, false) + "; defaults A " +
+          letter(PAD_BUTTON_A, true) + ", B " + letter(PAD_BUTTON_B, true) + ", X " + letter(PAD_BUTTON_X, true) + ", Y " +
+          letter(PAD_BUTTON_Y, true));
+    }
     if (std::strstr(kind, ":attach") != nullptr) {
       say("attached only"); // (xbox:attach: the controller plugged in for another test, the menu crawl)
       kind = nullptr;
@@ -3500,7 +3823,7 @@ void padTestFrame() {
       next = now + 600;
       break;
     }
-    // the answer: A's button (the confirm button on most controllers; a Switch's confirm is already B's)
+    // the answer: A's button (the confirm button: a Switch's A, as the game's A is on its printed A)
     sAnswer = cellGet(aPad).type == Bind::Button ? cellGet(aPad).a : ok;
     btn(sAnswer, true);
     after(150);
@@ -3634,7 +3957,7 @@ void padTestFrame() {
     } else {
       say(std::string("back on the page: ") + (sPageOpen ? "STILL open" : "closed"));
     }
-    PADRestoreDefaultMapping(0);
+    restoreDefaults(0);
     for (int i = 0; i < kGameRowCount; i++) {
       *sPad2[i][0] = -1;
     }

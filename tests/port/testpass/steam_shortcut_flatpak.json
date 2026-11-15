@@ -1,0 +1,34 @@
+{
+ "desc": "Add to Steam from inside the Flatpak (FLATPAK_ID set): the entry starts /usr/bin/flatpak with 'run <app ID>' and names the app in FlatpakAppID, not the sandbox's own /app path",
+ "groups": [
+  "settings",
+  "platform"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_files": [
+  "tests/port/testpass/files/steam/localconfig.vdf>steam/userdata/12345678/config/localconfig.vdf"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 600,
+  "TTYD_STEAM_TEST": 1,
+  "TTYD_STEAM_DIR": "{out}/user/steam",
+  "FLATPAK_ID": "io.github.llcoolt.PaperCut"
+ },
+ "log_must": [
+  "^\\[steam\\] .*: Added\\b",
+  "^\\[warp\\] frame \\d+: to gor_01\\b"
+ ],
+ "file_must": {
+  "user/steam/userdata/12345678/config/shortcuts.vdf": [
+   "Paper Cut",
+   "\"/usr/bin/flatpak\"",
+   "LaunchOptions\\x00run io\\.github\\.llcoolt\\.PaperCut\\x00",
+   "FlatpakAppID\\x00io\\.github\\.llcoolt\\.PaperCut\\x00"
+  ]
+ },
+ "timeout": 120
+}

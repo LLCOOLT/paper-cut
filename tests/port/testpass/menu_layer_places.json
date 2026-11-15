@@ -1,0 +1,36 @@
+{
+ "desc": "GitHub #60 and the audience's throw: the menu layer's places for a controller's own presses (TTYD_MENU_LAYER_TEST, the layer's own function on the bindings the cases name; a test's scripted presses are never moved, so no plugged-in controller is needed). Only confirm and back move, onto the game's A and B: a Switch Pro or Xbox controller with X and Y bound to its X and Y labels keeps them (0.5.0 swapped the game's X and Y on it in every menu and message: a lesson's 'Y' was its X), an Xbox controller's own bindings still give B on its B and X on its X in a menu, and with an audience member winding up a throw the battle menu's X stays on the field's X button",
+ "groups": [
+  "gh60",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "150",
+  "TTYD_MENU_LAYER_TEST": 1,
+  "TTYD_EXIT_FRAMES": 400
+ },
+ "input": [
+  "wait 120",
+  "end"
+ ],
+ "log_must": [
+  "^\\[menulayer\\] Xbox, its own bindings \\(A bottom, B left, X right, Y top\\): A->A B->X X->B Y->Y \\(moved\\)$",
+  "^\\[menulayer\\] Xbox, its own bindings, an audience member winding up a throw \\(X kept\\): A->A B->B X->X Y->Y \\(as they are\\)$",
+  "^\\[menulayer\\] PlayStation, its own bindings: A->A B->B X->X Y->Y \\(as they are\\)$",
+  "^\\[menulayer\\] Switch Pro, its own bindings \\(by place: A bottom, B right\\): A->B B->A X->X Y->Y \\(moved\\)$",
+  "^\\[menulayer\\] Switch Pro bound by its labels \\(A right, B bottom, X top, Y left\\): A->A B->B X->X Y->Y \\(as they are\\)$",
+  "^\\[menulayer\\] Xbox, Swap confirm and back: A->B B->X X->A Y->Y \\(moved\\)$",
+  "^\\[menulayer\\] Xbox, Y bound to its left button and X to its top \\(B right\\): A->A B->B X->X Y->Y \\(as they are\\)$"
+ ],
+ "log_must_not": [
+  "^\\[menulayer\\] .*Y->[ABX]",
+  "^\\[menulayer\\] .*X->Y"
+ ],
+ "timeout": 120
+}

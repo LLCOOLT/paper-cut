@@ -1,0 +1,96 @@
+{
+ "desc": "Online co-op: the host goes down gor_02's pipe into the sewers (tik_01) and, there before the guest, changes one of the area's own words (LSW 1000, unused). The guest, still in Rogueport (area gor) when that change comes, keeps it and takes it once it follows the host into tik_01, after the new area's reset, so both have it (0.5.1 before: another area's word was dropped, the player behind came in without it, and the digests called it an area DRIFT: s51-026, a guest's LSW(1) in nok_01 the host never had)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/mp_card.py",
+   "dest": "start.gci",
+   "args": [
+    "tests/port/full_run/checkpoints/{version}/03_sewers.sav",
+    "--region",
+    "{version}",
+    "--card"
+   ]
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_GOD": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_STORY_WATCH": "300",
+  "TTYD_SYNC_END_PICK": "own",
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_seq 2 3000",
+     "press_until_control a 3000",
+     "wait_peer coop1 9000",
+     "wait 300",
+     "walk_to -250 200 900",
+     "walk_to -250 345 600",
+     "walk_to -232 340 300",
+     "hold a+right 6",
+     "stick 100 26 14",
+     "wait 20",
+     "walk_to -190 329 120",
+     "hold down 30",
+     "press_until_map a tik_01 900",
+     "wait 2",
+     "lsw 1000 7",
+     "press_until_control a 3000",
+     "wait 1800",
+     "end"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_LOAD_SAVE": "{out}/user/start.gci"
+    },
+    "log_must": [
+     "\\[sync\\] .*digest: .*area same"
+    ],
+    "log_must_not": [
+     "DRIFT"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_seq 2 3000",
+     "wait_peer here 12000",
+     "wait_peer map=tik_01 12000",
+     "wait_map tik_01 6000",
+     "where coop 6000",
+     "wait 1200",
+     "end"
+    ],
+    "env": {
+     "TTYD_MAP": "gor_01",
+     "TTYD_STORY": "11",
+     "TTYD_SYNC_AT": 900
+    },
+    "log_must": [
+     "merge: LSW\\(1000\\) = 7 \\(area tik, held until this game came here\\)",
+     "arrive: tik_01 by no entrance"
+    ],
+    "log_must_not": [
+     "DRIFT"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 420
+}

@@ -37,8 +37,10 @@ void portCrowdBattleFrame(void);
 
 /* Idle players in the audience (port/src/common/crowd_seats_pc.c, docs/PLAYERS.md): in co-op a
  * player with no character in the battle has a seat in the crowd, emotes and a few throws.
- * "audience_players" (on); battle_audience.c calls Reset (BattleAudience_Init), Frame
- * (BattleAudience_Main) and Disp (BattleAudience_Disp). */
+ * "audience_players" (off by default); battle_audience.c calls Reset (BattleAudience_Init), Frame
+ * (BattleAudience_Main) and Disp (BattleAudience_Disp). PORT_AUDIENCE_PLAYERS_DEFAULT: the default for both
+ * of its declarations (crowd_seats_pc.c, port/settings/features/audience_players.cpp). */
+#define PORT_AUDIENCE_PLAYERS_DEFAULT 0
 int portCrowdSeatsOn(void);
 void portCrowdSeatsReset(void);
 void portCrowdSeatsFrame(void);
@@ -50,6 +52,15 @@ void portCrowdSeatsNet(int from, const void* data, size_t n);
 int portStateSyncCrowdSend(int toA, const void* data, size_t n);
 int portStateSyncBattleIsA(void);
 unsigned portStateSyncBattleId(void);
+
+/* battle_audience.c: an audience member holds up, or has thrown, an item that hasn't landed (what the command
+ * menu's X goes for: BattleAudience_GetItemOn's test, read only); 0 out of a battle */
+int portAudienceThrowPending(void);
+/* tests (the input script's "audience_throw"): the first member that can, holding up an item to throw, as the
+ * crowd's own throws start (BattleAudienceItemOn); its index, or -1 */
+int portAudienceThrowTest(void);
+/* battle_seq_command.c: the command menu's X went for audience member id's throw (logged) */
+void portLogAudienceAttack(int id);
 
 #ifdef __cplusplus
 }

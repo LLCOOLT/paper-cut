@@ -11,6 +11,9 @@ extern "C" {
 #endif
 
 float portHudStatusRowsBottom(void);
+/* a battle's speech bubble (or any message window in a battle) is up: a mode's line or bar at the top hides
+ * meanwhile, never drawn across its words (modes_aurora.c) */
+int portBattleBubbleUp(void);
 void portViewEditorPicture(float w, float h, float rect[4]); /* port/view.h: the picture's place in the window */
 
 #ifdef __cplusplus

@@ -16,8 +16,9 @@ extern "C" {
 /* Rooms on the relay (docs/ONLINE_RELAY.md): the host opens one by its code,
  * the others join with the code, no address or router to set up. */
 #define PORT_ONLINE_CODE_CHARS "23456789ABCDEFGHJKMNPQRSTUVWXYZ" /* nothing to read wrong (0/O, 1/I/L) */
-/* ROOM-SECRET, shown with a dash: the relay sees only the room's half (its
- * first character names the relay); the secret half makes the session's key
+/* ROOM-SECRET, shown with a dash: the relay sees only the room's half (four
+ * random characters; a hash of them names the relay, statesync_net_pc.c's
+ * relayOfCode); the secret half makes the session's key
  * between the games (port/include/port/online_link.h), never sent */
 #define PORT_ONLINE_CODE_LENGTH 8
 #define PORT_ONLINE_ROOM_HALF 4
@@ -28,6 +29,10 @@ extern "C" {
  * on its network (for a host to share), or 0 */
 const char* portOnlineRelay(void);
 const char* portOnlineRelayAt(int i);
+/* the address paper notes, leaderboards, bingo, daily and raid use (the build's
+ * TTYD_ONLINE_SERVICES, or $TTYD_ONLINE_SERVICES; wss:// or https://), "" when
+ * it isn't set: then the relay's (port/settings/relay_util.h, relayBase) */
+const char* portOnlineServices(void);
 int portOnlineLocalAddress(char* out, size_t size);
 
 /* port/src/common/fingerprint_pc.c (replays, the tests and shared online battles use these):

@@ -1,0 +1,13 @@
+# The PM64 partners drawn as TTYD paper models or as their sprites (0.5.1: pm64_link.cpp, pm64_models_pc.c)
+
+Partners' look
+なかまの見た目
+
+Thousand-Year Door paper (default)
+ペーパーマリオRPGの紙（標準）
+
+Paper Mario 64 sprites
+マリオストーリーのスプライト
+
+How the Paper Mario 64 partners are drawn: as paper models in the Thousand-Year Door's style that move as their sprites do, or as their own Paper Mario sprites.
+マリオストーリーのなかまの描きかた：スプライトと同じように動くペーパーマリオRPG風の紙のモデルか、マリオストーリーのスプライトそのままか。

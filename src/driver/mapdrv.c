@@ -26,10 +26,12 @@
 #ifdef TARGET_PC
 #include "port/bedecode.h"
 #include "port/gx_arrays.h"
+#include "port/platform.h"
 #include "port/map_pc.h"
 #include "port/widescreen.h"
 #include "port/tpl_pc.h"
 #include "driver/mapfile.h"
+#include "port/remake_maps.h"
 #endif
 #ifdef TARGET_PC
 /* A float colour channel to a u8 the console's way: fctiwz to s32, then the low byte. A plain (u8) of a float
@@ -1100,6 +1102,10 @@ static void _mapLoad(MapWork* wp, BOOL group, const char* map) {
         } else {
             wp->entries[group].flags &= 0x7FFF;
         }
+#ifdef TARGET_PC
+        /* PC port: the remake's map changes that add a model of the map's own (port/remake_maps.h) */
+        portRemakeMapsJoints(map, mapJoint, hitJoint);
+#endif
         PSMTXScale(scale, 10.0f, 10.0f, 10.0f);
         wp->entries[group].rootMapObj = mapEntry(mapJoint, scale, group);
         wp->entries[group].rootHitObj = hitEntry(hitJoint, scale, group);
@@ -4520,9 +4526,19 @@ void spline_maketable(s32 n, Vec* pts, f32* t, Vec* out) {
     s32 i;
     f32 dx, dy, dz;
     f32 ax, ay, az;
+#ifdef TARGET_PC
+    /* Vivian's ribbon (himo.c) makes its spline in its draw: in a frame drawn between the game's (Frame rate above
+     * 60, stereo 3D's first eye) its two work blocks come from the stack, so the map heap is as without it */
+    f32 hStack[16];
+    Vec wStack[16];
+    const BOOL onStack = portInterpInBetween() && n <= 16;
+    h = onStack ? hStack : _mapAlloc(n * sizeof(f32));
+    w = onStack ? wStack : _mapAlloc(n * sizeof(Vec));
+#else
 
     h = _mapAlloc(n * sizeof(f32));
     w = _mapAlloc(n * sizeof(Vec));
+#endif
     t[0] = 0.0f;
     for (i = 1; i < n; i++) {
         dx = pts[i].x - pts[i - 1].x;
@@ -4573,6 +4589,11 @@ void spline_maketable(s32 n, Vec* pts, f32* t, Vec* out) {
         out[i].y = (out[i].y - h[i] * out[i + 1].y) / w[i].y;
         out[i].z = (out[i].z - h[i] * out[i + 1].z) / w[i].z;
     }
+#ifdef TARGET_PC
+    if (onStack) {
+        return;
+    }
+#endif
     _mapFree(w);
     _mapFree(h);
 }
@@ -4697,6 +4718,11 @@ void mapObjGetFlushColor(const char* name, u8* r, u8* g, u8* b, u8* a) {
         error_flag = TRUE;
         error_count++;
         error_count %= 32;
+#ifdef TARGET_PC
+        /* evt_map_get_flush_color hands r, g, b, a to the script after this return too: no object
+         * reads as no tint, not the caller's stack */
+        *r = *g = *b = *a = 0;
+#endif
         return;
     }
     *r = obj->color.r;

@@ -3,6 +3,7 @@
  * late-game test saves' Mario, and taken to the point's first room. */
 #include <stdio.h>
 #include <string.h>
+#include "port/brothers.h"
 #include "port/practice.h"
 #include "port/practice_jump.h"
 #include "port/practice_tools.h"
@@ -251,6 +252,7 @@ static void giveMario(const Jump* j) {
     for (i = 1; i < 8; i++) {
         p->partyData[i].currentHP = p->partyData[i].maximumHP;
     }
+    portBrothersHealFull("a practice jump"); /* (Brothers mode's Luigi full with them) */
 }
 
 static void jump(int point) {

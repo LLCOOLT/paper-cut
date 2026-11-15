@@ -95,3 +95,14 @@ Non durante il gioco online: collega o scollega a sessione finita.
 
 Reading the ROM...
 Lettura della ROM...
+
+# Paper Mario's Spin Dash (0.5.1, GitHub #51: pm64_link.cpp, bindings.cpp)
+
+Spin Dash
+Spin Dash
+
+Paper Mario Spin Dash
+Spin Dash di Paper Mario
+
+With your Paper Mario ROM linked: Mario dashes forward spinning, as in Paper Mario, with Z on the keyboard or a tap of L (Spin Dash in Bindings). With Paper Mario 64 badges on, Rowf sells badges that improve it. Online, only when everyone has the ROM linked.
+Con la ROM di Paper Mario collegata: Mario scatta in avanti girando, come in Paper Mario, con Z sulla tastiera o un tocco di L (Spin Dash in Assegnazioni). Con le tessere di Paper Mario 64 attive, Rowf vende tessere che lo migliorano. Online, solo se tutti hanno collegato la ROM.

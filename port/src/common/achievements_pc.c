@@ -773,7 +773,11 @@ static int progress(const Achievement* a, int* goal) {
         return view.visited;
     }
     case K_BITS:
-        *goal = a->a != 0 ? a->a : portPm64BadgeCount(); /* (0: Rowf's, every badge of his) */
+        *goal = a->a != 0 ? a->a : PORT_PM64_BADGES_BEFORE_SPIN; /* (0: Rowf's, every badge of his) */
+        if (a->a == 0) {
+            /* (the Spin Dash's badges, 0.5.1, are his only with that setting on: not needed, as before them) */
+            return bitCount((unsigned)portAchievementCounter(a->key) & ((1u << PORT_PM64_BADGES_BEFORE_SPIN) - 1u));
+        }
         if (strcmp(a->key, "pm64_bosses") == 0) {
             /* the ten bosses' bits only: a record from before 0.5.0 may hold bit 10, the Koopa Bros.' rematch (a
                refight of it set it), which counted towards "all ten" */
@@ -979,8 +983,8 @@ static void watch(const PouchData* pouch) {
             portAchievementCounterBit("pm64_party", out);
         }
         for (i = 0; i < MAX_BADGES; i++) {
-            const int k = pouch->badges[i] - PORT_PM64_BADGE_MIN;
-            if (k >= 0 && k < portPm64BadgeCount()) {
+            const int k = portPm64BadgeIndex(pouch->badges[i]);
+            if (k >= 0) {
                 portAchievementCounterBit("pm64_rowf", k);
             }
         }
@@ -1252,6 +1256,16 @@ void portAchievementsFrame(void) {
                 }
                 loadRecord();
             }
+            if (test != NULL && getenv("TTYD_ACHIEVEMENT_ICONS") != NULL) {
+                /* (tests: each achievement's picture, -1 for none; a badge's must have one) */
+                for (i = 0; i < COUNT; i++) {
+                    if (kList[i].item > 0) {
+                        printf("[achievement] icon %s: item %d, icon %d\n", kList[i].name, kList[i].item,
+                               portAchievementIcon(i));
+                    }
+                }
+                fflush(stdout);
+            }
         }
     }
     if (!*sOn || sPath[0] == '\0' || gp == NULL || portPracticeTainted()) {
@@ -1362,9 +1376,10 @@ int portAchievementSecret(int i) {
     return i >= 0 && i < COUNT && (kList[i].flags & F_SECRET) != 0;
 }
 
+/* (an achievement's item may be a badge: itemDataTable runs through the badges, ITEM_MAX stops before them) */
 int portAchievementIcon(int i) {
     const int item = i >= 0 && i < COUNT ? kList[i].item : 0;
-    return item > 0 && item < ITEM_MAX ? (int)itemDataTable[item].icon_id : -1;
+    return item > 0 && item < BADGE_MAX ? (int)itemDataTable[item].icon_id : -1;
 }
 
 int portAchievementProgress(int i, int* goal) {

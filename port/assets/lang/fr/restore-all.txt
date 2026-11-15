@@ -1,0 +1,7 @@
+# The Restorations page's one switch, Restore everything (port/settings/features/enhancement_presets.cpp), in Français: an English line, then its translation, then a blank line.
+
+Restore everything
+Tout restaurer
+
+Everything the Japanese release had that Paper Cut puts back, on or off together: the chalk outline, the Parlor Boo's bunny ears, the screen flashes (warning: rapid flashing light), the 1000 X-Nauts, the bad ending, Hooktail's frogs and the Trial Stew. Each one is also below, to change on its own.
+Tout ce que la version japonaise avait et que Paper Cut remet, activé ou désactivé ensemble : la silhouette à la craie, les oreilles de lapin de la Boo du casino, les flashs à l'écran (attention : lumière clignotant rapidement), les 1000 X-Nauts, la mauvaise fin, les grenouilles de Carbocroc et le Pot biscottos. Chacun est aussi plus bas, à changer seul.

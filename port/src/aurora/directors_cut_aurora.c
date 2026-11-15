@@ -466,9 +466,14 @@ static EvtWord* sTik06Exit;     /* dokan_3's own exit script ("You can't enter f
 static const char* sTik06Bero; /* and the pipe it names */
 
 int portEvtDirectorsCutBero(struct EventEntry* event, int isFirstCall) {
-    BeroEntry* e;
     (void)isFirstCall;
-    for (e = (BeroEntry*)event->lwData[0]; e != NULL && e->hitName != NULL; e++) {
+    portDirectorsCutTik06((BeroEntry*)event->lwData[0]);
+    return EVT_RETURN_DONE;
+}
+
+void portDirectorsCutTik06(struct BeroEntry* table) {
+    BeroEntry* e;
+    for (e = table; e != NULL && e->hitName != NULL; e++) {
         if (strcmp(e->hitName, "dokan_3") != 0) {
             continue;
         }
@@ -487,7 +492,6 @@ int portEvtDirectorsCutBero(struct EventEntry* event, int isFirstCall) {
             e->nextBeroName = sTik06Bero;
         }
     }
-    return EVT_RETURN_DONE;
 }
 
 #define PORT_HOOK(index, name) static const int kSlot_##name = index;

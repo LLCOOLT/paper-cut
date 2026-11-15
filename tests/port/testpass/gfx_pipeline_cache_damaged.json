@@ -1,0 +1,42 @@
+{
+ "desc": "A damaged pipeline cache (\"database disk image is malformed\", as a full disk or a crash mid-write leaves it) is found at the start, moved aside and a new one made and seeded at once, and the run's pipelines are written into it with no write failing; and with a user folder named ($TTYD_USER_DIR) and no cache folder ($TTYD_CACHE_DIR empty), the cache is the user folder's (its cache folder, where the damaged one was put), never the player's own app data",
+ "groups": [
+  "gfx",
+  "seed"
+ ],
+ "versions": [
+  "us"
+ ],
+ "user_gen": [
+  {
+   "script": "tools/port/corrupt_pipeline_cache.py",
+   "dest": "cache/pipeline_cache.db"
+  }
+ ],
+ "env": {
+  "TTYD_CACHE_DIR": "",
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "21",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 600",
+  "end"
+ ],
+ "log_must": [
+  "(?s)Pipeline cache database (fails its check|is damaged).*Pipeline cache database is damaged: moved aside.*Pipeline cache: a new database made in place of the damaged one",
+  "(?s)is damaged: moved aside.*Seeded pipeline cache from '[^']*initial_pipeline_cache\\.db' \\([1-9]\\d* rows merged.*a new database made in place of the damaged one",
+  "^\\[input\\] end"
+ ],
+ "log_must_not": [
+  "Failed to upsert pipeline cache row",
+  "Failed to begin pipeline cache write transaction",
+  "the cache is off until the next start"
+ ],
+ "file_must": {
+  "user/cache/pipeline_cache.db.corrupt": [],
+  "user/cache/pipeline_cache.db": []
+ },
+ "new": true,
+ "timeout": 300
+}

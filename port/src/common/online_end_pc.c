@@ -23,6 +23,7 @@
 #include "win/win_main.h"
 #include "port/cardsave_pc.h"
 #include "port/online_end.h"
+#include "port/online_status.h"
 #include "port/platform.h"
 #include "port/save_files.h"
 #include "port/statesync.h"
@@ -63,6 +64,14 @@ static struct {
     int noServiceSeen; /* (the service's failure asked about once per failure) */
     char host[96];     /* UTF-8 */
 } E;
+
+/* the wait for the host (portOnlineWait): said this frame (asked), shown (a calm moment came), its row */
+static struct {
+    int asked, said, shown, kind, left, row;
+    unsigned at, answerAt;
+    const char* answer; /* Copy diagnostics' answer (English), under the rows a while */
+    char host[96];
+} W;
 
 static const char* rowLabel(int r) {
     switch (r) {
@@ -136,6 +145,53 @@ static void mainLine(char* out, size_t cap, int game) {
             snprintf(out, cap, "%s", game ? portTrGame(PORT_SYNC_NO_SERVICE) : PORT_SYNC_NO_SERVICE);
             return;
     }
+}
+
+/* the wait's line, English (game: the game's words, its encoding) */
+static void waitLine(char* out, size_t cap, int game) {
+    const char* name = W.host[0] != '\0' ? W.host : "the host";
+    char shown[96];
+    if (game) {
+        portTextForGame(W.host[0] != '\0' ? W.host : portTrGame("the host"), shown, sizeof(shown));
+    } else {
+        snprintf(shown, sizeof(shown), "%s", name);
+    }
+    switch (W.kind) {
+        case PORT_WAIT_HOST_AWAY:
+            snprintf(out, cap, game ? portTrGame("%s stepped away: waiting for them...") : "%s stepped away: waiting for them...",
+                     shown);
+            return;
+        case PORT_WAIT_RECONNECTING:
+            snprintf(out, cap, "%s", game ? portTrGame("Connection lost: reconnecting...") : "Connection lost: reconnecting...");
+            return;
+        default:
+            snprintf(out, cap, game ? portTrGame("Waiting for %s to come back...") : "Waiting for %s to come back...",
+                     shown);
+            return;
+    }
+}
+
+void portOnlineWait(int kind, const char* host, int secondsLeft) {
+    W.asked = 1;
+    W.left = secondsLeft > 0 ? secondsLeft : 0;
+    snprintf(W.host, sizeof(W.host), "%s", host != NULL ? host : "");
+    if (!W.said || W.kind != kind) {
+        char line[256];
+        W.said = 1;
+        W.kind = kind;
+        waitLine(line, sizeof(line), 0);
+        ssLog("wait: %s (%d s at most; Leave the room is there)", line, W.left);
+    }
+}
+
+/* the wait over (the host back, the room ended, this player left): the window down */
+static void waitOver(void) {
+    if (W.said) {
+        ssLog("wait: over");
+    }
+    W.said = W.shown = 0;
+    W.row = 0;
+    W.answer = NULL;
 }
 
 static int keeps(void) {
@@ -320,6 +376,16 @@ static void disp(CameraId camId, void* param) {
     portRandSetState(seed);
 }
 
+/* the wait for the host, drawn: the join's window's look and rows (online_status_pc.c portOnlineNoticeShow) */
+static void showWait(void) {
+    static const char* const kRows[3] = {"Keep waiting", "Copy diagnostics", "Leave the room"};
+    char line[256], left[160];
+    waitLine(line, sizeof(line), 1);
+    snprintf(left, sizeof(left), portTrGame("Still waiting %d:%02d. You can leave at any time."), W.left / 60,
+             W.left % 60);
+    portOnlineNoticeShow(line, left, kRows, NULL, 3, W.row, W.answer != NULL ? portTrGame(W.answer) : NULL);
+}
+
 /* the pointer over a choice: it gets the cursor; a click is A */
 static int pointer(void) {
     float gx, gy;
@@ -342,8 +408,86 @@ static int pointer(void) {
 }
 #endif
 
+/* the wait for the host, said this frame: up at a calm moment (down while it isn't one: a battle, the Start
+   menu), with the join's rows: Keep waiting, Copy diagnostics, Leave the room (B: Keep waiting); 1 when this
+   player left */
+enum { WR_WAIT, WR_COPY, WR_LEAVE, WR_COUNT };
+static int waitFrame(void) {
+    unsigned trg = 0, dir = 0;
+    const char* want = getenv("TTYD_SYNC_WAIT_PICK");
+    if (!calm()) {
+        W.shown = 0;
+        return 0;
+    }
+    if (!W.shown) {
+        W.shown = 1;
+        W.at = 0;
+        W.row = WR_WAIT;
+        W.answer = NULL;
+    }
+    W.at++;
+    if (W.answer != NULL && W.at - W.answerAt > 240) {
+        W.answer = NULL;
+    }
+#ifdef TTYD_BACKEND_AURORA
+    if (!E.shown) {
+        showWait();
+    }
+    trg = keyGetButtonTrg(0);
+    dir = keyGetDirRep(0);
+    if (trg == 0 && dir == 0) {
+        trg = portOnlineNoticePointer(WR_COUNT, &W.row);
+    }
+#endif
+    if (want != NULL && W.at == 60) {
+        /* (tests: $TTYD_SYNC_WAIT_PICK=wait|copy|leave, a second after it's up) */
+        W.row = !strcmp(want, "leave") ? WR_LEAVE : !strcmp(want, "copy") ? WR_COPY : WR_WAIT;
+        trg = PAD_BUTTON_A;
+        dir = 0;
+    }
+    if (dir & DEMO_STICK_UP) {
+        W.row = (W.row + WR_COUNT - 1) % WR_COUNT;
+        psndSFXOn(SFX_MOVE);
+    } else if (dir & DEMO_STICK_DOWN) {
+        W.row = (W.row + 1) % WR_COUNT;
+        psndSFXOn(SFX_MOVE);
+    } else if ((trg & PAD_BUTTON_A) && W.row == WR_LEAVE) {
+        psndSFXOn(SFX_OK);
+        ssLog("wait: chose \"Leave the room\"");
+        waitOver();
+        portStateSyncLeave(); /* (then "You left the room." and where to go, as any Leave) */
+        return 1;
+    } else if ((trg & PAD_BUTTON_A) && W.row == WR_COPY) {
+        psndSFXOn(SFX_OK);
+        ssLog("wait: chose \"Copy diagnostics\"");
+        W.answer = portOnlineCopyDiagnostics() ? "Copied: paste it into your report. Nothing was sent anywhere."
+                                               : "Couldn't copy it.";
+        W.answerAt = W.at;
+    } else if (trg & (PAD_BUTTON_A | PAD_BUTTON_B)) {
+        /* (Keep waiting: the wait goes on, its window the room's status meanwhile) */
+        psndSFXOn(SFX_OK);
+        if (W.row == WR_WAIT || (trg & PAD_BUTTON_B)) {
+            ssLog("wait: chose \"Keep waiting\"");
+        }
+        W.row = WR_WAIT;
+    }
+    return 0;
+}
+
 void portOnlineEndFrame(void) {
     unsigned trg, dir;
+    {
+        /* the wait for the host (portOnlineWait, said last frame): the room's end, when it comes, first */
+        const int asked = W.asked;
+        W.asked = 0;
+        if (!asked || E.why != PORT_END_NONE) {
+            if (W.said) {
+                waitOver();
+            }
+        } else if (waitFrame()) {
+            return;
+        }
+    }
     if (E.why == PORT_END_NONE) {
         /* the online service never reached (any of the ways in): asked once per failure, not from the
            Start menu's page (it has its own Try again and Back) */

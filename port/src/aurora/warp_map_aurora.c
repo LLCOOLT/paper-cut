@@ -21,6 +21,7 @@
 #include "port/companion_section.h"
 #include "port/area_maps.h"
 #include "port/button_markup.h"
+#include "port/companion.h"
 #include "port/companion_menu.h"
 #include "port/fast_travel.h"
 #include "port/menu_crawl.h"
@@ -31,8 +32,10 @@
 #include "port/practice_more.h"
 #include "port/practice_tools.h"
 #include "port/replay.h"
+#include "port/special_places.h"
 #include "port/statesync.h"
 #include "port/text_fit.h"
+#include "port/toggles.h"
 #include "port/tr.h"
 #include "port/warp_map.h"
 #include "driver/camdrv.h"
@@ -263,7 +266,7 @@ static void wmImage(f32 x, f32 y, f32 w, f32 h) {
 
 /* --- the page's state --- */
 
-enum { LEVEL_WORLD, LEVEL_AREA, LEVEL_WAYS };
+enum { LEVEL_WORLD, LEVEL_AREA, LEVEL_WAYS, LEVEL_SPECIAL };
 
 #define AREA_ROOMS 64
 #define WAYS_MAX 24
@@ -281,6 +284,15 @@ static char sHelp[512];
 static int sTour, sTourStep, sTourWait; /* $TTYD_WARPMAP_TOUR */
 static int sTravel;                    /* fast travel's (the Journal's map): Mario's rooms and ways only */
 #define SAFE_ROWS (sTravel ? 0 : 1)    /* the ways' list's safe spawn row: the warp's only */
+/* the special places (port/include/port/special_places.h): the rows, each a place's index, or -1 for the way
+   back while on a visit */
+#define SPECIAL_MAX 8
+static int sSpecial[SPECIAL_MAX], sSpecialCount, sSpecialCur;
+#define SP_W 340.0f
+#define SP_X (-SP_W / 2.0f)
+#define SP_TOP (PANEL_TOP - 24.0f)
+#define SP_STEP 26.0f
+#define SP_ROWS_TOP (SP_TOP - 46.0f)
 
 /* a room shown: every room for the warp; for fast travel, the ones Mario has been in */
 static int shown(int room) {
@@ -538,7 +550,10 @@ static void drawArea(WindowWork* wp, const Grid* g, f32 ox, f32 oy, int mini, in
 
 static void pointAt(WindowWork* wp) {
     f32 x, y;
-    if (sLevel == LEVEL_WORLD) {
+    if (sLevel == LEVEL_SPECIAL) {
+        wp->helpTgtX = SP_X + 2.0f;
+        wp->helpTgtY = SP_ROWS_TOP - sSpecialCur * SP_STEP - SP_STEP / 2.0f + 4.0f;
+    } else if (sLevel == LEVEL_WORLD) {
         pinAt(sPin, &x, &y);
         wp->helpTgtX = x - 12.0f;
         wp->helpTgtY = y;
@@ -615,9 +630,22 @@ static int warpNow(void) {
     const PortAreaExit* e = sWay >= SAFE_ROWS ? &portAreaExits[sWays[sWay - SAFE_ROWS]] : NULL;
     const char* map = portAreaRooms[sRooms[sRoom]].map;
     if (gPortCompanionMenu) {
-        sMessage = sTravel ? "Travel from the game's own Start menu, not the second screen's."
-                           : "Warp from the game's own Start menu, not the second screen's.";
-        return 0;
+        /* the second screen's map: the game warps or travels, at the point its own Start menu could open, with
+           the same rules (portWarpMapTapped, portTravelRequest); a refusal is said over the game's picture */
+        if (sTravel && e == NULL) {
+            sMessage = "Mario hasn't been here yet.";
+            return 0;
+        }
+        if (sTravel) {
+            portCompanionTapValue(PORT_COMPANION_TAP_TRAVEL, (unsigned)sWays[sWay - SAFE_ROWS]);
+        } else {
+            portCompanionTapValue(PORT_COMPANION_TAP_WARP,
+                                  ((unsigned)sRooms[sRoom] << 16) | (e != NULL ? (unsigned)sWays[sWay - SAFE_ROWS] + 1 : 0u));
+        }
+        printf("[warpmap] the second screen's %s: %s %s, sent to the game\n", sTravel ? "trip" : "warp", map,
+               e != NULL ? e->hit : "(safe spawn)");
+        fflush(stdout);
+        return 1;
     }
     if (sTravel) {
         sMessage = e != NULL ? portTravelRequest(sWays[sWay - SAFE_ROWS]) : "Mario hasn't been here yet.";
@@ -640,6 +668,20 @@ static int pointer(void) {
     const int kind = portMenuPoint(&gx, &gy);
     int i;
     if (kind == 0) {
+        return 0;
+    }
+    if (sLevel == LEVEL_SPECIAL) {
+        for (i = 0; i < sSpecialCount; i++) {
+            const f32 top = SP_ROWS_TOP - i * SP_STEP;
+            if (gx >= SP_X && gx < SP_X + SP_W && gy <= top && gy > top - SP_STEP) {
+                if (i == sSpecialCur) {
+                    return kind == 1;
+                }
+                sSpecialCur = i;
+                psndSFXOn((const char*)0x20005);
+                return 0;
+            }
+        }
         return 0;
     }
     if (sLevel == LEVEL_WORLD) {
@@ -752,7 +794,7 @@ static int wmMain(WindowWork* wp) {
     if (wp->buttonTrg & PAD_BUTTON_B) {
         psndSFXOn((const char*)0x20013);
         sMessage = NULL;
-        if (sLevel == LEVEL_WORLD || (sTravel && sLevel == LEVEL_AREA)) {
+        if (sLevel == LEVEL_WORLD || (sTravel && (sLevel == LEVEL_AREA || sLevel == LEVEL_SPECIAL))) {
             wmFree();
             return -1;
         }
@@ -763,6 +805,27 @@ static int wmMain(WindowWork* wp) {
     if ((wp->buttonTrg & PAD_BUTTON_X) && !sTravel) { /* the list: the full settings page, on the warp's tab */
         psndSFXOn((const char*)0x20012);
         portSettingsOpenAt("Enhancements");
+        return 0;
+    }
+    if (sLevel == LEVEL_SPECIAL) {
+        if (click || (wp->buttonTrg & PAD_BUTTON_A)) {
+            const int place = sSpecialCount > 0 ? sSpecial[sSpecialCur] : -2;
+            sMessage = place == -1 ? portSpecialLeave() : place >= 0 ? portSpecialRequest(place) : "Not seen in the story yet.";
+            if (sMessage == NULL) {
+                psndSFXOn((const char*)0x20012);
+                wmFree();
+                return -2; /* the whole menu closed: the trip once Mario has the controls */
+            }
+            psndSFXOn((const char*)0x20014); /* (the buzzer; the help box says why) */
+        } else if (wp->dirRep & (DEMO_STICK_UP | DEMO_STICK_DOWN)) {
+            const int to = sSpecialCur + ((wp->dirRep & DEMO_STICK_UP) ? -1 : 1);
+            if (to >= 0 && to < sSpecialCount) {
+                sSpecialCur = to;
+                sMessage = NULL;
+                psndSFXOn((const char*)0x20005);
+            }
+        }
+        pointAt(wp);
         return 0;
     }
     if (click || (wp->buttonTrg & PAD_BUTTON_A)) {
@@ -827,6 +890,8 @@ static const char* wmHelp(void) {
     char line[384];
     if (sMessage != NULL) {
         t = portTrGame(sMessage);
+    } else if (sLevel == LEVEL_SPECIAL) {
+        t = portTrGame("{A}: go there. {B}: back.");
     } else if (sTravel && sLevel == LEVEL_AREA) {
         t = portTrGame("{A}: this room's ways in. {B}: the map.");
     } else if (sTravel) {
@@ -931,7 +996,40 @@ static void waysDisp(WindowWork* wp, f32 x, f32 y) {
     }
 }
 
+/* a special place's row: its name (Mario's house keeps his name whoever plays: the brothers' house) */
+static const char* specialName(int k, char* out, size_t size) {
+    const int place = sSpecial[k];
+    snprintf(out, size, "%s",
+             place < 0 ? portTrGame("Back to where you came from")
+             : place == 0 ? portTrGameNoPlayAs(portSpecialName(place))
+                          : portTrGame(portSpecialName(place)));
+    plain(out);
+    return out;
+}
+
+static void specialDisp(WindowWork* wp, f32 x, f32 y) {
+    char line[96];
+    int i;
+    winKirinukiGX(wp, 0, x + SP_X, y + SP_TOP, SP_W, 56.0f + sSpecialCount * SP_STEP);
+    snprintf(line, sizeof(line), "%s", portTrGame("Special places"));
+    plain(line);
+    text(x + SP_X + 16.0f, y + SP_TOP - 12.0f, SP_W - 32.0f, 0.75f, kHeading, line, 0);
+    for (i = 0; i < sSpecialCount; i++) {
+        const f32 top = y + SP_ROWS_TOP - i * SP_STEP;
+        const int shut = sSpecial[i] >= 0 && portSpecialRefusal(sSpecial[i]) != NULL;
+        if (i == sSpecialCur) {
+            box(x + SP_X + 10.0f, top, SP_W - 20.0f, SP_STEP - 2.0f, kPicked);
+        }
+        text(x + SP_X + 26.0f, top - 2.0f, SP_W - 44.0f, 0.68f, i == sSpecialCur ? kBlack : shut ? kGrey : kInk,
+             specialName(i, line, sizeof(line)), 0);
+    }
+}
+
 static void wmDisp(WindowWork* wp, float x, float y) {
+    if (sLevel == LEVEL_SPECIAL) {
+        specialDisp(wp, x, y);
+        return;
+    }
     winKirinukiGX(wp, 0, x + PANEL_X, y + PANEL_TOP, PANEL_W, PANEL_H);
     if (sLevel == LEVEL_WORLD) {
         worldDisp(wp, x, y);
@@ -954,12 +1052,33 @@ void portWarpMapOpen(void) {
 static int sWantOpen; /* winMain opened the Start menu for the map: win_root.c opens it on the Settings tab */
 
 const char* portWarpMapRefusal(void) {
-    if (gPortCompanionMenu) {
-        return "Warp from the game's own Start menu, not the second screen's.";
-    }
+    /* (the second screen's copy too: its warp goes to the game as a tap, warpNow) */
     if (!portPracticeInGame() || seqGetSeq() != SEQ_GAME || portReplayActive() || portStateSyncOn()) {
         return "Only in the field, and not online or in a replay.";
     }
+    return NULL;
+}
+
+const char* portWarpMapTapped(int room, int exit) {
+    const char* map;
+    const char* hit = NULL;
+    const char* why = portWarpMapRefusal();
+    if (why != NULL) {
+        return why;
+    }
+    if (room < 0 || room >= portAreaRoomCount || exit >= portAreaExitCount ||
+        (exit >= 0 && portAreaExits[exit].room != room)) {
+        return "Not now.";
+    }
+    map = portAreaRooms[room].map;
+    if (exit >= 0) {
+        hit = portAreaExits[exit].hit;
+    }
+    if (!portRoomWarpRequest(map, hit)) {
+        return portPracticeModeRefusal() != NULL ? "Not while a mode runs." : "Only in the field, and not online or in a replay.";
+    }
+    printf("[warpmap] warp %s %s (the second screen's)\n", map, hit != NULL ? hit : "(safe spawn)");
+    fflush(stdout);
     return NULL;
 }
 
@@ -1049,9 +1168,90 @@ int portTravelJournalMain(WindowWork* wp) {
 }
 
 void portTravelJournalDisp(WindowWork* wp, float x, float y) {
-    if (sTravel && sRoomCount > 0) {
+    if (sTravel && (sRoomCount > 0 || sLevel == LEVEL_SPECIAL)) {
         wmDisp(wp, x, y);
     }
+}
+
+/* --- the special places (port/include/port/special_places.h): {X} on the Journal's map, or its tab --- */
+
+static void specialBuild(void) {
+    int i;
+    sSpecialCount = 0;
+    sSpecialCur = 0;
+    if (portSpecialVisiting() >= 0) {
+        sSpecial[sSpecialCount++] = -1; /* the way back first */
+    }
+    for (i = 0; i < portSpecialCount() && sSpecialCount < SPECIAL_MAX; i++) {
+        if (portSpecialSeen(i)) {
+            sSpecial[sSpecialCount++] = i;
+        }
+    }
+}
+
+/* the tab: above the map's frame, at its right (the Journal's map panel's coordinates) */
+#define TAB_W 190.0f
+#define TAB_H 30.0f
+#define TAB_X (230.0f - TAB_W)
+#define TAB_TOP (120.0f + 8.0f + TAB_H)
+
+int portTravelJournalSpecialShown(void) {
+    int i;
+    if (!portTravelOn() || portConsoleAccurate()) {
+        return 0;
+    }
+    for (i = 0; i < portSpecialCount(); i++) {
+        if (portSpecialSeen(i)) {
+            return 1;
+        }
+    }
+    return portSpecialVisiting() >= 0;
+}
+
+int portTravelJournalSpecialHit(float gx, float gy) {
+    return portTravelJournalSpecialShown() && gx >= TAB_X && gx <= TAB_X + TAB_W && gy <= TAB_TOP &&
+           gy >= TAB_TOP - TAB_H;
+}
+
+void portTravelJournalSpecialTab(WindowWork* wp, float x, float y) {
+    char line[96];
+    if (!portTravelJournalSpecialShown()) {
+        return;
+    }
+    winKirinukiGX(wp, 0, x + TAB_X, y + TAB_TOP, TAB_W, TAB_H);
+    snprintf(line, sizeof(line), "{X} %s", portTrGame("Special places"));
+    textMid(x + TAB_X + TAB_W / 2.0f, y + TAB_TOP - 5.0f, TAB_W - 16.0f, 0.62f, kHeading, line);
+}
+
+int portTravelJournalSpecial(WindowWork* wp) {
+    if (!portTravelJournalSpecialShown()) {
+        psndSFXOn((const char*)0x20014); /* the buzzer: nothing to show */
+        return 0;
+    }
+    psndSFXOn((const char*)0x20012);
+    specialBuild();
+    sTravel = 1;
+    sTour = 0;
+    sRoomCount = 0;
+    sLevel = LEVEL_SPECIAL;
+    sMessage = NULL;
+    printf("[special] list: %d rows\n", sSpecialCount);
+    fflush(stdout);
+    pointAt(wp);
+    return 1;
+}
+
+/* Bowser's pause on a visit: the way back's line under the PAUSE picture */
+void portSpecialBowserPauseDisp(void) {
+    static const GXColor kShade = {0x00, 0x00, 0x00, 0xA0};
+    const char* english = portSpecialBowserPauseLine();
+    char line[160];
+    if (english == NULL) {
+        return;
+    }
+    snprintf(line, sizeof(line), "%s", portTrGame(english));
+    box(-260.0f, PORT_SPECIAL_LINE_TOP + 6.0f, 520.0f, 40.0f, kShade);
+    textMid(0.0f, PORT_SPECIAL_LINE_TOP, 500.0f, 0.75f, kWhite, line);
 }
 
 const char* portTravelJournalMsg(const char* tag) {

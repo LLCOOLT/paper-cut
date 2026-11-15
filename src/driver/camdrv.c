@@ -14,6 +14,7 @@
 #if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
 #include "port/widescreen.h"
 #include "port/stereo.h"
+#include "port/interp_replay.h"
 void portBloomApply(void); /* port/src/aurora/bloom_aurora.c */
 void portRtLightingApply(void); /* port/src/aurora/rt_lighting_aurora.c */
 #endif
@@ -400,9 +401,13 @@ void camDraw(void) {
     for (cameraId = 0; cameraId < CAMERA_MAX; cameraId++) {
         CameraEntry* camera = camPtrTbl[cameraId];
 #if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+        portInterpCamera(cameraId); /* frame interpolation by replay: what follows is this camera's */
         if (cameraId == CAMERA_2D) {
+            /* (port passes, not the game's: a replay of the frame runs them again here, interp_replay_aurora.c) */
+            portInterpHookBegin();
             portRtLightingApply(); /* Graphics > Ray-traced lighting: the same (rt_lighting_aurora.c) */
             portBloomApply(); /* Graphics > Bloom: over the 3D scene, under the HUD (bloom_aurora.c) */
+            portInterpHookEnd(PORT_INTERP_HOOK_LIGHT_BLOOM);
         }
 #endif
         if (!(camera->flags & CAM_FLAG_HIDDEN)) {

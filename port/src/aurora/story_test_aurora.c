@@ -83,6 +83,23 @@ static int sBingoPartner;
  * and the battle allows Run Away (no NPC_BATTLE_NO_ESCAPE) */
 static int sRunFrom;
 static int sRunLogged;
+/* auto-battle: the foes' HP at the last command, and how many commands since any foe lost HP. A fight nothing on
+ * Mario's side can hurt (two Bald Clefts, Defence 2, against a Jump and a Headbonk of 1 a hit at story 11: 0
+ * damage each) ran to the turn cap, "STUCK" and exit 6, in the online soak; it is a planned Run Away now, as
+ * immune foes are (planRun) */
+#define NO_HARM_COMMANDS 16
+static int sFoeHpLast, sNoHarm;
+
+static int foeHp(const BattleWork* w) {
+    int i, hp = 0;
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        const BattleUnit* u = w->units[i];
+        if (u != NULL && u->alliance == 1 && u->currentHp > 0) {
+            hp += u->currentHp;
+        }
+    }
+    return hp;
+}
 
 /* a lesson's battle: the menu limited by the lesson's flags (battle.h) */
 static int lecture(const BattleWork* wp) {
@@ -146,6 +163,17 @@ static void dumpEvents(void) {
     }
     portMsgDump(); /* the windows a script there may wait on */
     fflush(stdout);
+}
+
+/* an input script's step that ran out (input_pc.c's FAIL): this game's scripts too, as the story watch's
+ * STUCK prints them (a host whose step failed first had none in its log, only its guests did) */
+void portStoryTestDumpScripts(const char* why) {
+    if (gp == NULL) {
+        return;
+    }
+    printf("[story] %s (story %d, map '%s', sequence %d, frame %u); the running scripts:\n", why,
+           (int)swByteGet(GSW_STORY_PROGRESS), gp->currentMapName, (int)seqGetSeq(), (unsigned)VIGetRetraceCount());
+    dumpEvents();
 }
 
 /* --- TTYD_EVENT: the scenario select's warp (seq_e3.c, case 102) --- */
@@ -215,6 +243,7 @@ static void eventFrame(void) {
     static time_t start;
     static char map[32];
     static int limit;
+    static unsigned startFrame;
     int stage, idx, prevId;
     EventData* row;
     if (sEventRow < 0 || state == 2 || gp == NULL) {
@@ -222,6 +251,7 @@ static void eventFrame(void) {
     }
     if (start == 0) {
         start = time(NULL);
+        startFrame = (unsigned)VIGetRetraceCount();
         limit = envInt("TTYD_WARP_LIMIT", 60);
     }
     row = eventRow(sEventRow, &stage, &idx, &prevId);
@@ -251,7 +281,7 @@ static void eventFrame(void) {
         state = 2;
         sArrived = 1;
     }
-    if (state < 2 && time(NULL) - start >= limit) {
+    if (state < 2 && portWarpLimitOver(start, (unsigned)limit, (unsigned)VIGetRetraceCount() - startFrame)) {
         printf("[event] FAIL: %s not reached in %ds (sequence %d, map '%s')\n", map[0] ? map : "the title", limit,
                (int)seqGetSeq(), gp->currentMapName);
         fflush(stdout);
@@ -566,15 +596,17 @@ static void frameHook(void) {
             sQuietSig = sig;
             sQuiet = 0;
         }
+    }
+    if (sAutoBattle && seqGetSeq() == SEQ_BATTLE) {
         /* (online, waiting on the other game's word: its player's turn, however slow that game runs under
            load, isn't a hang here; this game's frames race on meanwhile, and 3600 of them ended the host's game
-           mid-fight while the guest, at half its frame rate, chose: pm64x_online_versus. Two minutes of real
-           time waiting on one word is a hang all the same: the frames count again then) */
-        {
-            const unsigned waited = portStateSyncBattleWaitMs();
-            if (waited > 0 && waited < 120000 && sQuiet > 0) {
-                sQuiet--;
-            }
+           mid-fight while the guest, at half its frame rate, chose: pm64x_online_versus. The same before the
+           battle is up (no battle work yet): the invitation's answers and the others' loading, waited for by
+           the clock (the soak's seed 202). Two minutes of real time waiting on one word is a hang all the
+           same: the frames count again then) */
+        const unsigned waited = portStateSyncBattleWaitMs();
+        if (waited > 0 && waited < 120000 && sQuiet > 0) {
+            sQuiet--;
         }
     }
     if (seqGetSeq() == SEQ_BATTLE && sAutoBattle && ++sQuiet == sMaxQuiet) {
@@ -695,6 +727,12 @@ static void sweepCommandInit(BattleWork* wp) {
         fflush(stdout);
     }
     sweepMoveOver("back to the menu");
+    if (portStateSyncSharedBattle()) {
+        /* (a battle shared online: its HP and FP are every game's, and this game alone put them back. The foes
+           were whole again in the sweeping guest's game only: a Goomba gone in the host's still up in it, its
+           Run Away aiming at it, online_guest_battle_mash) */
+        return;
+    }
     pouchSetFP(pouch->maximumFP);
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
         BattleUnit* u = wp->units[i];
@@ -827,6 +865,8 @@ static int commandInitPre(BattleWork** wp) {
         if (++sTurns == 1) {
             portVersusCpuAutoReset();
             sRunLogged = 0;
+            sNoHarm = 0;
+            sFoeHpLast = foeHp(*wp);
             /* the battle's units, so a report names what was fought */
             BattleWork* w = *wp;
             const int foeHp = envInt("TTYD_FOE_HP", 0);
@@ -851,6 +891,12 @@ static int commandInitPre(BattleWork** wp) {
             printf("\n");
             fflush(stdout);
         }
+        if (sTurns > 1) {
+            /* (once a command: any foe's HP down, or one gone, is progress) */
+            const int hp = foeHp(*wp);
+            sNoHarm = hp < sFoeHpLast ? 0 : sNoHarm + 1;
+            sFoeHpLast = hp;
+        }
         if (sTurns == sMaxTurns + 1) {
             printf("[story] STUCK: battle over %d turns (story %d, map '%s'); running away\n", sMaxTurns,
                    (int)swByteGet(GSW_STORY_PROGRESS), gp->currentMapName);
@@ -865,15 +911,19 @@ static int commandInitPre(BattleWork** wp) {
     return 0;
 }
 
-/* Run Away planned for this command (sRunFrom above) */
+/* Run Away planned for this command (sRunFrom above): 1 TTYD_AUTO_BATTLE_RUN, 2 no foe takes damage, 3 nothing
+ * Mario's side has hurts any foe (NO_HARM_COMMANDS commands running, and no foe's HP down meanwhile) */
 static int planRun(const BattleWork* wp) {
     int i, foes = 0;
     if (wp->fbatInfo != NULL && wp->fbatInfo->setup != NULL &&
         (wp->fbatInfo->setup->battleFlags & NPC_BATTLE_NO_ESCAPE)) {
-        return 0;
+        return 0; /* (a boss: the turn cap still says when it never ends) */
     }
     if (sRunFrom > 0) {
         return sTurns >= sRunFrom;
+    }
+    if (sNoHarm >= NO_HARM_COMMANDS && portVersusCpuAutoHarmless() >= NO_HARM_COMMANDS) {
+        return 3;
     }
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
         const BattleUnit* u = wp->units[i];
@@ -888,12 +938,13 @@ static int planRun(const BattleWork* wp) {
         }
         foes++;
     }
-    return foes > 0;
+    return foes > 0 ? 2 : 0;
 }
 
 static int commandInputPre(s32* r, void** work) {
     BattleWork* wp = (BattleWork*)*work;
     BattleUnit* unit;
+    int run;
     (void)r;
     if (!sAutoBattle || blocked() || portVersusOn()) {
         return 0;
@@ -934,11 +985,12 @@ static int commandInputPre(s32* r, void** work) {
         }
     } else if (unit != NULL && unit->alliance == 0 && sTurns > sMaxTurns) {
         portVersusCpuEscape(wp, unit); /* (over the turn cap: Run Away, then the run fails) */
-    } else if (unit != NULL && unit->alliance == 0 && planRun(wp)) {
+    } else if (unit != NULL && unit->alliance == 0 && (run = planRun(wp)) != 0) {
         if (!sRunLogged) {
             sRunLogged = 1;
             printf("[story] battle (story %d, map '%s'): running away (%s)\n", (int)swByteGet(GSW_STORY_PROGRESS),
-                   gp->currentMapName, sRunFrom > 0 ? "TTYD_AUTO_BATTLE_RUN" : "no foe takes damage");
+                   gp->currentMapName,
+                   run == 1 ? "TTYD_AUTO_BATTLE_RUN" : run == 3 ? "nothing hurts the foes" : "no foe takes damage");
             fflush(stdout);
         }
         portVersusCpuEscape(wp, unit);
@@ -997,9 +1049,10 @@ static int damagePre(s32* unitId, BattleUnit** target, BattleUnitPart** part, s3
 
 /* --- the pads: the text advance, A now and then in battle --- */
 
-static int choiceFor(const char* tag, const char* before, int num) {
+static int choiceFor(const char* tag, const char* before, int num, int* listed) {
     const char* p = sChoice;
     int fallback = 0;
+    *listed = 0;
     while (p != NULL && *p) {
         const char* colon = strchr(p, ':');
         const char* comma = strchr(p, ',');
@@ -1010,9 +1063,11 @@ static int choiceFor(const char* tag, const char* before, int num) {
         n = (size_t)(colon - p);
         if (n == 1 && p[0] == '*') {
             fallback = atoi(colon + 1);
+            *listed = 1; /* ("*": every choice the auto's) */
         } else if ((tag != NULL && strlen(tag) == n && strncmp(tag, p, n) == 0) ||
                    (before[0] && strlen(before) == n && strncmp(before, p, n) == 0)) {
             const int v = atoi(colon + 1);
+            *listed = 1;
             return v < 0 ? num + v : v;
         }
         p = comma != NULL ? comma + 1 : NULL;
@@ -1043,6 +1098,18 @@ void portStoryTestPad(PADStatus* pads) {
         }
         sSweepPad = 0;
         return;
+    }
+    if (sAutoBattle && gp->inBattle && getenv("TTYD_VERSUS_CPU_SAC") != NULL) {
+        /* (a Star Power the auto battle was made to pick: its game played as the versus computer plays it) */
+        PortVersusCpuPad sac;
+        portVersusCpuSacPad(&sac);
+        if (sac.press != 0 || sac.stickX != 0 || sac.stickY != 0) {
+            pads[0].err = PAD_ERR_NONE;
+            pads[0].button |= (u16)sac.press;
+            pads[0].stickX = (s8)sac.stickX;
+            pads[0].stickY = (s8)sac.stickY;
+            return;
+        }
     }
     if (sWalkFrames >= 0) {
         MarioWork* m = marioGetPtr();
@@ -1150,7 +1217,18 @@ void portStoryTestPad(PADStatus* pads) {
         return;
     }
     if (kind == 2) {
-        const int want = choiceFor(tag, before, num);
+        int listed = 0;
+        const int want = choiceFor(tag, before, num, &listed);
+        if (listed) {
+            /* a choice TTYD_AUTO_CHOICE names is the auto's alone: the input script's own presses meanwhile
+             * (press_until_story's A every 30 frames) picked whatever the cursor was on before the auto's
+             * Down got there, 1 run in 6 (the full run's 05: Frankly's second "lesson?", answered yes, then
+             * a wait for Start for ever) */
+            pads[0].button &= (u16) ~(PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_UP |
+                                      PAD_BUTTON_DOWN | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT);
+            pads[0].stickX = 0;
+            pads[0].stickY = 0;
+        }
         if (n % 8 < 2) {
             pads[0].err = PAD_ERR_NONE;
             if (sel != want && want >= 0 && want < num) {

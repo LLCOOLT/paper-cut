@@ -1,0 +1,29 @@
+{
+ "desc": "#65: the reporter's open-world seed (RDKB5ABHHR, its hash 2EF2C533B7762EDC; the new file's default pools, goal 7, glitchless; its sphere 2 in Boggly Woods) on a file just past the prologue: down to tik_03 from tik_04, along the secret passage Punio opens in the game (open here: chapter 2 starts after his scenes), down the pipe at its end, chapter 2's title card, then Boggly Woods (win_06)",
+ "groups": ["rando", "open_world_ways"],
+ "versions": ["us"],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tik_03,s_bero_1",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "RDKB5ABHHR",
+  "TTYD_OPEN_GOAL": "7",
+  "TTYD_OPEN_LOGIC": "2",
+  "TTYD_OPEN_POOLS": "27",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 12000
+ },
+ "input": "tests/port/input/rando_ow_way_ch2.txt",
+ "log_must": [
+  "\\[open\\] file stamped: seed 'RDKB5ABHHR', pools \\d+, goal 7, logic 2",
+  "open world: seed RDKB5ABHHR: \\d+ places",
+  "\\[open\\] chapter 2's way in: flag 1334 set \\(tik_03\\)",
+  "\\[input\\] where flag GSWF_TIK03_SECRET_DOOR_OPEN \\(1334\\) = 1",
+  "\\[input\\] where: map 'win_06'"
+ ],
+ "log_must_not": ["\\[input\\] walk_to: not reached", "\\*\\*\\* crash"],
+ "timeout": 300
+}

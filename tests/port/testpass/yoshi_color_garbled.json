@@ -1,0 +1,26 @@
+{
+ "desc": "Yoshi's colour bits at 7, no colour of his seven (another game's progress garbled on the way, as a co-op fuzz round's guest took the host's; a damaged save), then Yoshi comes out: he's read as the first colour, never past the colour tables (0.5.1 before: animPoseEntry's strcmp of yoshigroup[7], NULL, a crash)",
+ "groups": [
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": "70",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 200",
+  "yoshi_color 7",
+  "party 4",
+  "wait 300",
+  "end"
+ ],
+ "log_must": [
+  "\\[input\\] yoshi_color 7: read back 0"
+ ],
+ "timeout": 120
+}

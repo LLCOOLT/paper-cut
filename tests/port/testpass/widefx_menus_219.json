@@ -1,0 +1,55 @@
+{
+ "desc": "Widescreen 21:9 (no scene limits), nothing still drawn at 4:3 (wide_check): the pause menu's backdrop and each of its tabs, opening and closing (Rogueport's plaza, gor_01)",
+ "groups": [
+  "widescreen",
+  "widefx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "widescreen": 1,
+  "aspect_ratio": 4,
+  "aspect_scene_limits": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": [
+  "wait 60",
+  "press start",
+  "wait 40",
+  "shot m00",
+  "press r",
+  "wait 30",
+  "shot m01",
+  "press r",
+  "wait 30",
+  "shot m02",
+  "press r",
+  "wait 30",
+  "shot m03",
+  "press r",
+  "wait 30",
+  "shot m04",
+  "press r",
+  "wait 30",
+  "shot m05",
+  "press b",
+  "wait 40",
+  "shot closed",
+  "end"
+ ],
+ "wide_check": {},
+ "timeout": 120,
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "expect_shots": [
+  "m05",
+  "closed"
+ ]
+}

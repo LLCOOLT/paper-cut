@@ -1,0 +1,63 @@
+{
+ "desc": "a phone guest's app goes to the background for 20 s as iOS suspends it (TTYD_SYNC_BACKGROUND_AT ...:close): the others told it stepped away, its relay connection closed cleanly (its ticket and session id kept), the game held; the host frees its seat but keeps it for it (no newcomer takes it while it's away); back in front it connects again at once with its ticket, the session resumes and the seat is its again, no end window",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 3000",
+     "give 149",
+     "coins 20",
+     "wait 8800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_EXIT_FRAMES": 12000
+    },
+    "log_must": [
+     "co-op: player 2 stepped away \\(their app in the background\\)",
+     "co-op: seat 2's player 2 is gone: the seat is free",
+     "co-op: player 2 is back: seat 2 again",
+     "net: session resumed with player 2"
+    ],
+    "log_must_not": [
+     "end: "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 5900"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 6000,
+     "TTYD_SYNC_BACKGROUND_AT": "1500:20000:close"
+    },
+    "log_must": [
+     "co-op: this player steps away",
+     "net: the app goes to the background: its connections closed, its place kept",
+     "net: back from the background after 20 s: the relay asked again at once",
+     "net: session resumed with player 1"
+    ],
+    "log_must_not": [
+     "end: "
+    ]
+   }
+  ]
+ },
+ "timeout": 400
+}

@@ -1,0 +1,54 @@
+{
+ "desc": "a host's messages naming what this game doesn't have are left out, not acted on: a scene's pull to a map no game has (gor_99: its map change crashed on the null map) and a together start of a kind no game knows (TTYD_NET_FUZZ_INJECT hands them to the guest's handlers as from the host); the guest plays on, linked",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1800,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1800"
+    ],
+    "env": {
+     "TTYD_NET_FUZZ_FROM": 200,
+     "TTYD_NET_FUZZ_INJECT": "r:1:40:36@0=14@4=07@8=676f725f3939;r:1:63:8@0=39300000@4=01"
+    },
+    "log_must": [
+     "fuzz: inject: a reliable one from player 1, type 40, 36 bytes",
+     "scene: player 1's pull dropped: its map isn't a map's name",
+     "together: the host's start of kind 12345: not one this game knows",
+     "fuzz: inject: taken \\(no crash\\)"
+    ],
+    "log_must_not": [
+     "warped to gor_99",
+     "\\*\\*\\* crash"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true
+  }
+ },
+ "timeout": 300
+}

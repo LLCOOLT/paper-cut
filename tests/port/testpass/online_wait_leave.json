@@ -1,0 +1,55 @@
+{
+ "desc": "the guest leaves while it waits for its host: the host's game gone without a word, 'Waiting for <host> to come back...' comes up with Keep waiting and Leave the room; the guest picks Leave the room (TTYD_SYNC_WAIT_PICK=leave, a second after it's up) long before the wait would end: 'You left the room.' and where to go, as any Leave",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_EXIT_FRAMES": 1500
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 4900"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 5000,
+     "TTYD_SYNC_WAIT_PICK": "leave",
+     "TTYD_SYNC_END_PICK": "title"
+    },
+    "log_must": [
+     "co-op: the host's game is gone: waiting 120 seconds for it",
+     "wait: Waiting for Test Host to come back\\.\\.\\.",
+     "wait: chose \"Leave the room\"",
+     "end: You left the room\\.",
+     "end: chose \"Title screen\""
+    ],
+    "log_must_not": [
+     "end: Test Host left the room"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false,
+   "linked": false
+  }
+ },
+ "timeout": 300
+}

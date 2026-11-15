@@ -18,7 +18,6 @@ namespace {
 
 constexpr const char* kTab = "Modes";
 constexpr unsigned kPlay = PORT_SETTING_CHANGES_PLAY;
-constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 std::string sMessage;
 
@@ -58,7 +57,7 @@ const char* pitAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   const char* why = nullptr;
   return portPitMoverGo(&why) ? "Down to the 50th floor once the menu is closed." : why;
@@ -137,7 +136,7 @@ const char* exhibitionAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   const char* why = nullptr;
   int ok;
@@ -253,7 +252,9 @@ struct Register {
                           kPlay, "pg_newsletter", "newsletter trouble delivery rogueport post game");
     portSettingsDeclare("pg_crane_prizes", 0, 0, 1);
     portSettingsAddToggle(kTab, "Crane game prizes",
-                          "After the story, the X-Naut crane game's coins are prizes, a new batch each visit.", kPlay,
+                          "After the story, the X-Naut crane game's coins are prizes, a new batch each visit. From "
+                          "the next room.",
+                          kPlay,
                           "pg_crane_prizes", "crane game x-naut fortress prizes post game");
     portSettingsDeclare("pg_buy_tokens", 0, 0, 1);
     portSettingsAddToggle(kTab, "Buy Pianta tokens",

@@ -8,6 +8,8 @@
 #include "port/battlex.h"
 #include "port/pm64_media.h"
 #include "port/open_world.h"
+#include "port/settings.h"
+#include "port/pm64.h"
 #endif
 #include "eff/eff_mahojin.h"
 #include "version.h"
@@ -7378,6 +7380,17 @@ static s32 naniga_okorukana_cook(void) {
     return 182;
 }
 
+/* The recipe lookups' result word. FAKE (GameCube): a volatile u32 cast orders the args[n] loads as in the target.
+ * PC port: never cast there: a script word is 64 bits wide, and a u32 cast turns LW(2)'s negative code into a large
+ * positive one, which evtSetValue takes for no variable at all: the dish was never set, LW(2) kept a stale 4 and
+ * cooking_flag's swSet(4 - 114) wrote before the saved flags, into the game's own state (a crash on the next frame:
+ * a player's report, Zess T.'s two-ingredient recipes on Windows). */
+#ifdef TARGET_PC
+#define COOK_ARG(w) (w)
+#else
+#define COOK_ARG(w) ((volatile u32)(w))
+#endif
+
 /**
  * Looks up an item by its internal id string in itemDataTable and returns its index, or 0 if none matches.
  * Used to turn the recipe table's names into items.
@@ -7446,8 +7459,8 @@ static USER_FUNC(cook_chk) {
     parsePop();
     fileFree(file);
     // FAKE: volatile casts, see the retail cook_chk.
-    evtSetValue(event, (volatile u32)args[1], itemNameToID(result));
-    evtSetValue(event, (volatile u32)args[2], itemNameToID(result2));
+    evtSetValue(event, COOK_ARG(args[1]), itemNameToID(result));
+    evtSetValue(event, COOK_ARG(args[2]), itemNameToID(result2));
     return EVT_RETURN_DONE;
 }
 
@@ -7471,7 +7484,7 @@ static USER_FUNC(cook_chk2) {
     if (item1 == 163 || item2 == 163) {
         item2 = naniga_okorukana_cook();
         // FAKE: volatile cast, see the retail cook_chk.
-        evtSetValue(event, (volatile u32)args[2], item2);
+        evtSetValue(event, COOK_ARG(args[2]), item2);
         return EVT_RETURN_DONE;
     }
     file = fileAsyncf(0, NULL, "%s/cooking.xml", getMarioStDvdRoot());
@@ -7503,7 +7516,7 @@ static USER_FUNC(cook_chk2) {
     parsePop();
     fileFree(file);
     // FAKE: volatile cast, see the retail cook_chk.
-    evtSetValue(event, (volatile u32)args[2], itemNameToID(out));
+    evtSetValue(event, COOK_ARG(args[2]), itemNameToID(out));
     return EVT_RETURN_DONE;
 }
 #else
@@ -7529,8 +7542,8 @@ static USER_FUNC(cook_chk) {
         if (strcmp(data->id, R_simple_recipe_table[i].ingredient) == 0) {
             // FAKE: the (volatile u32) casts order the args[n] loads after the inlined itemNameToID as in the target
             // (tried: a result local, a u32 cast of the result, event->args[n]).
-            evtSetValue(event, (volatile u32)args[1], itemNameToID(R_simple_recipe_table[i].result));
-            evtSetValue(event, (volatile u32)args[2], itemNameToID(R_simple_recipe_table[i].result2));
+            evtSetValue(event, COOK_ARG(args[1]), itemNameToID(R_simple_recipe_table[i].result));
+            evtSetValue(event, COOK_ARG(args[2]), itemNameToID(R_simple_recipe_table[i].result2));
             return EVT_RETURN_DONE;
         }
     }
@@ -7562,7 +7575,7 @@ static USER_FUNC(cook_chk2) {
     if (item1 == 163 || item2 == 163) {
         item2 = naniga_okorukana_cook();
         // FAKE: volatile cast, see cook_chk.
-        evtSetValue(event, (volatile u32)args[2], item2);
+        evtSetValue(event, COOK_ARG(args[2]), item2);
         return EVT_RETURN_DONE;
     }
 #ifdef TARGET_PC
@@ -7580,7 +7593,11 @@ static USER_FUNC(cook_chk2) {
         if ((strcmp(data1->id, R_cookbook_recipe_table[i].a) == 0 && strcmp(data2->id, R_cookbook_recipe_table[i].b) == 0) ||
             (strcmp(data2->id, R_cookbook_recipe_table[i].a) == 0 && strcmp(data1->id, R_cookbook_recipe_table[i].b) == 0)) {
             // FAKE: volatile cast, see cook_chk.
-            evtSetValue(event, (volatile u32)args[2], itemNameToID(R_cookbook_recipe_table[i].out));
+            evtSetValue(event, COOK_ARG(args[2]), itemNameToID(R_cookbook_recipe_table[i].out));
+#ifdef TARGET_PC
+            printf("[cook] recipe %u: 0x%x + 0x%x -> 0x%x\n", (unsigned)i, (unsigned)item1, (unsigned)item2,
+                   (unsigned)evtGetValue(event, args[2])); /* (testpass: cook_*.json) */            fflush(stdout);
+#endif
             return EVT_RETURN_DONE;
         }
     }
@@ -7592,6 +7609,104 @@ static USER_FUNC(cook_chk2) {
 #endif
     return EVT_RETURN_DONE;
 }
+
+#ifdef TARGET_PC
+/* PC port, tests only (testpass cook_sweep_*.json, TTYD_STORY_KICK=rel_gor__cook_sweep_evt): every recipe of Zess T.'s
+ * own tables through cook_chk and cook_chk2 themselves (into this script's LW(10..12), as cooking_evt's LW(0..2)),
+ * under each combination of the recipe options (Paper Mario 64's, Paper Cut's, the Japanese release's). Each must
+ * give the table's dish, whatever the options; with Paper Mario 64's recipes on, only the four pairs it takes
+ * (portPm64RecipeFirst) give its dish instead. The options are put back as they were. */
+static USER_FUNC(cook_sweep) {
+    static const char* const kKeys[3] = {"pm64_recipes", "pc_recipes", "pg_jp_recipes"};
+    EvtWord* const saved = event->args;
+    EvtWord args[3];
+    int* opt[3];
+    int was[3];
+    int combo, k, i, j, wrong = 0, taken = 0, singles = 0, pairs = 0;
+
+    for (k = 0; k < 3; k++) {
+        opt[k] = portSettingsDeclare(kKeys[k], 0, 0, 1);
+        was[k] = *opt[k];
+    }
+    for (combo = 0; combo < 8; combo++) {
+        for (k = 0; k < 3; k++) {
+            *opt[k] = combo >> k & 1;
+        }
+        for (i = 0; i < 26; i++) {
+            const s32 item = itemNameToID(R_simple_recipe_table[i].ingredient);
+            const s32 want1 = itemNameToID(R_simple_recipe_table[i].result);
+            const s32 want2 = itemNameToID(R_simple_recipe_table[i].result2);
+            s32 got1, got2;
+            if (item == 0 || item == 163) {
+                continue;
+            }
+            evtSetValue(event, LW(10), -1);
+            evtSetValue(event, LW(11), -1);
+            args[0] = item;
+            args[1] = LW(10);
+            args[2] = LW(11);
+            event->args = args;
+            cook_chk(event, TRUE);
+            event->args = saved;
+            got1 = evtGetValue(event, LW(10));
+            got2 = evtGetValue(event, LW(11));
+            singles++;
+            if (got1 != want1 || got2 != want2) {
+                wrong++;
+                printf("[cook] sweep: options %d%d%d: 0x%x alone -> 0x%x 0x%x, the table's 0x%x 0x%x\n",
+                       combo & 1, combo >> 1 & 1, combo >> 2 & 1, (unsigned)item, (unsigned)got1, (unsigned)got2,
+                       (unsigned)want1, (unsigned)want2);
+            }
+        }
+        for (i = 0; i < VERSION_PICK(289, 292); i++) {
+            const s32 a = itemNameToID(R_cookbook_recipe_table[i].a);
+            const s32 b = itemNameToID(R_cookbook_recipe_table[i].b);
+            s32 want = 0, got;
+            if (a == 0 || b == 0 || a == 163 || b == 163) {
+                continue;
+            }
+            for (j = 0; j <= i; j++) { /* (the first entry of this pair is the one the lookup finds) */
+                const s32 ja = itemNameToID(R_cookbook_recipe_table[j].a);
+                const s32 jb = itemNameToID(R_cookbook_recipe_table[j].b);
+                if ((ja == a && jb == b) || (ja == b && jb == a)) {
+                    want = itemNameToID(R_cookbook_recipe_table[j].out);
+                    break;
+                }
+            }
+            evtSetValue(event, LW(12), -1);
+            args[0] = a;
+            args[1] = b;
+            args[2] = LW(12);
+            event->args = args;
+            cook_chk2(event, TRUE);
+            event->args = saved;
+            got = evtGetValue(event, LW(12));
+            pairs++;
+            if (got != want && portPm64FoodActive() && portPm64FoodIs(got)) {
+                taken++; /* one of the four pairs Paper Mario 64's recipe takes */
+            } else if (got != want) {
+                wrong++;
+                printf("[cook] sweep: options %d%d%d: 0x%x + 0x%x -> 0x%x, the table's 0x%x\n", combo & 1,
+                       combo >> 1 & 1, combo >> 2 & 1, (unsigned)a, (unsigned)b, (unsigned)got, (unsigned)want);
+            }
+        }
+    }
+    for (k = 0; k < 3; k++) {
+        *opt[k] = was[k];
+    }
+    printf("[cook] sweep: %d one-ingredient and %d two-ingredient lookups, Paper Mario 64 %s, %d taken by its "
+           "recipes, %d wrong\n",
+           singles, pairs, portPm64Linked() != PM64_NONE ? "linked" : "not linked", taken, wrong);
+    fflush(stdout);
+    return EVT_RETURN_DONE;
+}
+
+extern EvtWord cook_sweep_evt[];
+EVT_BEGIN(cook_sweep_evt)
+    CALL(cook_sweep)
+    RETURN
+EVT_END()
+#endif
 #endif
 
 /** Returns TRUE when item is not 0, i.e. when there is a dish to cook. */
@@ -8199,9 +8314,14 @@ static USER_FUNC(chk_cook_msg) {
 /** Marks dish args[0] as cooked in the recipe log (swSet with the item number minus 114). */
 static USER_FUNC(cooking_flag) {
 #ifdef TARGET_PC
+    printf("[cook] Zess T. gave dish 0x%x\n", (unsigned)evtGetValue(event, event->args[0])); /* (testpass: cook_*.json) */
+    fflush(stdout);
     if (portItemIsHeld(evtGetValue(event, event->args[0]))) {
         portPm64FoodMarkCooked(evtGetValue(event, event->args[0])); /* (Tayce T.'s: the recipe book's own record) */
         return EVT_RETURN_DONE; /* the port's dishes have no Recipe Log flag (port/include/port/battlex.h) */
+    }
+    if (evtGetValue(event, event->args[0]) < 114) {
+        return EVT_RETURN_DONE; /* (no dish: a flag before the saved flags would be written, the game's state) */
     }
 #endif
     swSet(evtGetValue(event, event->args[0]) - 114);

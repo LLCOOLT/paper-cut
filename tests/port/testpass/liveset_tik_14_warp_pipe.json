@@ -1,0 +1,32 @@
+{
+ "desc": "Warp pipes in the sewers turned on in tik_14: its side pipe asks where to at once (the entrance and its registered exit both changed), and off again",
+ "groups": [
+  "settings",
+  "maps_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "tik_14",
+  "TTYD_STORY": "405",
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "settings": {
+  "remake_warp_pipes": 0
+ },
+ "input": [
+  "wait 60",
+  "setting remake_warp_pipes 1",
+  "wait 30",
+  "setting remake_warp_pipes 0",
+  "wait 30",
+  "where",
+  "end"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "\\[input\\] setting remake_warp_pipes = 1[\\s\\S]*\\[remake\\] tik_14: the warp pipe on[\\s\\S]*\\[remake\\] tik_14: the warp pipe off"
+ ]
+}

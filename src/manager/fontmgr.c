@@ -142,6 +142,14 @@ static inline FontWidthEntry* fontGetWidth(u16 code) {
     FontWidthBlock* block = (FontWidthBlock*)&pfh[1];
     u32 i;
 
+#ifdef TARGET_PC
+    if (pfh == NULL) { /* (before the logos load the font: every glyph is 0 wide; see JUTFont_CodeToGlyph) */
+        static FontWidthEntry sNoFont;
+        sNoFont.kerning = 0;
+        sNoFont.width = 0;
+        return &sNoFont;
+    }
+#endif
     for (i = 0; i < pfh->blockcount; i++) {
         switch (block->magic) {
             case 'WID1':
@@ -1272,6 +1280,13 @@ u16 JUTFont_CodeToGlyph(u32 code) {
 #define PORT_GLYPH_FOUND() ((void)0)
 #endif
 
+#ifdef TARGET_PC
+    /* PC port: the port's own windows (online's join and wait windows) can come up before the logos load the
+       font; no font, no glyph (fontGetWidth and _JUTFont_DrawPos then measure and draw nothing) */
+    if (pfh == NULL || pfi == NULL) {
+        return 0;
+    }
+#endif
     map = (BinaryFontMap*)&pfh[1];
     glyph = pfi->replace;
     blockcount = pfh->blockcount;
@@ -1444,6 +1459,11 @@ static void _JUTFont_DrawPos(u16 code, s16 x, s16 y) {
     f32 tv;
     f32 scale;
     u8 kern;
+#ifdef TARGET_PC
+    if (blockGlyph == NULL) { /* (no font loaded yet: nothing to draw; see JUTFont_CodeToGlyph) */
+        return;
+    }
+#endif
     entry = fontGetWidth(code);
     kern = entry->kerning;
     glyph = blockGlyph;

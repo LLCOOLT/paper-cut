@@ -90,8 +90,18 @@ float portRulesPowerLiftMax(float max);
 int portRulesNoStageHazards(void);
 /* battle_audience.c BattleAudienceItemOn ("no_audience_throws"). */
 int portRulesNoAudienceThrows(void);
+/* battle_audience.c BattleAudience_CheckReactionPerPhase: 1 when phase reaction `reaction` (4 the Boo, 9 the
+   Shy Guy's run) is left out (a shared online battle: the crowd's acts on the battle are off, as its throws) */
+int portRulesNoAudienceStageActs(int reaction);
 /* battle_camera.c, evt_cam.c ("less_shake"): a shake's size. */
 float portRulesShakeScale(void);
+/* mario_motion.c marioFall, peach_parasol_pc.c ("spring_jump_standing"): the Ultra Boots' Spring Jump
+ * starts only from standing, never straight out of a landing. */
+int portRulesSpringStanding(void);
+/* marioFall: a landing that would go into the Spring Jump may (logged with TTYD_JUMP_LOG=1). */
+int portRulesSpringLanding(void);
+/* marioBoots, mot_stay: a Spin Jump or Spring Jump started, logged with TTYD_JUMP_LOG=1 (tests). */
+void portRulesJumpLog(const char* what);
 
 /* battle_seq_command.c BattleCommandInput ("rules_audience_pause"): drops
  * this frame's presses while something the audience threw is in the air. */

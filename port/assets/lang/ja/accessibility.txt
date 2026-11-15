@@ -3,8 +3,8 @@
 Colour-blind filter
 色覚補正フィルター
 
-Shifts the colours your eyes confuse into ones they can tell apart, over the whole picture (a daltonization correction, not a simulation).
-見分けにくい色を見分けやすい色へずらします。画面全体にかかります（シミュレーションではなく、ダルトナイズによる補正）。
+Shifts the colours your eyes mix up into ones you can tell apart, over the whole picture.
+見分けにくい色を、見分けやすい色へずらします。画面全体にかかります。
 
 Protanopia (red-blind)
 1型色覚（赤）

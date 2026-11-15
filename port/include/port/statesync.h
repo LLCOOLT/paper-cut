@@ -59,11 +59,19 @@ int portStateSyncCoopSeatTaken(int seat);
    whose pouch and party are the shared ones (the item itself leaves through the pouch's own changes). */
 int portStateSyncCoopMarioMenuOk(void);
 int portStateSyncCoopMarioMenuHeld(void);
+/* A guest joined with its Start menu up: the menu closes itself through its own close (win_root.c: the
+   Online page's Close, B at the tabs), and the game follows the host's from there (statesync_pc.c) */
+int portStateSyncMenuCloseWanted(void);
 void portStateSyncCoopItemUsed(int item, int target);
 void portStateSyncCoopPartnerPicked(int partner);
 /* tests (input_pc.c's wait_peer): another game in the session shows what: "card" (its player's card open),
    "paused" (the host's world held by a Start menu); "!" before either: not */
 int portStateSyncPeerShows(const char* what);
+/* tests (input_pc.c's "online last_pause"): this game's pauses from now on are marked its last (a bit of
+   PlayerMsg.paused, set only while paused): a guest's "wait_peer paused_last" waits for that one alone, never
+   counting pauses it may have missed while away (nm51f l51-053) */
+void portStateSyncMarkLastPause(void);
+void portStateSyncTestPause(int on); /* a test's: this game reads as paused to the others (online hold_pause) */
 /* The host's pick for everyone (the Online screen's lobby): pick 1 the adventure, 10-16 the party games;
    a, b its arguments. Set: the host only (to every guest, and to a guest joining later). Get: 0 none,
    *version +1 per new pick. */
@@ -81,8 +89,15 @@ int portStateSyncSeatAsked(int* fromPlayer, int* seat);
 void portStateSyncSeatAnswer(int yes);
 void portStateSyncSeatSet(int seat, int player);
 int portStateSyncSeatPending(void);
-/* a player's seat (1-4) while playing together, 0 none (a shared battle's characters go by it) */
+/* a player's seat (1-4) while playing together, 0 none (a shared battle's characters go by it): its own
+   controller's, not its second controller's */
 int portStateSyncSeatOf(int player);
+/* seat (2-4) is its player's second controller's: a guest with two controllers plays two seats (SeatPlayer is
+   that guest for both); its card isn't mirrored, its character is the host's game's to walk */
+int portStateSyncSeatSub(int seat);
+/* the host: seats a and b's players swapped at the next calm moment (each with its controller, a second
+   controller's too); 0 and *why when it can't be (Mario's seat never a second controller's or nobody's) */
+int portStateSyncSeatSwap(int a, int b, const char** why);
 /* a co-op guest: seat (2-4)'s character in the host's game (port/player_menu.h's portCoopCharacterOf there:
    -1 Luigi, 0 nobody, else a party member) and its Paper Mario 64 look (pm64, may be NULL);
    PORT_STATESYNC_NO_CHARACTER when this game isn't a co-op guest or the host's haven't come yet */
@@ -149,6 +164,23 @@ int portStateSyncCopyHeld(void);
 int portStateSyncSceneShown(void);
 /* Try again after a failure (the last Host or Join, as it was asked); 0 none to try */
 int portStateSyncRetry(void);
+/* A phone's app and online play (docs/STATE_SYNC.md "Leaving and coming back"): the system's lifecycle
+ * (android_pc.c, ios_app.m). AWAY, the app about to go to the background: the others are told this player
+ * stepped away (their place, seat and link kept up to 10 minutes; a shared battle plays their units at once),
+ * sent before the app is held; SUSPEND, it's in the background where the system takes its sockets (iOS): its
+ * connections closed cleanly, its place kept; BACK, in front again: connected again at once, the others told. */
+enum { PORT_SYNC_APP_BACK, PORT_SYNC_APP_AWAY, PORT_SYNC_APP_SUSPEND };
+void portStateSyncBackground(int state);
+/* player 1-4 said they stepped away and hasn't come back (their app in the background) */
+int portStateSyncPlayerAway(int player);
+/* A session that ended without a Leave (a crash, the system ending a phone's app in the background) is
+ * offered again for 15 minutes (<user>/online_resume.txt, online_resume_pc.c): never joined by itself. Offer:
+ * 1 with the room's host's name (this player's own when it hosted) and whether this player hosted; Resume: back
+ * in that room (the same seat: a host opens the same room, with the same code, its players coming back to
+ * theirs); Forget: not offered again. */
+int portStateSyncResumeOffer(char* hostName, size_t cap, int* hosted);
+int portStateSyncResume(void);
+void portStateSyncResumeForget(void);
 /* the online service's failure (the relay can't be reached, or dropped for everyone), English */
 #define PORT_SYNC_NO_SERVICE "Can't reach the online service. Try again, or play on one computer."
 
@@ -172,6 +204,10 @@ void portStateSyncCoopSeatMoved(int seat, const char* why);
 /* second_player_pc.c: helper h's (0 the partner, 1 player 3's, 2 player 4's) player has taken it, and
    set so (a co-op guest following the host's word) */
 int portCoopHelperFree(int h);
+/* a helper's character in the air with nothing to land it (second_player_pc.c): down on the floor under it, its
+   air flags off; 1 when it was in the air */
+struct PartyEntry;
+int portCoopHelperLand(struct PartyEntry* party);
 void portCoopHelperSet(int h, int free);
 /* a co-op guest: helper h's character (1, 2: players 3 and 4's) the host's one here (its party member) */
 void portCoopGuestHelperAs(int h, int member);
@@ -200,6 +236,7 @@ enum {
     PORT_COOP_ACT_PICK,       /* the Character strip or wheel: a the strip's entry (port/player_menu.h) */
     PORT_COOP_ACT_ITEM,       /* an item from Mario's Start menu (seat 1): the host's answer to it */
     PORT_COOP_ACT_MENU_PARTNER, /* a partner from Mario's Start menu (seat 1): the host's answer */
+    PORT_COOP_ACT_SPIN,         /* Luigi's Spin Dash (Brothers mode, port/include/port/pm64_spin.h): where, which way */
 };
 /* the guest: an action of its seat's character, shown here now (at x, y, z facing dir; name: the NPC or block;
    a, b: the kind's numbers; prev: what a refusal puts back, the partner or companion it had). Its number, 0:
@@ -221,6 +258,7 @@ void portCoopGuestActUndo(int h, int kind, int prev);
 /* brothers_pc.c: the host, a guest's swing or talk (1 done); the guest, one refused taken back */
 int portBrothersGuestSwing(float x, float y, float z, float dir);
 int portBrothersGuestTalk(const char* npc, float x, float y, float z);
+int portBrothersGuestSpin(float x, float y, float z, float dir);
 void portBrothersGuestUndo(int kind);
 struct PADStatus;
 void portStateSyncApplyPad(struct PADStatus* pads); /* the pad read (DEMOPad.c): a shared battle's pads */
@@ -247,7 +285,8 @@ int portStateSyncBattleStep(void* work, int gate, int ours);
 /* tests (a hang's report): where the shared battle's waits stand, in the log */
 void portStateSyncBattleDebug(void);
 /* tests (the auto-battle's hang watch): how long this game has waited on another game's word in its shared
-   battle, in ms (0: not waiting). A slower game's turn isn't this game's hang: its frames race on meanwhile */
+   battle, in ms (0: not waiting), its start's waits (the invitation's answers, the go, the loading) too. A
+   slower game's turn isn't this game's hang: its frames race on meanwhile */
 unsigned portStateSyncBattleWaitMs(void);
 /* evt_npc_battle_start: 1 when this game already won this NPC's script battle with the other players, here and
    not long ago, as another player's (its own script coming to the same fight later): the script goes on as after
@@ -256,11 +295,25 @@ int portStateSyncScriptBattleFought(const void* npc);
 /* btlseqAct 0x6000006: 1 while this game waits for the random numbers for the action (from the game of the
  * player whose unit acts, A's for the enemies: that game itself never waits) */
 int portStateSyncBattleExec(void* work);
-/* evtmgrMain, each event's turn (its unit, EventEntry.unitId): the acting unit's scripts draw from the
- * action's own random numbers in a shared battle, the same in every game, never from those the rest of
- * each game draws from (Begin swaps them in, End back) */
-void portStateSyncBattleEvtBegin(int unitId);
+/* evtmgrMain, each event's turn (an EventEntry): the acting unit's scripts (by EventEntry.unitId) draw from
+ * the action's own random numbers in a shared battle, the same in every game, never from those the rest of
+ * each game draws from; a stage event (portStateSyncBattleStageEvent) and its children from its own (Begin
+ * swaps them in, End back) */
+void portStateSyncBattleEvtBegin(void* entry);
 void portStateSyncBattleEvtEnd(void);
+/* The stage's events in a shared battle (battle_stage_object.c: a falling object, the iron frame, the nozzles'
+ * turns and bursts, a background set falling, the units' ceiling-fall reactions): the stage decides each in the
+ * same moment of every game (an action's script, a step of the battle's sequence), but its event runs once the
+ * others are over, a different number of frames later in each game, and draws its picks (a target, a dodge, a
+ * status) then. So each stage event draws from random numbers of its own, the same in every game (from the
+ * battle, the step and its order in the step), never from the rest's. `what` names it in the log */
+void portStateSyncBattleStageEvent(void* entry, const char* what);
+/* a stage decision outside an action's script (the nozzles' type at the first turn): its draws from the stage's
+ * own numbers in a shared battle (Begin: 1 swapped, *keep the rest's; End puts them back) */
+int portStateSyncBattleStageDrawBegin(unsigned* keep);
+void portStateSyncBattleStageDrawEnd(unsigned keep);
+/* tests: $TTYD_STAGE_FORCE, BattleDebugFlags the stage's events are forced with (0 none) */
+unsigned portStateSyncBattleStageForce(void);
 /* a draw by chance of the acting unit's scripts in a shared battle (btlevtcmd_ChoiceSamplingEnemy,
  * btlevtcmd_DrawLots, btlevtcmd_GetRandomValue, evt_sub_random): the deciding game's (A's for an enemy).
  * Wait, before this game's own draw: 1 the script waits for the decider's; Done, after it: the decider's
@@ -320,6 +373,10 @@ int portStateSyncPhase(void);
 const char* portStateSyncCode(void); /* the room's code as shown (K7P2-QX9M), "" when not in a room */
 int portStateSyncPort(void);         /* hosting by address: the port, 0 otherwise */
 const char* portStateSyncNote(void); /* the last refusal or failure (English), "" none */
+/* the relay said its day is mostly used (relay 0.5.1 "busy" to a new host): PORT_SYNC_RELAY_BUSY, else ""
+   (for the Multiplayer page to show; the room plays on) */
+#define PORT_SYNC_RELAY_BUSY "The online service is busy today: new rooms may be turned away until midnight UTC. Connecting by address still works."
+const char* portStateSyncRelayBusy(void);
 /* the host, linked: a versus fight with the other player (the Versus page's set-up; the host's
  * side Mario's, the guest's Luigi's), started in both games; 0 and why (English) when it can't.
  * 1: asked; the host's own fight starts once the other player says yes (dropped, with a notice,
@@ -341,6 +398,12 @@ int portStateSyncWatching(void);
  * for the next join (or $TTYD_SYNC_WATCH=1); this game watches now */
 void portStateSyncWatchNext(int on);
 int portStateSyncWatcher(void);
+/* A map change by no entrance (seq_mapchange.c's _load): where this game arrives when it follows another
+ * player into the room (a co-op guest or a watcher after the host, a scene's pull): the other player's
+ * place there, 1; 0 the game's own (0, 0, 0). Without it Mario stood at the room's origin for the first
+ * frames, and a script that waits for him past a line took him there: tik_01's Goomba bullies' scene
+ * played in a co-op guest's copy of the room alone (nm51f l51-051) */
+int portStateSyncArrivePlace(const char* map, float* x, float* y, float* z);
 /* The room list (the relay's: docs/ONLINE_RELAY.md): the next room this game
  * hosts is listed under this name, open to anyone (NULL: not listed; $TTYD_SYNC_LIST=<name> in
  * tests); the version its listing names ("sync-p" and PORT_SYNC_PROTOCOL, below: every game that can
@@ -361,6 +424,11 @@ int portStateSyncCatchUp(void);
 /* evt_msg.c: a script's text box opened (its message's name, or "DIRECT" and the text; the NPC
  * speaking; its window): a scene's, shown to the player pulled into it (layer 4) */
 void portStateSyncSceneText(const char* tag, const char* text, const char* speaker, int window);
+/* msgdrv.c: more text in that text box (msgWindow_Add: the conversation goes on in it), shown there too */
+void portStateSyncSceneTextAdd(const char* text, int window);
+/* evt_msg.c: a script's choice opened (its message's name, or "DIRECT" and the text; its window): the scene's
+   players see it, its cursor as its reader moves it (the reader's game's keys choose) */
+void portStateSyncSceneSelect(const char* tag, const char* text, int window);
 
 /* Players' names: each game's PLAYER messages carry its player's (the Online tab's "Your name",
  * port/include/port/online_menu.h; $TTYD_SYNC_NAME in tests). Player 1..4's (this game's own too)
@@ -409,13 +477,23 @@ void portStateSyncLaunch(int host, int byAddress, const char* code, int port, in
    the messages' layouts change and it doesn't; after the bump, "sync_protocol.py --update" writes its
    record (tests/port/sync_protocol.txt) again. (0: a build from before it, which compared whole build
    strings: always older.) */
-#define PORT_SYNC_PROTOCOL 3 /* (2: a co-op guest walks its own character, SS_MSG_OWN, and plays its field actions,
+#define PORT_SYNC_PROTOCOL 5 /* (2: a co-op guest walks its own character, SS_MSG_OWN, and plays its field actions,
                                 SS_R_COOP_ACT; in a shared battle each player's own unit's action starts from their
                                 game's random numbers (B_EXEC from its place), each follower beats to A (B_AT sub 1)
                                 and A takes an outcome that came too late as a miss, sent marked (Hdr.pad):
                                 statesync_battle_pc.c. 3: in a shared battle an action's scripts draw from random
                                 numbers of their own, and its draws by chance (an enemy's target, its move) are
-                                the deciding game's, sent as it draws them (B_RES R_PICK)) */
+                                the deciding game's, sent as it draws them (B_RES R_PICK). 4: the host's PLAYER word
+                                carries each number's session count (sessEpoch: a guest forgets another guest's
+                                words when a new player takes that number), SS_R_COUNTS_ABS a sequence after its
+                                counts, and more of the settings are the session's field rules;
+                                the room's digest (SS_MSG_ROOM), the progress digest's stats and area
+                                (DigestMsg), a step's stage and turn (SnapStage), a defeats record that
+                                defeats its enemies; the acknowledgement is u32 expect, u32
+                                flags (ACK_GAP), u32 the held ones' mask; the direct connection's
+                                SS_R_DIRECT and its packets (port/online_ice.h). 5: a walked character's facing in
+                                its OWN word, and a scene's text boxes and choices mirrored page by page
+                                (SS_R_SCENE's text, select and their ends)) */
 /* the connection (statesync_net_pc.c) */
 enum {
     SS_MSG_HELLO = 1,  /* never through the faults */
@@ -428,6 +506,7 @@ enum {
     SS_MSG_FWD = 13,    /* the host's: u8 origin player, u8 type, payload: a guest's message for the others */
     SS_MSG_PAD = 14,    /* a co-op guest's: its controller, the last frames (to the host) */
     SS_MSG_OWN = 15,    /* a co-op guest's: its own character as its game walks it (to the host) */
+    SS_MSG_ROOM = 16,   /* the room's owner's: its room's digest, every 5 s (statesync_room_pc.c "the room's digest") */
 };
 /* inner types of reliable messages */
 enum {
@@ -447,15 +526,21 @@ enum {
     SS_R_ITEM_GONE = 21, /* map[16], name[16], s32 id, f32 x,y,z */
     SS_R_MOBJ_GONE = 22, /* map[16], name[16] */
     SS_R_MOBJ_HIT = 23,  /* map[16], name[16], s32 state */
+    SS_R_DEAD_HELD = 24, /* the defeat records this game keeps by its own rule (map[16], s32 mask)..., and the map
+                            whose enemies it just let come back (statesync_room_pc.c, portDefeatsMapLoad) */
     SS_R_BATTLE = 30,    /* battle together (statesync_battle_pc.c) */
     SS_R_SETTINGS = 31,  /* the host's settings that change play: a shared battle's in both games */
     SS_R_COOP = 35,      /* co-op: seats, the host's pick, the team bonus (statesync_coop_pc.inc) */
     SS_R_COOP_SAVE = 36, /* co-op: the host's save as it stands, for each guest's copy (coop_save_pc.c) */
     SS_R_COOP_ACT = 37,  /* co-op: a guest's field action and the host's answer (statesync_coop_pc.inc) */
+    SS_R_ROSTER = 38,    /* the host's: every player number's entry (in the room, session count, name), to a new
+                            player at once and to everyone on any change (statesync_pc.c) */
     SS_R_SCENE = 40,     /* scenes together */
     SS_R_FWD = 50,       /* the host's: u8 origin player, u8 inner type, payload: a guest's for the others */
     SS_R_MODES = 60,     /* the party modes' (statesync_modes_pc.c): every game's, through the host */
     SS_R_MODES_END = 70,
+    SS_R_DIRECT = 90, /* the connection's own: the direct connection's offer, answer, candidates
+                         (port/online_ice.h PortIceSig + text); never the game side's, never forwarded */
 };
 /* the party modes' messages (statesync_modes_pc.c), from player `from` */
 void ssModesRel(int from, int type, const uint8_t* p, size_t n);
@@ -473,6 +558,13 @@ void portStateSyncPartyState(int game, const void* state, size_t n); /* the host
 int portStateSyncPartyStateGet(int game, void* out, size_t cap, unsigned* version);
 void portStateSyncPartyPress(int game, unsigned short buttons); /* a guest: its player's presses */
 unsigned short portStateSyncPartyPressed(int player);          /* the host: player 2..4's, taken */
+/* a guest leaves the host's party game on its own (Z, or B where the host's first controller's B leaves): the
+ * guest's game closes it at once and tells the host, whose game plays on without that player (the quiz) or
+ * ends it (the duel against that player); the other guests see it in the host's next state. The host: the
+ * players who left game `game` since it last asked (bit p for player p), taken */
+void portStateSyncPartyLeave(int game);
+unsigned portStateSyncPartyLeft(int game);
+int portStateSyncPlayerInRoom(int player); /* player 1..4 still linked to the room (heard from lately or not) */
 
 /* The raid boss (raid_aurora.c) with each player in their own game: the host starts it, and each
  * guest's game starts the same raid; the boss fight is one shared battle (the host's script's,
@@ -520,22 +612,86 @@ void ssNetSendTo(int player, int type, const void* p, size_t n);
 void ssNetSendRelTo(int player, int type, const void* p, size_t n);
 void ssNetSend(int type, const void* p, size_t n);    /* unreliable, to all */
 void ssNetSendRel(int type, const void* p, size_t n); /* reliable, to all */
+/* the reliable messages to player so far, as a mark (its link's next sequence; 0 with none), and whether every one
+   up to a mark is acknowledged (or the link began again since) */
+unsigned ssNetRelMark(int player);
+int ssNetRelAcked(int player, unsigned mark);
+/* unreliable, in a room at the next 3 frames even if its kind may wait (a place whose player's state changed) */
+void ssNetSendToNow(int player, int type, const void* p, size_t n);
+/* a room's pace to that player (statesync_net_pc.c "a room's batches"): the frames places, lists and
+ * acknowledgements may wait for its next relay message (0: every 3 frames); watch: a watcher's link */
+void ssNetPace(int player, int frames, int watch);
 /* blocks for up to ms waiting for something to arrive (a shared battle's set-up) */
 void ssNetWait(int ms);
 void ssNetSleep(int ms); /* the tests' pace */
 /* a game ending: pumps until every reliable message is acknowledged (at most ms) */
 void ssNetDrain(int ms);
 int ssNetRttMs(int player);   /* the last round trip to that player (the host's guests, a guest's host), -1 none */
+/* the connection's state for online_status_pc.c: ms since anything came from that player (-1 not linked); the
+   protocol this game plays (this game's own way out down: ssNetSelfDown, below) */
+long long ssNetQuietMs(int player);
+unsigned ssNetProtocol(void);
+/* the join's last steps, as the game side sees them (statesync_coop_pc.inc): -1 not linked to the host; 0 none
+   to wait for (a party game, each player's own game); 1 the host isn't in a game yet; 2 its progress not here
+   yet; 3 not in its world yet; 4 in it */
+int ssJoinWorldStep(void);
+int ssNetDirect(int player);  /* the messages to that player go direct (port/online_ice.h), not by the relay */
 unsigned long long ssNetOutMs(void); /* when bytes last went onto the wire (the delay log's "out") */
 void ssNetPoll(void);     /* the host, as the controllers are read: what came since the frame's pump */
-void ssNetFrameEnd(void); /* the frame's end: a room's batch (every 3 frames) */
+void ssNetFrameEnd(void); /* the frame's end: a room's batches due (every 3 frames) */
 void ssNetRemove(int player); /* the host: that player's game turned away for the rest of the session */
+void ssNetBan(int player);    /* the host: that player's game turned away if it comes back (ssNetRemove's first half) */
+int ssNetPlaceHeld(int player); /* a room's host: a game holds that player's relay place (linked or not) */
 const char* ssNetSummary(void);
+/* a phone's app to the background (bg 1: what waits sent now, a tenth of a second at most; close 1, iOS: its
+   connections closed cleanly too, its place kept) and back (bg 0: connected again at once when it was long or
+   closed) */
+void ssNetBackground(int bg, int closeConns);
+/* that player said they stepped away for seconds (0: they're back): their quiet isn't a drop meanwhile, and
+   their place is kept from a new game */
+void ssNetPeerAway(int player, int seconds);
+int ssNetSelfDown(void); /* this game's own connection is down now (reconnecting): the others aren't gone */
+/* resuming a session after this game closed (online_resume_pc.c): Info, what keeps this session's place now
+   (0 when not on); Set, the next ssNetBegin takes it (its session id, the relay's ticket, a joining game's
+   place, a host's players' ids by place: peers, SS_PLAYERS - 1 of them, or NULL) */
+typedef struct SsNetResume {
+    int host, room, port, asPeer;
+    uint64_t nonce;
+    char where[128]; /* the room's whole code (8 characters), or the host's address; a host by address "" */
+    char ticket[48];
+    uint64_t peers[SS_PLAYERS - 1];
+} SsNetResume;
+int ssNetResumeInfo(SsNetResume* r);
+void ssNetResumeSet(uint64_t nonce, const char* ticket, int asPeer, const uint64_t* peers);
+/* a player said they stepped away (a phone's app in the background) and hasn't said they're back (the
+   game's side, statesync_coop_pc.inc): a shared battle plays their units at once */
+int ssPlayerAway(int player);
+/* tests ($TTYD_SYNC_BACKGROUND_AT=b<step>:...): a shared battle reached that step (statesync_battle_pc.c) */
+void ssLifecycleBattleStep(unsigned step);
+/* <user>/online_resume.txt (online_resume_pc.c): the session this game is in, written whole (a temporary
+   file, then renamed over the last) while it plays, gone on a Leave. Read: 1 when there and written within
+   the last 15 minutes ($TTYD_SYNC_RESUME_MAX=<seconds>, tests) */
+typedef struct SsResumeFile {
+    SsNetResume net;
+    int watch;                    /* it joined to watch */
+    int player, seat;             /* this game's player number and seat (0 none) */
+    char hostName[SS_NAME];       /* the room's host's name (UTF-8) */
+    int lastSeat[SS_PLAYERS + 1]; /* a host's: each player's seat (theirs again when they come back) */
+    int hostSeat;                 /* a host's own seat while a guest played Mario (0) */
+    long long at;                 /* written (seconds since 1970) */
+} SsResumeFile;
+int ssResumeRead(SsResumeFile* r);
+void ssResumeWrite(const SsResumeFile* r);
+void ssResumeDelete(void);
+long long ssResumeNow(void);  /* seconds since 1970 (the file's clock) */
+long long ssResumeMaxS(void); /* how long after it was written a session is offered (15 minutes) */
 /* the game side's (statesync_pc.c); from: the player it came from (forwarded ones: their origin) */
 void ssOnSession(int player, int fresh); /* a session with that player's game (again) */
 void ssOnMessage(int from, int type, const uint8_t* p, size_t n);
 void ssOnRel(int from, int type, const uint8_t* p, size_t n);
 int ssWatchChosen(void); /* the next join watches (the menu's choice or $TTYD_SYNC_WATCH) */
+/* a map's name from another game (NUL within cap), fit to warp to or load: a map of this game's world */
+int ssMapNameOk(const char* s, size_t cap);
 
 /* the room's enemies and objects (statesync_room_pc.c) */
 void ssRoomFrame(unsigned frame, int peerHere, int iOwn);
@@ -543,6 +699,34 @@ void ssRoomMessage(int type, const uint8_t* p, size_t n);
 void ssRoomRel(int type, const uint8_t* p, size_t n);
 void ssRoomReset(void);
 void ssRoomStop(void); /* the mode off: the room's NPCs this game's own again */
+/* The enemies' defeat records (FieldBattleData.deadInfo) and when the enemies come back (docs/STATE_SYNC.md "When
+ * enemies come back"). database.c's setupDataBase, as a map loads, after it put the map's record first: whether
+ * the map keeps records (recordMap) and the game's own rule now (2 the area changed: every record forgotten; 1 all
+ * but this map's and the one before it forgotten; 0 none). This game's own list of the records it keeps follows
+ * that rule always. Online with others it returns 1 and the game's own forgetting is skipped: the map's record
+ * is kept if this game's own rule keeps it or another player's keeps it by theirs (every game tells the others
+ * its list, SS_R_DEAD_HELD); else it's forgotten (its enemies back) here and, told, in every game. 0: the game's
+ * own rule, as alone. */
+int portDefeatsMapLoad(const char* mapName, int recordMap, int rule);
+/* the whole table put another way (a save loaded, a game over's forgetting): this game's own list from it */
+void portDefeatsTableSet(void);
+/* this game's list to the others (a session new, someone new in the room: statesync_pc.c) */
+void ssRoomHeldSend(void);
+/* SS_R_DEAD_HELD from player `from` */
+void ssRoomHeldRel(int from, const uint8_t* p, size_t n);
+/* player p (not this game's) in this online room now: the host's roster's "in" */
+int ssPlayerIn(int p);
+/* the desyncs found and healed in this session (the rooms', for the logs' "desync:" line at the end) */
+void ssRoomDesyncCounts(unsigned* found, unsigned* healed, unsigned* unhealed);
+/* Tests: $TTYD_SYNC_CORRUPT=<kind>[:<arg>]@<when>[,...] puts this game's own shared state wrong on purpose,
+ * unsaid, so the other games' digests must find it and heal it (statesync_room_pc.c, statesync_pc.c,
+ * statesync_battle_pc.c). <when> is the session's frame (a battle's: its step). Kinds: mobj_gone:<name>,
+ * item_gone:<name> (deleted here, its word to the others lost), npc_dead:<name or "enemy"> (defeated here,
+ * unsaid), mask_clear (this room's defeats record forgotten here), item_add:<id> (an item in the pouch the
+ * others never hear of), area_flag:<n> (an area flag flipped here alone), stage (a shared battle's stage
+ * state and turn count put wrong here). 1 once, the first time it's asked at or after its moment: arg gets
+ * what follows the colon ("" none). */
+int ssCorruptDue(const char* kind, unsigned when, char* arg, size_t cap);
 
 /* the ghost (statesync_ghost_pc.c) */
 typedef struct SsGhostPose {
@@ -557,6 +741,12 @@ typedef struct SsGhostPose {
    1 the partner, 2 Brothers mode's Luigi */
 void ssGhostDraw(int other, int which, const SsGhostPose* pose);
 void ssGhostHide(int other, int which); /* other -1: every one; which -1: all */
+/* tests ($TTYD_LOOK_CHECK=1): a character as this screen shows it, once a frame (who: the caller's own number,
+   0..PORT_LOOK_WHO-1): where it is, the way its paper faces (a display direction: 90..270 left), its pose. A
+   "look: BAD:" log line (ssLog) when the pose doesn't fit what it does: walking in place or in steps, standing
+   while it slides along, facing away from where it walks (statesync_ghost_pc.c); 2: a line every frame */
+#define PORT_LOOK_WHO 40
+void portLookCheck(int who, const char* name, float x, float y, float z, float dir, const char* anim);
 /* the other players' ghosts drawn see-through (the setting ghost_see_through: this player's own) */
 int portStateSyncGhostSeeThrough(void);
 void portStateSyncGhostSetSeeThrough(int on);
@@ -566,6 +756,8 @@ void ssBattleFrame(unsigned frame, int peerHere);
 void ssBattleRel(int from, int type, const uint8_t* p, size_t n);
 int ssBattleApplyPad(struct PADStatus* pads);
 int ssBattleBusy(void);
+int ssBattlePullArrive(const char* map, float* x, float* y, float* z); /* a scene's pull's place in map, 1 */
+unsigned ssBattleStageDrifts(void); /* a shared battle's stage apart from player 1's at two steps in a row (healed) */
 int ssBattleHeld(void);  /* a shared battle or scene asked for, under way or waiting (its player kept) */
 void ssBattleStop(void); /* the mode off: a pull let go, a battle's sharing ended */
 /* each game frame, on or off line: a battle taken from another game ends in the field (its script's
@@ -634,6 +826,9 @@ void portCoopBattleCompanions(int players, const int* forms);
 int portCoopBattleCompanion(int wanted, int partner, int taken);
 int portSecondPlayerPartnerOwner(const void* unit);
 void ssProgressRebase(void); /* this game's progress as it is now is the shadow's: nothing of it sent */
+/* a co-op guest: its story flags and words changed for that many frames aren't sent (its script went past a fight
+   the host's game fights or won: the host's flags are the world's; its digest asks for them if they differ) */
+void ssProgressQuiet(unsigned frames);
 int ssSameRoom(void);
 void ssLog(const char* fmt, ...);
 

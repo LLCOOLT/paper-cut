@@ -1,0 +1,176 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Wed, 11 Nov 2026 12:00:00 -0500
+Subject: [PATCH] gfx: a suboptimal surface presents; the frame's GPU waits time out
+
+A SuccessSuboptimal surface texture was dropped and the swapchain configured
+again, which rebuilt every render target after a GPU sync: a surface that
+stays suboptimal (an Android rotation the swapchain doesn't pre-rotate) did
+that every frame and showed nothing. It now presents, and the swapchain is
+configured again once per stretch of suboptimal frames. A surface configured
+again at the same size and format (vsync, HDR, a suboptimal or recreated
+surface) keeps the scene's targets rather than making each again.
+
+The waits at a frame's start (a frame slot, a staging buffer mapped) had no
+timeout: a stopped GPU (a hung or reset device, whose callbacks never come)
+hung the game inside them. After 2 s the frame is skipped with a warning
+("Staging buffer N not mapped after ...") and the next waits again; after 20 s
+without progress the game ends with "The GPU stopped responding".
+---
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index 1dd7e36..c30a605 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -343,6 +343,22 @@ void end_frame() noexcept {
+         wgpu::SurfaceTexture surfaceTexture;
+         g_surface.GetCurrentTexture(&surfaceTexture);
+         surfaceStatus = surfaceTexture.status;
++        // Suboptimal (the surface no longer matches its configuration exactly: an Android rotation the
++        // swapchain doesn't pre-rotate, a size in flight) still presents: the frame is drawn and shown, and
++        // the swapchain is configured again once (below). A surface that stays suboptimal after that (some
++        // phones always are) is left as it is: configuring it again each frame rebuilt every render target
++        // each frame and showed nothing.
++        static bool sSuboptimalRefreshed = false;
++        if (surfaceStatus == wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) {
++          sSuboptimalRefreshed = false;
++        } else if (surfaceStatus == wgpu::SurfaceGetCurrentTextureStatus::SuccessSuboptimal) {
++          if (!sSuboptimalRefreshed) {
++            sSuboptimalRefreshed = true;
++            Log.info("Surface texture is suboptimal, reconfiguring the swapchain once");
++            window::push_custom_event(window::CustomEvent::RefreshSurface);
++          }
++          surfaceStatus = wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal;
++        }
+         if (surfaceStatus == wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal) {
+           currentTexture = std::move(surfaceTexture.texture);
+           currentView = currentTexture.CreateView();
+@@ -526,7 +542,6 @@ void end_frame() noexcept {
+       case wgpu::SurfaceGetCurrentTextureStatus::Timeout:
+         Log.warn("Surface texture acquisition timed out");
+         break;
+-      case wgpu::SurfaceGetCurrentTextureStatus::SuccessSuboptimal:
+       case wgpu::SurfaceGetCurrentTextureStatus::Outdated:
+         Log.info("Surface texture is {}, reconfiguring swapchain", magic_enum::enum_name(surfaceStatus));
+         window::push_custom_event(window::CustomEvent::RefreshSurface);
+diff --git a/lib/gfx/frame.cpp b/lib/gfx/frame.cpp
+index 53f1a29..b815356 100644
+--- a/lib/gfx/frame.cpp
++++ b/lib/gfx/frame.cpp
+@@ -682,9 +682,33 @@ void shutdown() {
+   }
+ }
+ 
++// The waits for the GPU at a frame's start (a frame slot, a staging buffer mapped) give up after
++// GpuWaitTimeout: the frame is skipped (begin_frame false) and the next one waits again, so a GPU that has
++// stopped (a hung or reset device, whose callbacks never come) leaves the game's loop and its window running and
++// says so in the log, rather than hanging inside the wait. One that stays stopped for GpuStallFatal ends the
++// game with that message.
++constexpr auto GpuWaitTimeout = std::chrono::seconds{2};
++constexpr auto GpuStallFatal = std::chrono::seconds{20};
++static PresentClock::time_point g_gpuStallSince{};
++
++// a wait that timed out: logged, and fatal once the GPU has made no progress for GpuStallFatal
++static void gpu_wait_timed_out(const char* what, size_t slot) {
++  const auto now = PresentClock::now();
++  if (g_gpuStallSince == PresentClock::time_point{}) {
++    g_gpuStallSince = now - GpuWaitTimeout;
++  }
++  const auto stalled = std::chrono::duration_cast<std::chrono::seconds>(now - g_gpuStallSince);
++  Log.warn("{} {} not {} after {} s: the GPU isn't progressing, frame skipped", what, slot,
++           std::string_view{what} == "Frame slot" ? "free" : "mapped", stalled.count());
++  if (now - g_gpuStallSince >= GpuStallFatal) {
++    Log.fatal("The GPU stopped responding ({} {} waited for {} s)", what, slot, stalled.count());
++  }
++}
++
+ bool wait_for_staging_buffer(size_t slot) {
+   ZoneScopedN("Wait for buffer map");
+   map_staging_buffer(slot);
++  const auto waitStart = PresentClock::now();
+   while (true) {
+     const auto mappingState = g_mappingStates[slot].load(std::memory_order_acquire);
+     if (mappingState == BufferMapState::Mapped) {
+@@ -693,11 +717,15 @@ bool wait_for_staging_buffer(size_t slot) {
+     if (mappingState == BufferMapState::Unmapped) {
+       return false;
+     }
++    if (PresentClock::now() - waitStart >= GpuWaitTimeout) {
++      gpu_wait_timed_out("Staging buffer", slot); // (its map stays pending: the next frame waits on it again)
++      return false;
++    }
+     wait_for_gpu_progress(std::chrono::milliseconds{1});
+   }
+ }
+ 
+-size_t acquire_frame_slot() {
++std::optional<size_t> acquire_frame_slot() {
+   ZoneScopedN("Acquire frame slot");
+   const auto waitStart = PresentClock::now();
+   while (true) {
+@@ -707,12 +735,17 @@ size_t acquire_frame_slot() {
+       TracyPlot("aurora: frameSlotWaitMs", waitMs);
+       return *slot;
+     }
++    if (PresentClock::now() - waitStart >= GpuWaitTimeout) {
++      gpu_wait_timed_out("Frame slot", 0);
++      return std::nullopt;
++    }
+     wait_for_gpu_progress(std::chrono::microseconds{100});
+   }
+ }
+ 
+ std::optional<size_t> acquire_mapped_staging_buffer() {
+   ZoneScopedN("Acquire mapped staging buffer");
++  const auto waitStart = PresentClock::now();
+   while (true) {
+     if (auto slot = g_stagingSlots.try_acquire()) {
+       if (wait_for_staging_buffer(*slot)) {
+@@ -721,6 +754,10 @@ std::optional<size_t> acquire_mapped_staging_buffer() {
+       g_stagingSlots.release(*slot);
+       return std::nullopt;
+     }
++    if (PresentClock::now() - waitStart >= GpuWaitTimeout) {
++      gpu_wait_timed_out("Staging slot", 0);
++      return std::nullopt;
++    }
+     wait_for_gpu_progress(std::chrono::microseconds{100});
+   }
+ }
+@@ -728,12 +765,17 @@ std::optional<size_t> acquire_mapped_staging_buffer() {
+ bool begin_frame() {
+   ZoneScoped;
+   // pace_frame_start();
+-  const size_t frameSlot = acquire_frame_slot();
++  const auto acquiredFrameSlot = acquire_frame_slot();
++  if (!acquiredFrameSlot) {
++    return false;
++  }
++  const size_t frameSlot = *acquiredFrameSlot;
+   const auto stagingSlot = acquire_mapped_staging_buffer();
+   if (!stagingSlot) {
+     g_frameSlots.release(frameSlot);
+     return false;
+   }
++  g_gpuStallSince = {};
+ 
+   auto& frame = g_framePackets[frameSlot];
+   frame = {};
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index dfe5db4..ad6c798 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -1982,7 +2013,13 @@ static void resize_swapchain_internal(uint32_t width, uint32_t height, uint32_t
+     }
+ #endif
+   }
+-  for (;;) {
++  // The scene's targets only when they change: a surface configured again at the same size (vsync, HDR, a
++  // suboptimal or recreated surface) keeps them, rather than making every one again
++  const bool targetsKept = g_frameBuffer.texture && g_frameBufferResolved.texture && g_depthBuffer.texture &&
++                           (!g_graphicsConfig.normalBuffer || g_normalBuffer.texture) &&
++                           g_frameBuffer.size.width == width && g_frameBuffer.size.height == height &&
++                           g_frameBuffer.format == g_graphicsConfig.surfaceConfiguration.format;
++  for (; !targetsKept;) {
+ #ifndef __EMSCRIPTEN__
+     // Out of video memory for the scene's targets (supersampling on a small card): a smaller factor and again,
+     // not a fatal error in the next draw

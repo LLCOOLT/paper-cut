@@ -1,0 +1,24 @@
+{
+ "desc": "bigger room codes (0.5.1): 10,000 new codes drawn ($TTYD_SYNC_CODE_DRAWS) over three relays: every place's characters even (the room half's first too: 0.5.0 always put the relay's '2' there, leaving 3 random characters, 29,791 rooms; now 4, 923,521), and the room halves' hash spreads the rooms evenly over the relays",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 120,
+  "TTYD_SYNC_CODE_DRAWS": 10000,
+  "TTYD_ONLINE_RELAY": "wss://relay-a.invalid wss://relay-b.invalid wss://relay-c.invalid"
+ },
+ "input": [
+  "wait 100",
+  "end"
+ ],
+ "log_must": [
+  "net: test: 10000 codes drawn: each character (2[3-9]\\d|3\\d\\d)\\.\\.(3\\d\\d|4[01]\\d) times in a place \\(even: 322\\), the first place's (2[3-9]\\d|3\\d\\d)\\.\\.(3\\d\\d|4[01]\\d); rooms on relays 0-3: 3[0-6]\\d\\d 3[0-6]\\d\\d 3[0-6]\\d\\d 0; \"2TST\" is relay [012]'s"
+ ],
+ "timeout": 120
+}

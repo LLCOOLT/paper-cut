@@ -1,0 +1,28 @@
+# Leaving the host's party game online, and the dungeon master away (port/src/aurora/quiz_aurora.c, cards_aurora.c, dungeon_master_aurora.c), in Italiano: an English line, then its translation, then a blank line.
+
+Player 2 left the quiz.
+Il giocatore 2 ha lasciato il quiz.
+
+Player 3 left the quiz.
+Il giocatore 3 ha lasciato il quiz.
+
+Player 4 left the quiz.
+Il giocatore 4 ha lasciato il quiz.
+
+The other player left the duel.
+L'altro giocatore ha lasciato il duello.
+
+{B}: leave the quiz
+{B}: lascia il quiz
+
+Answer with {A}, {B}, {X} or {Y}. {Z} leaves the quiz.
+Rispondi con {A}, {B}, {X} o {Y}. {Z} lascia il quiz.
+
+{Z}: stop watching.
+{Z}: smetti di guardare.
+
+The dungeon master is away: the enemies play themselves until a button is pressed.
+Il signore del dungeon è assente: i nemici giocano da soli finché non si preme un tasto.
+
+The dungeon master is back: the enemies are yours again.
+Il signore del dungeon è tornato: i nemici sono di nuovo tuoi.

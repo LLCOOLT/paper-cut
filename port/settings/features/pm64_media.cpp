@@ -189,7 +189,7 @@ const char* listAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return "Not on the second screen: use the game's Start menu.";
+    return portPauseSecondScreenAct(id, dir);
   }
   const char* why = nullptr;
   return portModePm64FightAs(id - kRowListBoss, sListLoadout, sListEarly, &why) ? "The fight starts once the menu is closed."
@@ -218,6 +218,27 @@ void tattleSection(int) {
       const Pm64EnemyInfo* e = portPm64EnemyInfo(i);
       ImGui::Text(portTr("HP %d"), e->hp);
       ImGui::TextWrapped("%s", portPm64EnemyTattle(i, tattle, sizeof(tattle))[0] != 0 ? tattle : "");
+      ImGui::TreePop();
+    }
+    ImGui::PopID();
+  }
+  // each boss its own entry (though bosses of different fights stand on one unit type): once Goombella tattled it
+  const int bosses = portPm64BossEntryCount();
+  int tattled = 0;
+  for (int i = 0; i < bosses; i++) {
+    tattled += portPm64BossEntryTattled(i);
+  }
+  ImGui::Spacing();
+  ImGui::Text(portTr("Bosses: %d of %d tattled"), tattled, bosses);
+  for (int i = 0; i < bosses; i++) {
+    char name[64];
+    ImGui::PushID(1000 + i);
+    if (!portPm64BossEntryTattled(i)) {
+      ImGui::TextDisabled("%s", "???");
+    } else if (ImGui::TreeNode(portPm64BossEntryName(i, name, sizeof(name)))) {
+      static char tattle[1024];
+      ImGui::Text(portTr("HP %d"), portPm64BossEntryHp(i));
+      ImGui::TextWrapped("%s", portPm64BossEntryTattle(i, tattle, sizeof(tattle)));
       ImGui::TreePop();
     }
     ImGui::PopID();
@@ -284,10 +305,12 @@ struct Pm64MediaSettings {
                           "With your Paper Mario ROM linked: Rowf comes from Toad Town to the Star Haven corner of "
                           "Rogueport's plaza with Paper Mario badges TTYD hasn't got: Dizzy Stomp, Mega Jump, Mega "
                           "Smash, Power Quake, Mega Quake, Triple Dip, Damage Dodge, Peekaboo, Pay-Off and Attack FX "
-                          "A to E, with their names, descriptions and icons from your ROM. Online only when every "
-                          "player has a ROM linked.",
+                          "A to E, with their names, descriptions and icons from your ROM; with Paper Mario Spin Dash "
+                          "on, Speedy Spin, Spin Attack and Dizzy Attack too. Online only when every player has a ROM "
+                          "linked.",
                           PORT_SETTING_CHANGES_PLAY, "pm64_badges",
-                          "paper mario 64 pm64 n64 badges rowf merchant dizzy stomp peekaboo pay-off attack fx");
+                          "paper mario 64 pm64 n64 badges rowf merchant dizzy stomp peekaboo pay-off attack fx speedy "
+                          "spin");
     portSettingsDeclare("pm64_recipes", 0, 0, 1);
     portSettingsAddToggle("Enhancements", "Tayce T.'s recipes",
                           "With your Paper Mario ROM linked: Zess T. cooks Paper Mario's dishes from its recipes "
@@ -324,11 +347,9 @@ struct Pm64MediaSettings {
     portPauseAddForm(&kListForm);
     portSettingsDeclare("pm64_boss_scale", 1, 0, 1); // (modes_aurora.c, pm64_bosses_aurora.c)
     portSettingsAddToggle("Enhancements", "Paper Mario 64 bosses: Scale to your level",
-                          "A fight from the Paper Mario 64 boss list, the Star Haven corner's board or Boss "
-                          "refights: the boss's HP and attack follow Mario's level against the chapter it comes "
-                          "from in Paper Mario, from half of Paper Mario's own numbers for a low level up to "
-                          "exactly them at that level or past it, never more. Off: as strong as the game's "
-                          "post-game. The boss rush keeps its own rules.",
+                          "Paper Mario 64 bosses fought from the boss list, the board or Boss refights match Mario's "
+                          "level, never stronger than in Paper Mario. Off: as strong as the post-game. The boss rush "
+                          "keeps its own rules.",
                           PORT_SETTING_CHANGES_PLAY, "pm64_boss_scale",
                           "paper mario 64 pm64 bosses scale level hp attack easier boss list");
   }

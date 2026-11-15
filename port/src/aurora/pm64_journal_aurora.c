@@ -13,6 +13,7 @@
 #include "port/party.h"
 #include "port/pm64.h"
 #include "port/pm64_enemy.h"
+#include "port/pm64_foes.h"
 #include "port/pm64_media.h"
 #include "port/replay.h"
 #include "port/tr.h"
@@ -36,6 +37,11 @@ static const float kPageX[2] = {20.0f, 250.0f};
 #define LINES 11
 
 static int sOpen, sAt;
+
+/* the pages: the enemies, then each PM64 boss its own (port/pm64_foes.h: portPm64BossEntry*) */
+static int pages(void) {
+    return portPm64EnemyCount() + portPm64BossEntryCount();
+}
 static Pm64Anim sAnim;
 static int sAnimOf = -1;
 static unsigned sAnimGen, sAnimFrame;
@@ -123,7 +129,7 @@ int portPm64JournalEntry(void) {
 void portPm64JournalOpen(struct WindowWork* wp) {
     (void)wp;
     sOpen = 1;
-    if (sAt >= portPm64EnemyCount()) {
+    if (sAt >= pages()) {
         sAt = 0;
     }
 }
@@ -135,7 +141,7 @@ static void help(WindowWork* wp) {
 }
 
 int portPm64JournalMain(struct WindowWork* wp) {
-    const int n = portPm64EnemyCount();
+    const int n = pages();
     if (!sOpen) {
         portPm64JournalOpen(wp);
     }
@@ -241,15 +247,31 @@ void portPm64JournalDisp(struct WindowWork* wp, float x, float y) {
     const GXColor ink = {0x20, 0x18, 0x10, 0xFF};
     const GXColor head = {0x90, 0x28, 0x20, 0xFF};
     const f32 bx = x + BOOK_DX, by = y + BOOK_DY;
-    const int n = portPm64EnemyCount();
+    const int enemies = portPm64EnemyCount(), n = pages();
     const u32 seed = portRandState();
-    const Pm64EnemyInfo* e = portPm64EnemyInfo(sAt);
-    const int seen = portPm64EnemySeen(sAt);
+    /* the page's enemy, or (past the enemies) the boss with its own entry */
+    const int boss = sAt >= enemies ? sAt - enemies : -1;
+    const Pm64EnemyInfo* e = boss < 0 ? portPm64EnemyInfo(sAt) : NULL;
+    const int seen = boss < 0 ? portPm64EnemySeen(sAt) : portPm64BossEntryTattled(boss);
+    int sprite = 0, palette = -1, idle = 0, hp = 0, shown = 0;
     char buf[512], name[48];
     int i, met = 0;
     winBookGX(wp, 1, bx, by);
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < enemies; i++) {
         met += portPm64EnemySeen(i);
+    }
+    for (i = 0; i < n - enemies; i++) {
+        met += portPm64BossEntryTattled(i);
+    }
+    if (e != NULL) {
+        sprite = e->sprite;
+        palette = e->palette;
+        idle = e->idle;
+        hp = e->hp;
+        shown = 1;
+    } else if (boss >= 0 && portPm64BossEntryLook(boss, &sprite, &palette, &idle)) {
+        hp = portPm64BossEntryHp(boss);
+        shown = 1;
     }
     winKirinukiGX(wp, 0, bx - 110.0f, by - 160.0f, 100.0f, 70.0f);
     centredText(bx - 60.0f, by - 166.0f, 0.7f, 88.0f, black, portTrGame("Paper Mario"));
@@ -257,9 +279,11 @@ void portPm64JournalDisp(struct WindowWork* wp, float x, float y) {
     centredText(bx - 60.0f, by - 184.0f, 0.6f, 88.0f, black, buf);
     snprintf(buf, sizeof(buf), "%d/%d", sAt + 1, n);
     centredText(bx - 60.0f, by - 202.0f, 0.65f, 88.0f, black, buf);
-    if (e != NULL) {
+    if (shown) {
         const f32 lx = bx + kPageX[0], rx = bx + kPageX[1];
-        if (seen) {
+        if (seen && boss >= 0) {
+            portPm64BossEntryName(boss, name, (int)sizeof(name));
+        } else if (seen) {
             portPm64EnemyName(sAt, name, (int)sizeof(name));
         } else {
             snprintf(name, sizeof(name), "?");
@@ -270,23 +294,30 @@ void portPm64JournalDisp(struct WindowWork* wp, float x, float y) {
             sAnimOf = sAt;
             sAnimGen = portPm64Generation();
             sAnimFrame = gp->retraceCount;
-            portPm64AnimStart(&sAnim, portPm64NpcSprite(e->sprite), e->idle);
+            portPm64AnimStart(&sAnim, portPm64NpcSprite(sprite), idle);
         } else if (sAnimFrame != gp->retraceCount) {
             const unsigned d = gp->retraceCount - sAnimFrame;
             portPm64AnimStep(&sAnim, (float)(d > 4 ? 4 : d));
             sAnimFrame = gp->retraceCount;
         }
-        portPm64AnimDraw2D(&sAnim, e->palette, lx + PAGE_W / 2.0f, by - 150.0f, 1.5f,
-                           seen ? 0xFFFFFFFFu : 0x302820FFu);
+        portPm64AnimDraw2D(&sAnim, palette, lx + PAGE_W / 2.0f, by - 150.0f, 1.5f, seen ? 0xFFFFFFFFu : 0x302820FFu);
         snprintf(buf, sizeof(buf), portTrGame("No. %d"), sAt + 1);
         textAt(lx, by - 166.0f, 0.62f, PAGE_W, ink, buf);
         if (seen) {
-            snprintf(buf, sizeof(buf), portTrGame("Max HP %d"), e->hp);
+            snprintf(buf, sizeof(buf), portTrGame("Max HP %d"), hp);
             textAt(lx, by - 185.0f, 0.62f, PAGE_W, ink, buf);
-            snprintf(buf, sizeof(buf), portTrGame("Fights as: %s"), portPartyEnemyName(e->host));
-            textAt(lx, by - 204.0f, 0.62f, PAGE_W, ink, buf);
-            portPm64EnemyTattle(sAt, buf, (int)sizeof(buf));
+            if (boss >= 0) {
+                textAt(lx, by - 204.0f, 0.62f, PAGE_W, ink, portTrGame("A Paper Mario boss"));
+                portPm64BossEntryTattle(boss, buf, (int)sizeof(buf));
+            } else {
+                snprintf(buf, sizeof(buf), portTrGame("Fights as: %s"), portPartyEnemyName(e->host));
+                textAt(lx, by - 204.0f, 0.62f, PAGE_W, ink, buf);
+                portPm64EnemyTattle(sAt, buf, (int)sizeof(buf));
+            }
             wrapped(rx, by - 22.0f, 0.62f, PAGE_W, ink, buf[0] != '\0' ? buf : portTrGame("(No Tattle in this ROM's text.)"));
+        } else if (boss >= 0) {
+            wrapped(rx, by - 22.0f, 0.62f, PAGE_W, ink,
+                    portTrGame("Not tattled yet. Have Goombella tattle this Paper Mario boss in its fight."));
         } else {
             wrapped(rx, by - 22.0f, 0.62f, PAGE_W, ink,
                     portTrGame("Not met yet. Paper Mario's enemies turn up in the Pit of 100 Trials and in Master Quest."));

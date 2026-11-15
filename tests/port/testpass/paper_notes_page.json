@@ -8,6 +8,7 @@
  "versions": [
   "us"
  ],
+ "settings": {"paper_notes": 1},
  "env": {
   "TTYD_MAP": "gor_00,s_bero",
   "TTYD_STORY": "150",

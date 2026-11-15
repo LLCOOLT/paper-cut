@@ -1,0 +1,74 @@
+{
+ "desc": "Playing together, a guest's link drops while it joins: the host's whole progress already came, but the guest's own game takes it only once its file's game begins, and by then the relay has dropped its connection and forgotten its ticket a moment (relay --kill and --forget 2 s, from the host's whole progress sent: relay_go). Its session resumes: the reliable messages go on and no new snapshot comes, so what it took stands. Before: every session, resumed too, forgot it (C.took), the host sends a snapshot to a new session alone, and the guest stayed \"joining the room (step 4)\" for good, its join's 'taking long' window up. Now the join's progress and world steps are done once it is back, and the two play on settled",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_EXIT_FRAMES": 12000,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--kill",
+   "guest:0",
+   "--forget",
+   "guest:0:2"
+  ],
+  "relay_go": {
+   "role": "host",
+   "log": "sent the whole progress for the merge"
+  },
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 6000",
+     "wait_peer !here 30000",
+     "wait_peer here 60000",
+     "wait 1500",
+     "where coop 2400",
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: player 2 is back: seat 2 again"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer !here 30000",
+     "wait_peer here 60000",
+     "wait 600",
+     "where coop 2400",
+     "wait 900"
+    ],
+    "log_must": [
+     "net: session resumed with player 1",
+     "join: step 4 progress done",
+     "join: done after"
+    ],
+    "log_must_not": [
+     "join: the window is up",
+     "NOT SETTLED: joining the room"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true,
+   "drift": true,
+   "same_where": true
+  }
+ },
+ "timeout": 500
+}

@@ -29,6 +29,8 @@
 #include <unordered_set>
 #include <vector>
 
+extern "C" void portPlayAsPronounTest(void); // luigi_pc.c
+
 namespace {
 
 struct TrEntry {
@@ -922,6 +924,16 @@ struct Register {
                           "Paper Cut's own menus. Auto: the Japanese release's Japanese, the European release's "
                           "text language, otherwise the computer's. The game's own text follows the disc.",
                           0, "menu_language", kChoices, 7, "language translate english deutsch french spanish italian japanese");
+    // $TTYD_PLAY_AS_PRONOUN_TEST=1: Play as's pronouns checked once the game draws (luigi_pc.c)
+    portSettingsAddOverlay(
+        [](int) {
+          static bool sDone = false;
+          if (!sDone && SDL_getenv("TTYD_PLAY_AS_PRONOUN_TEST") != nullptr) {
+            sDone = true;
+            portPlayAsPronounTest();
+          }
+        },
+        nullptr);
   }
 } sRegister;
 
@@ -1040,6 +1052,7 @@ extern "C" {
 int portPlayAsText(void);                                              // luigi_pc.c
 int portPlayAsHasName(const char* text, int chr);                      // luigi_pc.c
 void portPlayAsSwapText(const char* text, char* out, int chr, int enc); // luigi_pc.c
+int portPlayAsKeepsMario(const char* english);                         // luigi_pc.c
 }
 
 namespace {
@@ -1052,35 +1065,7 @@ constexpr int kEncSjis = 1, kEncLatin1 = 2, kEncUtf8 = 3; // luigi.h's PORT_TEXT
 // looks and colours named after the brothers, versus (always the
 // brothers: Mario's side against Luigi's), Brothers mode (Luigi with Mario,
 // and it turns Play as off), and the model files' names.
-bool keepsMario(const char* english) {
-  static const char* const kWhole[] = {
-      "Mario", "Luigi", "Peach", "Bowser", "Fire Mario", "Luigi green",
-      // the colour slots, each named after the one it dresses (cosmetics.cpp: all four's listed together)
-      "Mario's cap and shirt", "Mario's overalls", "Luigi's cap and shirt", "Luigi's overalls", "Peach's dress",
-      "Peach's crown", "Peach's hair", "Peach's gloves", "Peach's earrings", "Peach's shoes", "Bowser's shell",
-      "Bowser's hair", "Bowser's skin", "Bowser's horns and spikes", "Bowser's bracelets"};
-  for (const char* w : kWhole) {
-    if (std::strcmp(english, w) == 0) {
-      return true;
-    }
-  }
-  static const char* const kPart[] = {
-      "Mario's place", "Luigi's voice for Mario", "sound as Luigi's", "as his brother or his rivals",
-      "Mario's side", "Luigi's side", "Mario's player", "against Luigi", "against the computer's Luigi",
-      "Mario's badges", "Mario's items", "Luigi's badges", "Luigi's items", "Luigi joins Mario",
-      "Luigi follows Mario", "walks Luigi", "Brothers mode's Luigi", "Mario is a_mario", "Play as", "playing as",
-      "Luigi's higher jump", "While Luigi is picked",
-      // texts written for each pick already (the Wardrobe's tab and costume notes, wardrobe_aurora.c):
-      // swapped again, Peach's would read "Mario, her partners" (the pick and Mario trade places)
-      "partners and the status bar look", "This outfit doesn't fit",
-  };
-  for (const char* p : kPart) {
-    if (std::strstr(english, p) != nullptr) {
-      return true;
-    }
-  }
-  return false;
-}
+bool keepsMario(const char* english) { return portPlayAsKeepsMario(english) != 0; }
 
 // shown (english in the menu language) with the pick's name for Mario's, kept
 // for as long as the game runs

@@ -55,6 +55,11 @@ void portPaperBoxFan(MtxPtr posMtx, const PortBoxTex* tex, int n, const Vec* pos
                      const u8* alpha);
 /* A draw the box can't follow (a substituted texture): the GX box stands. */
 void portPaperBoxUnknown(void);
+/* Draws outside renderProc count too, or their pixels outside the box stay
+ * on screen (the copy clears only the box) and are cut off the sheet:
+ * Vivian's (and her sisters') tail ribbon (himo.c; its texture is set here by
+ * animdrv's dispProc before vivihimo) and Cool Mode's glasses (fun_pc.c). */
+extern PortBoxTex gPortPaperBoxRibbonTex;
 /* Disarms; 1 and the box of the pixels that passed (inclusive, as
  * GXReadBoundingBox) when there is one, else 0 (use the GX box). */
 int portPaperBoxEnd(u16* left, u16* top, u16* right, u16* bottom);

@@ -23,8 +23,8 @@ each game shows it in its own language.
   screen tap the note (the mouse can click it too). The balloon shows the
   button of the controller in hand. It is the binding **Read a paper note**
   (Controls > Bindings). The balloon then offers **Rate up**, **Rate down**
-  and **Close** (Close alone for your own or one you rated): A or a tap
-  chooses, B or the notes' button again closes. **A is never a note's**: by a
+  and **Close** (Close alone for one you rated; **Take back** and Close for
+  your own): A or a tap chooses, B or the notes' button again closes. **A is never a note's**: by a
   note it jumps, talks, reads a sign or opens a door as anywhere else.
 - **Leaving one**: the Start menu's Multiplayer tab → **Paper notes...**. Pick a **Phrase**
   and a **Word** with left and right (the note reads out at the top), then
@@ -47,6 +47,19 @@ each game shows it in its own language.
 - **Rating**: the same page lists the room's notes, nearest first; right
   rates one up, left down, once each (not your own). A note rated down to -3
   is gone; a room keeps 30, the lowest-rated older ones going first.
+- **Taking one back**: your own note's balloon offers **Take back**, and on
+  the page choosing one of yours twice (A, or a tap: the first asks, the
+  second takes it) does the same. It is gone for everyone, frees its place in
+  your three for the room, and `notes.txt` forgets it. A note is its
+  device's, not its network's (see **This device's code** below): it is
+  taken back from any network, and another device on the same one (a
+  household, a school, a phone carrier's shared address) can't take it.
+  Another device's note is answered "Only the device that left it can take
+  it back." A note left before 0.5.1 belongs to the address it was left from,
+  as it did then: it is taken back from there, and from another network the
+  answer is "It can only be taken back from where it was left." (it stays
+  yours, for when you're back). A relay from before 0.5.1 answers "This
+  relay can't take notes back yet."
 - **Refresh** asks the relay again; otherwise an area's notes (all the maps
   that start with the same three letters, `gor_` Rogueport, `tik_` its
   underground...) are fetched when you enter it and kept for 30 minutes, the
@@ -66,18 +79,39 @@ fetched or shown.
   exactly what its recording did.
 
 What this device left and rated is kept in `<user>/notes.txt`, so its own
-notes show as yours and a rating isn't asked twice.
+notes show as yours and a rating isn't asked twice; a note taken back (or
+found gone when taken) leaves it.
+
+**This device's code**: the first time a note is left or taken back, the
+game makes a random code (128 bits from the system's random generator) and
+keeps it in `<user>/notes_code.txt` (a portable copy's user folder too). It
+goes to the relay with each note left and each take, inside the request
+(never in an address); the relay keeps only a salted hash of it as the note's
+author, never the code. The code is never written to the log, and Report a
+problem takes it out of everything in its zip. Moving the user folder to
+another computer (both files) keeps your notes yours; deleting
+`notes_code.txt` makes a new code, and the notes left with the old one can
+no longer be taken back (they stay for others until rated away or crowded
+out).
 
 ## Tests
 
-`TTYD_NOTES_TEST="<dx> <dy> <dz> <phrase> <word> <score>[ m];..."` puts notes
+`TTYD_NOTES_TEST="<dx> <dy> <dz> <phrase> <word> <score>[ m|o];..."` puts notes
 in the first room the field shows, round Mario's place there, with no relay
-(`m`: this device's own). Leaving and rating are then answered by the game
-itself with the relay's rules (three of yours a room, one rating each, gone
-at -3), logged as `[notes] test: ...`. `TTYD_NOTES_PAGE=1` opens the Paper
+(none: another device's; `m`: this device's own, by its code; `o`: in this
+device's `notes.txt` but left before codes from another address; `a`: left
+before codes from this address; `s`: in `notes.txt` but left by another
+device on this address). Leaving, rating and taking back are then answered
+by the game itself with the relay's rules (three of a device's a room, six of
+an address's, one rating each, gone at -3, taken back by the device that
+left it, or from its address before codes), logged as `[notes] test: ...`;
+Refresh logs the room's count (`[notes] test: refresh: <N> notes in <area>,
+<M> yours`). `TTYD_NOTES_TEST_OLD_RELAY=1` answers a take as a relay from
+before 0.5.1; `TTYD_NOTES_TEST_MOVE=1` changes the address after each note
+left (`[notes] test: the address changes ...`). `TTYD_NOTES_PAGE=1` opens the Paper
 notes page as the Start menu's Multiplayer tab is chosen. The scenarios
-`paper_notes_world`, `paper_notes_read`, `paper_notes_page` and
-`paper_notes_new_words` (`tests/port/testpass/`) use them. With
+`paper_notes_world`, `paper_notes_read`, `paper_notes_page`,
+`paper_notes_new_words` and the `paper_notes_take_*` ones (`tests/port/testpass/`) use them. With
 `TTYD_TEXT_FIT` the page, as it opens, measures every phrase with every
 word as the balloon draws it, and the fit log names any that has to shrink
 much (`paper_notes_fit_<language>`, one per language).
@@ -90,10 +124,32 @@ much (`paper_notes_fit_<language>`, one per language).
                              <ID> <MAP> <X> <Y> <Z> <PHRASE> <WORD> <SCORE>   (each map's best 8)
     POST /notes?area=<AAA>   add <MAP> <X> <Y> <Z> <PHRASE> <WORD>   -> ok <ID>
                              rate <MAP> <ID> <1|-1>                   -> ok <SCORE>
+                             take <MAP> <ID>                          -> ok taken   (0.5.1)
 
 A refusal is a status other than 200 with `<why>: <words>` (`mine`, `today`,
-`own`, `rated`, `gone`, `bad`). The relay keeps no address: only a hash of it
-(with the optional `HASH_SALT` secret), for the limits and one vote each.
+`own`, `rated`, `gone`, `bad`).
+
+From 0.5.1 the game adds this device's code (32 to 64 lowercase hex digits)
+as a last word to `add` and `take`:
+
+    add <MAP> <X> <Y> <Z> <PHRASE> <WORD> <CODE>   -> ok <ID>
+    take <MAP> <ID> <CODE>                         -> ok taken
+
+Such a note's author is the code's hash (with `HASH_SALT`), the hash of the
+address it came from kept beside it. A take by another code, or a take with no
+code, is `own` (403, "only the device that left a note ..."). The limits stay
+on the address, since a code can be made anew: ten notes a day in an area,
+one rating each, no rating of a note left from your own address, and at most
+six notes a room from one address whatever its codes; the three a room are
+counted by code. A note from before 0.5.1 (or from an older game) has its
+address as author: a take from that address, with or without a code, takes
+it, from any other is `own` (403, "only who left a note ..."). A relay from
+before 0.5.1 answers a coded `add` or `take` `bad: add or rate` (400): the
+game then leaves the note without its code (the address's, as before), and
+reads a take's as "can't take notes back yet". The relay still answers 0.4.x
+and 0.5.0 games exactly as before (`port/relay/test/run_compat.sh`, which also
+checks taking back and the codes). The relay keeps no address and no code:
+only a hash of each (with the optional `HASH_SALT` secret).
 The phrase and word numbers are `port/settings/features/notes.cpp`'s lists,
 which only ever grow at the end; a game that doesn't know a number skips the
 note. `tools/port/notes_lists.txt` is the lists as released, and

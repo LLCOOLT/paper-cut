@@ -186,8 +186,8 @@ Archivo %d: %s, capítulo %d, nivel %d
 Offer
 Ofrecer
 
-A new file can start in Rogueport's plaza: the opening skipped (the letter, the ship, the harbour and Lord Crump), Goombella just joined and what the opening gives given. Off: the file menu as the original. Offer: {A} from the beginning, {Y} in Rogueport. Always: new files start in Rogueport. Not in Console-accurate mode.
-Un archivo nuevo puede empezar en la plaza de Villa Viciosa: la introducción saltada (la carta, el barco, el puerto y Peke X), Goomarina recién unida y lo que da la introducción ya dado. No: el menú de archivos como el original. Ofrecer: {A} desde el principio, {Y} en Villa Viciosa. Siempre: los archivos nuevos empiezan en Villa Viciosa. No en el modo fiel a la consola.
+Skip the opening: a new file starts in Rogueport's plaza with Goombella and everything the opening gives. Offer: the file menu asks ({A} for the beginning, {Y} for Rogueport). Always: every new file. Not in Console-accurate mode.
+Salta el comienzo: un archivo nuevo empieza en la plaza de Villa Viciosa con Goombella y todo lo que da el comienzo. Ofrecer: el menú de archivos pregunta ({A} para el principio, {Y} para Villa Viciosa). Siempre: cada archivo nuevo. No en el modo fiel a la consola.
 
 You're in the host's adventure.
 Estás en la aventura del anfitrión.

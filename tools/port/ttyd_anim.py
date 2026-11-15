@@ -303,12 +303,19 @@ class NodeKey:
             return [(v, _trunc_deg(self.sa * v / self.n), _trunc_deg(self.sb * v / self.n)) for v in vals]
         return list(zip(vals, _fit_angles(self.sa, vals, self.n), _fit_angles(self.sb, vals, self.n)))
 
+    def jumps(self):
+        """the game holds the value through the segment and jumps at the key: a step, or (a few disc
+        deltas) every chunk's end angle 89 or past, which the game doesn't blend either"""
+        return self.step or all(not -89 < c[2] < 89 for c in self.chunks())
+
     def effective(self):
         """(start slope, end slope) the game uses for these chunks, None for a step"""
         ch = self.chunks()
         if self.step:
             return None
-        return sum(_tan(c[1]) for c in ch), sum(_tan(c[2]) for c in ch)
+        # (a start angle of 89 is past the game's table: flat, as Evaluator.at_frame takes it)
+        live = [c for c in ch if -89 < c[2] < 89]
+        return sum(_tan(c[1]) for c in live if -89 < c[1] < 89), sum(_tan(c[2]) for c in live)
 
 
 def _fit_angles(slope, vals, n):
@@ -911,6 +918,146 @@ def write_png(path, rows):
     with open(path, "wb") as f:
         f.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)) +
                 chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
+
+
+# ---------------------------------------------------------------- checks ----
+
+_SECTION = (12, 0x2C, 4, 4, 12, 2, 4, 8)  # AnimData's sections' entry sizes
+_KEY_KINDS = ((2, "pos", "vertices"), (3, "nrm", "normals"), (4, "texAnim", "texture slots"),
+              (5, "vis", "visibility values"), (6, "node", "node values"))
+
+
+def check_model(data, strict=None):
+    """port/src/common/anim_check_pc.c portAnimCheckModel, the same check:
+    (True, "") if every table lies in the file, the group tree's indices are
+    in range and every animation's deltas stay inside the model's buffers
+    (strict(name): a new animation, also its tangents in the game's table and
+    its first key at or before its start); else (False, why)"""
+    data = bytes(data)
+    size = len(data)
+    if size < HEADER_SIZE:
+        return False, "too short for a model"
+    counts = struct.unpack_from(">25I", data, 0xE8)
+    ptrs = struct.unpack_from(">25I", data, 0x14C)
+    cnt = {name: counts[ci] for name, _s, ci in TABLES}
+    rsize = {name: s for name, s, _ci in TABLES}
+    ptr = {name: ptrs[i] for i, (name, _s, _ci) in enumerate(TABLES)}
+    for i, (name, s, ci) in enumerate(TABLES):
+        c = counts[ci]
+        if c and (ptrs[i] > size or c > (size - ptrs[i]) // s):
+            return False, "table %d runs past the file" % i
+
+    def rec(name, i):
+        return data[ptr[name] + i * rsize[name]:ptr[name] + (i + 1) * rsize[name]]
+    ng = cnt["groups"]
+    if ng == 0 or ng > 4096:
+        return False, "%d groups" % ng
+    for i in range(ng):
+        bro, child, shape, vis, node = struct.unpack_from(">5i", rec("groups", i), 0x40)
+        if not (-1 <= bro < ng and -1 <= child < ng and -1 <= shape < cnt["shapes"] and 0 <= vis < cnt["vis"]
+                and 0 <= node and node + NODE_SIZE <= cnt["node"]):
+            return False, "group %d's indices are out of range" % i
+    seen = set()
+    stack = [ng - 1]
+    while stack:
+        gi = stack.pop()
+        while gi != -1:
+            if gi in seen:
+                return False, "the group tree comes back to group %d" % gi
+            seen.add(gi)
+            bro, child = struct.unpack_from(">2i", rec("groups", gi), 0x40)
+            if child != -1:
+                stack.append(child)
+            gi = bro
+    for i in range(cnt["shapes"]):
+        v = struct.unpack_from(">26I", rec("shapes", i), 0x40)
+        for j in range(11):
+            first, num = v[2 * j], v[2 * j + 1]
+            lim = cnt[("pos", "nrm", "clr")[j] if j < 3 else "texVtx"]
+            if num and (first > lim or num > lim - first):
+                return False, "shape %d's vertices run past the model's" % i
+        first, num = v[22], v[23]
+        if num and (first > cnt["draws"] or num > cnt["draws"] - first):
+            return False, "shape %d's draws run past the model's" % i
+    for i in range(cnt["draws"]):
+        first, num = struct.unpack_from(">2I", rec("draws", i), 0x38)
+        if num and (first > cnt["drawCalls"] or num > cnt["drawCalls"] - first):
+            return False, "draw %d's calls run past the model's" % i
+    na = counts[_C_ANIM]
+    if na and (ptrs[24] > size or na > (size - ptrs[24]) // 0x40):
+        return False, "the animation table runs past the file"
+    table_end = ptrs[24] + 0x40 * na
+    for j in range(na):
+        e = data[ptrs[24] + 0x40 * j:ptrs[24] + 0x40 * (j + 1)]
+        name = _cstr(e[:60])
+        doff = struct.unpack_from(">I", e, 0x3C)[0]
+        st = bool(strict and strict(name))
+        if doff < table_end:
+            if st:
+                return False, "%s has no data" % name
+            continue
+        if doff >= size:
+            return False, "%s: its data is past the file" % name
+        ok, why = _check_anim(data, doff, size - doff, name, st, cnt, rec)
+        if not ok:
+            return False, why
+    return True, ""
+
+
+def _check_anim(data, at, avail, name, strict, cnt, rec):
+    if avail < ANIM_HEADER_OLD:
+        return False, "%s: its data runs past the file" % name
+    size = struct.unpack_from(">I", data, at)[0]
+    if size < ANIM_HEADER_OLD or size > avail:
+        return False, "%s: its data runs past the file" % name
+    n = struct.unpack_from(">8I", data, at + 4)
+    off = struct.unpack_from(">8I", data, at + 0x24)
+    for i in range(8):
+        if n[i] and (off[i] > size or n[i] > (size - off[i]) // _SECTION[i]):
+            return False, "%s: section %d runs past its data" % (name, i)
+    hdr = ANIM_HEADER_OLD if off[0] == ANIM_HEADER_OLD else ANIM_HEADER_SIZE
+    if size < hdr:
+        return False, "%s: its header runs past its data" % name
+    if not n[0] or not n[1] or not n[7]:
+        return False, "%s: no loop range, keys or value keys" % name
+    sec = [at + o for o in off]
+    start, end = struct.unpack_from(">ff", data, sec[0] + 4)
+    if strict:
+        if not (math.isfinite(start) and math.isfinite(end)) or end < start:
+            return False, "%s: its loop range isn't one" % name
+        if struct.unpack_from(">f", data, sec[1])[0] > start or struct.unpack_from(">f", data, sec[7])[0] > start:
+            return False, "%s: its first key comes after its start" % name
+        prev = None
+        for i in range(n[7]):
+            t = struct.unpack_from(">f", data, sec[7] + 8 * i)[0]
+            if not math.isfinite(t) or (prev is not None and t < prev):
+                return False, "%s: its value keys aren't in time order" % name
+            prev = t
+    prev = None
+    for k in range(n[1]):
+        kf = struct.unpack_from(">f10I", data, sec[1] + 0x2C * k)
+        t = kf[0]
+        if strict and (not math.isfinite(t) or (prev is not None and t < prev)):
+            return False, "%s: its keys aren't in time order" % name
+        prev = t
+        for j, (s, table, what) in enumerate(_KEY_KINDS):
+            first, num = kf[1 + 2 * j], kf[2 + 2 * j]
+            if not num:
+                continue
+            if first > n[s] or num > n[s] - first:
+                return False, "%s: key %d's deltas run past their section" % (name, k)
+            idx, lim = 0, cnt[table]
+            for q in range(num):
+                idx += data[sec[s] + (first + q) * _SECTION[s]]
+                if idx >= lim:
+                    return False, "%s: key %d moves past the model's %s" % (name, k, what)
+            # (a texture slot's bind past the model's: the game draws its first texture, animdrv.c)
+            if table == "node" and strict and k > 0:
+                for q in range(num):
+                    _st, _v, a, b = struct.unpack_from(">Bbbb", data, sec[s] + 4 * (first + q))
+                    if -89 < b < 89 and not -89 <= a <= 88:
+                        return False, "%s: key %d has a tangent past the game's table" % (name, k)
+    return True, ""
 
 
 # ------------------------------------------------------------------- cli ----

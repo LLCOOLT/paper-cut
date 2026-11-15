@@ -7,7 +7,9 @@
 #include "port/platform.h"
 #include "../../archipelago/ttyd_ap.h"
 #include "port/luigi.h"
+#include "port/pm64.h"
 #include "port/story_test.h"
+#include "port/battlex.h"
 
 int ttyd_main(void); /* src/main.c, compiled with -Dmain=ttyd_main */
 void portDvdSetRoot(const char* root);              /* sdk/dvd_pc.c */
@@ -116,5 +118,7 @@ int main(int argc, char* argv[]) {
         portApVerifyTargets(); /* the randomizers' targets against the disc's RELs (as Aurora's portApInit) */
     }
     portLuigiModelInit(); /* the Play as models with our animations, as on Aurora (luigi_model_pc.c) */
+    portPm64ModelsInit(); /* the PM64 partners' own TTYD models, as on Aurora (pm64_models_pc.c) */
+    portItemsInit(); /* Paper Cut's items' table entries, as Aurora's portBattlexInit: a new dish's name was NULL */
     return ttyd_main();
 }

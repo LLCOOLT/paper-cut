@@ -16,7 +16,9 @@
 //   Esc                 close (unsaved changes are saved)
 // Controller: left stick fly, right stick look, triggers down and up, A place
 // at the picture's middle, X take away, LB / RB the previous / next thing,
-// Y the next kind, Back test play, B close.
+// Y the next kind, Back test play, B close; as the keys' own: the D-pad nudges, the left stick pressed in puts
+// the selected thing down on the floor (F), the right stick pressed in turns it (R), Start saves (Ctrl+S),
+// the Undo button undoes.
 #include "port/menu_buttons.h"
 #include "port/map_edits.h"
 #include "port/area_maps.h"
@@ -965,6 +967,12 @@ int event(const void* ev) {
     } else if (b >= SDL_GAMEPAD_BUTTON_DPAD_UP && b <= SDL_GAMEPAD_BUTTON_DPAD_RIGHT) {
       nudge(b == SDL_GAMEPAD_BUTTON_DPAD_LEFT ? -5.f : b == SDL_GAMEPAD_BUTTON_DPAD_RIGHT ? 5.f : 0.f, 0.f,
             b == SDL_GAMEPAD_BUTTON_DPAD_UP ? -5.f : b == SDL_GAMEPAD_BUTTON_DPAD_DOWN ? 5.f : 0.f, 0.f);
+    } else if (b == SDL_GAMEPAD_BUTTON_LEFT_STICK) { // (F's: the keyboard's only, before)
+      snapSelected();
+    } else if (b == SDL_GAMEPAD_BUTTON_RIGHT_STICK) { // (R's)
+      nudge(0, 0, 0, 45.f);
+    } else if (b == SDL_GAMEPAD_BUTTON_START) { // (Ctrl+S's)
+      save();
     } else {
       return 0;
     }

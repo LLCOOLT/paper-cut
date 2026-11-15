@@ -62,6 +62,9 @@ int portTowerHelped(void);
 int portTowerResult(int* floor, unsigned long long* ms, int* cleared);
 /* The highest floor and the best time to the top (0: none), unhelped climbs only. */
 int portTowerBest(int* floor, unsigned long long* ms);
+/* Autosave on (port/src/common/autosave_pc.c), each frame: a climb's new highest floor kept at once (unhelped);
+ * 1 when it was written now. */
+int portTowerAutosave(void);
 
 /* --- daily shop specials --------------------------------------------------- */
 

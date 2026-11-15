@@ -67,7 +67,7 @@ What the editor shows while it is open is local: the room's things come from the
 
 | type | what | fields |
 |---|---|---|
-| `pipe` | a green pipe; Mario goes down it by holding the stick down on it | `to`, `entrance` |
+| `pipe` | a green pipe; Mario goes down it by holding the stick down on it. `pos` is the floor under it: it stands 30 above it, as the rooms' own pipes | `to`, `entrance` |
 | `save_block`, `heart_block` | the game's Save and Heart Blocks | `price` (Heart Block, coins) |
 | `jump_stand` | a blue jump stand | `power` (130); `to`, `entrance`: it throws Mario over to another room |
 | `block`, `badge_block` | a ? block, a badge block | `item`, `flag` |

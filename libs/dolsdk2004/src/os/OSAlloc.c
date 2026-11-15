@@ -1,5 +1,9 @@
 #include <dolphin.h>
 #include <dolphin/os.h>
+#ifdef TARGET_PC
+#include "port/asan_heap.h" /* a -fsanitize=address build: free space poisoned */
+PORT_ASAN_ALLOCATOR_BEGIN
+#endif
 
 #define ALIGNMENT 32
 
@@ -234,6 +238,9 @@ void* OSAllocFromHeap(int heap, u32 size) {
     hd->paddingBytes += (cell->size - (requested + 0x20));
     hd->payloadBytes += requested;
 #endif
+#ifdef TARGET_PC
+    PORT_ASAN_UNPOISON((u8*)cell + 0x20, requested);
+#endif
     return (u8*)cell + 0x20;
 }
 
@@ -372,6 +379,9 @@ void OSFreeToHeap(int heap, void* ptr) {
     hd->paddingBytes -= (cell->size - (cell->requested + 0x20));
     hd->payloadBytes -= cell->requested;
 #endif
+#ifdef TARGET_PC
+    PORT_ASAN_POISON(ptr, cell->size - 0x20);
+#endif
     hd->allocated = DLExtract(hd->allocated, cell);
     hd->free = DLInsert(hd->free, cell);
 }
@@ -464,6 +474,9 @@ int OSCreateHeap(void* start, void* end) {
             hd->allocated = 0;
 #ifdef ENABLE_HEAPDESC
             hd->paddingBytes = hd->headerBytes = hd->payloadBytes = 0;
+#endif
+#ifdef TARGET_PC
+            PORT_ASAN_POISON((u8*)start + sizeof(Cell), hd->size - sizeof(Cell));
 #endif
             return heap;
         }
@@ -658,3 +671,6 @@ void OSVisitAllocated(void (*visitor)(void*, u32)) {
         }
     }
 }
+#ifdef TARGET_PC
+PORT_ASAN_ALLOCATOR_END
+#endif

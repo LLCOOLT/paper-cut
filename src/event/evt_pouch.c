@@ -6,6 +6,7 @@
 #include "manager/evtmgr_cmd.h"
 #include "version.h"
 #ifdef TARGET_PC
+#include "port/brothers.h"
 #include "port/open_world.h"
 #endif
 
@@ -173,6 +174,9 @@ USER_FUNC(evt_pouch_mario_recovery) {
     pouchSetHP(pouchGetMaxHP());
     pouchSetFP(pouchGetMaxFP());
     pouchSetAP(pouchGetMaxAP());
+#ifdef TARGET_PC
+    portBrothersHealFull("a rest"); /* Brothers mode: Luigi's too (port/include/port/brothers.h) */
+#endif
     return EVT_RETURN_DONE;
 }
 

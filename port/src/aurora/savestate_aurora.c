@@ -256,7 +256,7 @@ static void status(const char* english, ...) {
     va_copy(again, args);
     vsnprintf(text, sizeof(text), english, args);
     va_end(args);
-    fprintf(stderr, "[savestate] %s\n", text);
+    fprintf(stdout, "[savestate] %s\n", text);
     if (!sQuiet) {
         vsnprintf(sStatus, sizeof(sStatus), portTr(english), again);
         sStatusTime = SDL_GetTicks();

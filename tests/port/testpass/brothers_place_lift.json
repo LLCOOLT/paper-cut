@@ -1,0 +1,52 @@
+{
+ "desc": "Brothers mode, the full run's segment 84 from its checkpoint (the X-Naut fortress's lift in aji_01, which a scene runs up and down): Luigi isn't left on the old floor hopping after Mario; he waits out of sight while the lift carries Mario and is beside him at its end",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "84_card_keys"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "84_card_keys"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_GOD_POWER": 2,
+  "TTYD_AUTO_CHOICE": "stg7_aji_02:0,stg7_aji_07:2,stg7_aji_09:3,stg7_aji_11:1,stg7_aji_13:2,stg7_aji_15:0,stg7_aji_17:2,stg7_aji_19:3,stg7_aji_ele_1_01:1",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1"
+ },
+ "input": "tests/port/full_run/84_card_keys.txt",
+ "log_must": [
+  "^\\[bros-trace\\] scene-end f=\\d+ map=aji_01 .*verdict=",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900,
+ "new": true,
+ "log_must_not": [
+  "^\\[bros-trace\\] (arrive|scene-end) .*verdict=BAD:[a-z,]*(jumps|far|nofloor|hidden)"
+ ]
+}

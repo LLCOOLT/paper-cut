@@ -10,6 +10,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.hardware.display.DisplayManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -55,6 +56,7 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
     private static native void menuTap(float x, float y);
     private static native void menuButton(int button);
     private static native void setDualScreen(boolean dual);
+    private static native boolean anyDisplay(); // tests: $TTYD_COMPANION_ANY_DISPLAY
 
     // port/include/port/companion_menu.h
     private static final int MENU_W = 640, MENU_H = 480;
@@ -130,10 +132,20 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
         }
     }
 
-    private Display secondDisplay() {
+    /** The display the game itself is on (a dual-screen device can start it on either). */
+    @SuppressWarnings("deprecation")
+    private int gameDisplay() {
+        Display own = Build.VERSION.SDK_INT >= 30 ? activity.getDisplay()
+                                                  : activity.getWindowManager().getDefaultDisplay();
+        return own != null ? own.getDisplayId() : Display.DEFAULT_DISPLAY;
+    }
+
+    private Display secondDisplay(boolean any) {
         Display[] list = displays.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION);
+        final int game = gameDisplay();
         for (Display d : list) {
-            if (d.getDisplayId() != Display.DEFAULT_DISPLAY && builtIn(d)) {
+            // never the game's own display: the menu would cover the game
+            if (d.getDisplayId() != Display.DEFAULT_DISPLAY && d.getDisplayId() != game && (any || builtIn(d))) {
                 return d;
             }
         }
@@ -142,14 +154,26 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
 
     private void update() {
         boolean on;
-        Display second = secondDisplay();
+        if (!running) {
+            return; // (a display change posted before stop())
+        }
+        Display second;
         try {
+            second = secondDisplay(anyDisplay());
             setDualScreen(second != null); // the setting shows only then
             on = enabled();
         } catch (UnsatisfiedLinkError e) {
             return; // the game's library isn't loaded yet
         }
         Display d = on ? second : null;
+        if (screen != null && !screen.isShowing()) {
+            // Android dismissed it itself: a Presentation is cancelled when its
+            // display's metrics change (rotated, resized, a new density) or the
+            // display goes away. A new one on the same display, below.
+            Log.i(TAG, "companion: dismissed by the system (its display changed)");
+            screen = null;
+            setActive(false);
+        }
         if (screen != null && (d == null || screen.getDisplay().getDisplayId() != d.getDisplayId())) {
             dismiss();
         }
@@ -186,6 +210,8 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
 
     @Override
     public void onDisplayChanged(int displayId) {
+        // after the Presentation's own listener (it may have cancelled itself)
+        handler.post(this::update);
     }
 
     // --- The snapshot, from the game's text (companion_pc.c portCompanionText) ---

@@ -3,6 +3,7 @@
  * Mario's unit in battle. The state is in the save-state section
  * (CMakeLists.txt), so a save state keeps the pose ids it points at; each
  * frame still checks the pose is the c_luigi this file loaded. */
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,8 +16,11 @@
 #include "port/pm64.h"
 #include "port/pm64_enemy.h"
 #include "port/pm64_media.h"
+#include "port/text_language.h"
 #include "port/toggles.h"
+#include "port/tr.h"
 #include "port/versus.h"
+#include "version.h"
 #include "driver/animdrv.h"
 #include "driver/msgdrv.h"
 #include "driver/npcdrv.h"
@@ -117,9 +121,19 @@ static const PlayChar kChars[PORT_PLAY_AS_COUNT] = {
      {"KPA_Z_1", "KPA_S_1", "KPA_W_1", "KPA_R_1", "KPA_T_1", "KPA_J_1A", "KPA_J_1B", "KPA_D_1", "KPA_A_1B"}},
 };
 
+/* Bowser is never shown from behind: his back view walking away looked wrong, so Mario's back-facing
+ * animations (M_W_1R, M_R_1R, M_S_1R, ...) play as his front ones (M_W_1, ...), in the field, co-op and
+ * online ghosts alike (c_koopa_r_pc is still made: the character export has it) */
+static int frontOnly(int chr) {
+    return chr == PORT_PLAY_AS_BOWSER;
+}
+
 /* the character has a back view: the disc's, or ours made at startup */
 static int hasBack(int chr) {
     const PlayChar* c = &kChars[chr];
+    if (frontOnly(chr)) {
+        return 0;
+    }
     return c->back != NULL || (c->pcBack != NULL && sModelReady[chr][1]);
 }
 
@@ -235,10 +249,16 @@ static const char* charAnim(int chr, int where, int pose, int backPose, const ch
     AnimationPoseData* d;
     const char* found;
     char battle[64];
+    char front[32];
     int i;
     *back = 0;
     if (mario == NULL || chr <= 0) {
         return NULL;
+    }
+    if (frontOnly(chr) && isBack(mario) && strlen(mario) < sizeof(front)) {
+        /* (his front view: Mario's animation of the same name without its R) */
+        snprintf(front, sizeof(front), "%.*s", (int)strlen(mario) - 1, mario);
+        mario = front;
     }
     /* a back-facing animation of Mario's: the back model's version (ours in
      * c_peach_r_pc) */
@@ -359,6 +379,12 @@ static const char* haveAnim(int chr, int where, int back, const char* mario, con
  * scaled to end on the frame his does (a loop of its own in whole turns,
  * ending as it starts) and holds there, so it is never still playing when
  * his has ended and the scene goes on. */
+/* ours is Mario's animation of its name (its battle one "<name>@b" too) */
+static int sameName(const char* ours, const char* mario) {
+    const size_t n = mario != NULL ? strlen(mario) : 0;
+    return mario != NULL && !strncmp(ours, mario, n) && (ours[n] == '\0' || ours[n] == '@');
+}
+
 static void standInClock(int pose, int src, const char* anim) {
     AnimationPose* d = animPoseGetAnimPosePtr(pose);
     AnimationPose* s = animPoseGetAnimPosePtr(src);
@@ -375,8 +401,10 @@ static void standInClock(int pose, int src, const char* anim) {
     d->localTime = s->localTime;
     m = animPoseGetCurrentAnim(src)->data;
     o = animPoseGetCurrentAnim(pose)->data;
-    if (!strncmp(anim, "M_", 2) || m == NULL || o == NULL || m->loopInfoCount == 0 || o->loopInfoCount == 0 ||
-        *(const s32*)&m->loopInfo[0] != 0) {
+    /* (ours of Mario's own name share his clock; one of another name, Bowser's front M_W_1 for Mario's
+       M_W_1R (frontOnly), is fitted as a disc one) */
+    if ((!strncmp(anim, "M_", 2) && sameName(anim, animPoseGetCurrentAnim(src)->name)) || m == NULL || o == NULL ||
+        m->loopInfoCount == 0 || o->loopInfoCount == 0 || *(const s32*)&m->loopInfo[0] != 0) {
         return;
     }
     /* Mario's one-shot: how far through it he is now (after his step this frame) */
@@ -878,6 +906,7 @@ void portLuigiRelease(int poseId) {
     int where;
     npcRelease(poseId);
     portSkinRelease(poseId);
+    portPm64ModelRelease(poseId);
     portPm64NoteReleased(poseId);
     for (where = PORT_LUIGI_MENU; where <= PORT_LUIGI_LOG; where++) {
         if (poseId >= 0 && sStandIn[where].source == poseId) {
@@ -929,10 +958,12 @@ static const char* const kJpMansion[2] = {"\x83\x7D\x83\x93\x83\x56\x83\x87\x83\
                                           "\xE3\x83\x9E\xE3\x83\xB3\xE3\x82\xB7\xE3\x83\xA7\xE3\x83\xB3"};
 static const char* const kJpSu[2] = {"\x83\x58", "\xE3\x82\xB9"};
 
-/* one swap's settings: the pick, the text's encoding */
+/* one swap's settings: the pick, the text's encoding, its language (for the pronouns: LANG_* below) */
 typedef struct {
     int chr;
     int enc; /* PORT_TEXT_GAME, _SJIS, _LATIN1, _UTF8 */
+    int lang;
+    const char* tag; /* the game's message's tag (its own words: kPhrases), or NULL */
 } Swap;
 
 static const char* nameOf(const Swap* w, int n) {
@@ -1023,6 +1054,11 @@ static int nameAt(const Swap* w, const char* s, size_t i, int n, int prevWide, s
         (strncmp(s + i - 6, "Paper", 5) == 0 || strncmp(s + i - 6, "PAPER", 5) == 0)) {
         return 0; /* the game's own title */
     }
+    if (!NAME_IS_MARIO(n) && w->chr == PORT_PLAY_AS_PEACH &&
+        ((i >= 7 && strncmp(s + i - 7, "Peachy", 6) == 0) || startsWith(s + i + 5, " Tart") ||
+         startsWith(s + i + 5, "\nTart") || startsWith(s + i + 5, "-Torte"))) {
+        return 0; /* the fruit: the Peachy Peach, the Peach Tart (Peach-Torte) */
+    }
     stretchChr = kLatinNames[w->chr][n].stretch;
     while (s[k] == stretchChr) {
         k++;
@@ -1065,18 +1101,415 @@ static void put(char** o, const char* s, size_t len) {
     *o += len;
 }
 
-/* s with Mario's and the pick's names swapped; out has room for twice s */
+/* --- The pronouns: Mario's follow the pick where the text names him. Only Peach's differ from his
+ * (Luigi and Bowser are "he" as he is). From a mention of Mario by name, not one that speaks to him
+ * ("Mario, ...", "..., Mario!"), to the end of its sentence, and on into the next one when that
+ * starts with one ("Mario's HP is low. His ..."), his are hers: "Mario's attack goes up by 2, but he
+ * takes double damage" reads "Peach's attack ..., but she ...". The pick's own name (made Mario's)
+ * ends it: whose pronoun is whose isn't clear then. Each language its own words, the text's language
+ * (the game's, or the menus' for Paper Cut's own); a word that agrees with its noun, not its owner
+ * (French son, Spanish su), stays. Peach's own (she, made Mario's) stay too. */
+enum { LANG_EN, LANG_DE, LANG_FR, LANG_ES, LANG_IT, LANG_JA, LANG_OTHER };
+/* when a word is his: always, before a noun (a space and a letter), not before one, before a German
+ * noun (a space and a capital), not French's impersonal il (il y a, il faut) */
+enum { PR_ANY, PR_NOUN, PR_NOT_NOUN, PR_CAP_NOUN, PR_PERSONAL };
+typedef struct {
+    const char* from; /* lower case; its Capitalized and UPPER forms too */
+    const char* to;
+    int when;
+} Pronoun;
+/* (longer words first; accented ones in Latin-1 and in UTF-8, each the same encoding as its text) */
+static const Pronoun kPronounsEn[] = {
+    {"himself", "herself", PR_ANY}, {"him", "her", PR_ANY}, {"his", "her", PR_NOUN},
+    {"his", "hers", PR_NOT_NOUN},   {"he", "she", PR_ANY},  {NULL, NULL, 0},
+};
+static const Pronoun kPronounsDe[] = {
+    {"seinen", "ihren", PR_ANY}, {"seinem", "ihrem", PR_ANY}, {"seiner", "ihrer", PR_ANY},
+    {"seines", "ihres", PR_ANY}, {"seine", "ihre", PR_ANY},   {"sein", "ihr", PR_CAP_NOUN}, /* (not "sein", to be) */
+    {"ihn", "sie", PR_ANY},      {"ihm", "ihr", PR_ANY},      {"er", "sie", PR_ANY},        {NULL, NULL, 0},
+};
+static const Pronoun kPronounsFr[] = {
+    {"lui-m\xEAme", "elle-m\xEAme", PR_ANY}, {"lui-m\xC3\xAAme", "elle-m\xC3\xAAme", PR_ANY},
+    {"il", "elle", PR_PERSONAL},             {NULL, NULL, 0},
+};
+static const Pronoun kPronounsEs[] = {
+    {"\xE9l mismo", "ella misma", PR_ANY}, {"\xC3\xA9l mismo", "ella misma", PR_ANY},
+    {"\xC9l mismo", "Ella misma", PR_ANY}, {"\xC3\x89l mismo", "Ella misma", PR_ANY},
+    {"\xE9l", "ella", PR_ANY},             {"\xC3\xA9l", "ella", PR_ANY},
+    {"\xC9l", "Ella", PR_ANY},             {"\xC3\x89l", "Ella", PR_ANY},
+    {NULL, NULL, 0},
+};
+static const Pronoun kPronounsIt[] = {
+    {"lui stesso", "lei stessa", PR_ANY}, {"lui", "lei", PR_ANY}, {NULL, NULL, 0},
+};
+static const Pronoun* const kPronouns[LANG_OTHER] = {kPronounsEn, kPronounsDe, kPronounsFr,
+                                                     kPronounsEs, kPronounsIt, NULL};
+/* Japanese: the game's text has no kanji for "he" (its font has none: it writes カレ, and カノジョ for "she"), so
+ * カレ (not カレー, curry, nor カレら, they) is カノジョ; [0] Shift-JIS, [1] UTF-8 */
+static const char* const kJpHe[2] = {"\x83\x4A\x83\x8C", "\xE3\x82\xAB\xE3\x83\xAC"};
+static const char* const kJpHeNot[2][2] = {{"\x81\x5B", "\x82\xE7"}, {"\xE3\x83\xBC", "\xE3\x82\x89"}};
+static const char* const kJpShe[2] = {"\x83\x4A\x83\x6D\x83\x57\x83\x87", "\xE3\x82\xAB\xE3\x83\x8E\xE3\x82\xB8\xE3\x83\xA7"};
+/* a sentence's end (。！？; the game's own text has no 。, its pages end them) and a name spoken to (、！ after
+ * it). (UTF-8's 。 and 、, of the menus' Japanese, as bytes: patterns that are looked for, never drawn with the
+ * game's font, which has neither) */
+static const char kJpStopU8[] = {(char)0xE3, (char)0x80, (char)0x82, 0};
+static const char kJpCommaU8[] = {(char)0xE3, (char)0x80, (char)0x81, 0};
+static const char* const kJpEnds[2][3] = {{"\x81\x42", "\x81\x49", "\x81\x48"}, {kJpStopU8, "\xEF\xBC\x81", "\xEF\xBC\x9F"}};
+static const char* const kJpCall[2][2] = {{"\x81\x41", "\x81\x49"}, {kJpCommaU8, "\xEF\xBC\x81"}};
+
+static char caseOf(char c, int at, int form) {
+    if (c >= 'a' && c <= 'z' && (form == 2 || (form == 1 && at == 0))) {
+        return (char)(c - 'a' + 'A');
+    }
+    return c;
+}
+
+static int upperAt(const unsigned char* p) {
+    return (p[0] >= 'A' && p[0] <= 'Z') || (p[0] >= 0xC0 && p[0] <= 0xDE && p[0] != 0xD7 && p[0] != 0xC3) ||
+           (p[0] == 0xC3 && p[1] >= 0x80 && p[1] <= 0x9E && p[1] != 0x97); /* (Latin-1's, UTF-8's: Ä Ö Ü ...) */
+}
+
+/* one of the language's words for him at s + i (a word's start), put in o as hers: its length, or 0 */
+static size_t pronounAt(const Swap* w, const char* s, size_t i, char** o) {
+    const Pronoun* p;
+    int form;
+    if (w->lang < 0 || w->lang >= LANG_OTHER || kPronouns[w->lang] == NULL) {
+        return 0;
+    }
+    for (p = kPronouns[w->lang]; p->from != NULL; p++) {
+        const size_t len = strlen(p->from);
+        for (form = 0; form < 3; form++) {
+            const unsigned char* after = (const unsigned char*)s + i + len;
+            size_t k;
+            int noun;
+            for (k = 0; k < len && s[i + k] == caseOf(p->from[k], (int)k, form); k++) {
+            }
+            if (k < len || isLetter(*after) || (w->enc == PORT_TEXT_UTF8 && *after >= 0x80 && *after < 0xC0)) {
+                continue;
+            }
+            noun = after[0] == ' ' && isLetter(after[1]);
+            if ((p->when == PR_NOUN && !noun) || (p->when == PR_NOT_NOUN && noun) ||
+                (p->when == PR_CAP_NOUN && !(after[0] == ' ' && upperAt(after + 1))) ||
+                (p->when == PR_PERSONAL && (startsWith((const char*)after, " y ") || startsWith((const char*)after, " faut") ||
+                                            startsWith((const char*)after, " fallait") ||
+                                            startsWith((const char*)after, " faudra")))) {
+                continue;
+            }
+            for (k = 0; p->to[k] != '\0'; k++) {
+                *(*o)++ = caseOf(p->to[k], (int)k, form);
+            }
+            return len;
+        }
+    }
+    return 0;
+}
+
+/* --- The words around the name, and the phrases that name the player another way (docs/PLAY_AS.md, Text:
+ * the rules). Tables in UTF-8, a Latin-1 text's made from them as it is read; Japanese also in Shift-JIS. A
+ * space in a table's text is any one space or line break of the text's, and the text's own are kept. */
+#define PK_L (1 << PORT_PLAY_AS_LUIGI)
+#define PK_P (1 << PORT_PLAY_AS_PEACH)
+#define PK_B (1 << PORT_PLAY_AS_BOWSER)
+#define PK_PB (PK_P | PK_B)
+#define PK_ALL (PK_L | PK_P | PK_B)
+
+/* a man's word just before Mario's name (a title, "dear", "this") and Peach's for it; chain: only before a
+ * word just made hers (Italian's il Signor Mario: la Signora Peach). Japanese has none before. */
+typedef struct {
+    int lang;
+    const char* from;
+    const char* to;
+    int chain;
+} Word;
+/* a phrase for the picks (PK_*) in a language: anywhere (kPhrases: a nickname, a misremembered name, Luigi's
+ * "big brother"; tag: only in that message, or those starting with it before a '*'), or just after Mario's
+ * name, put in as Peach's (kAfter: "est devenu", "è arrivato"). key: a part of from in ASCII (or Japanese, in
+ * each encoding) for the quick test that a text may have it ("": always) */
+typedef struct {
+    int picks;
+    int lang;
+    const char* tag;
+    const char* from;
+    const char* to;
+    const char* fromSjis;
+    const char* toSjis;
+    const char* key;
+    const char* keySjis;
+} Phrase;
+/* kBefore, kAfter and kPhrases: made from port/assets/play_as_text.txt by tools/port/playas_text_check.py tables */
+#include "play_as_text_tables.inc"
+
+/* a table's text in the text's encoding (buf: room for it) */
+static const char* tableText(const Swap* w, const char* utf8, const char* sjis, char* buf, size_t size) {
+    size_t n = 0;
+    if (w->enc == PORT_TEXT_UTF8) {
+        return utf8;
+    }
+    if (w->enc == PORT_TEXT_SJIS || (w->enc == PORT_TEXT_GAME && w->lang == LANG_JA)) {
+        return sjis;
+    }
+    /* Latin-1: UTF-8's two-byte letters (U+0080..U+00FF) as one */
+    for (; utf8 != NULL && *utf8 != '\0' && n + 1 < size; utf8++) {
+        const unsigned char c = (unsigned char)*utf8;
+        if ((c == 0xC2 || c == 0xC3) && utf8[1] != '\0') {
+            buf[n++] = (char)(((c & 0x03) << 6) | ((unsigned char)utf8[1] & 0x3F));
+            utf8++;
+        } else {
+            buf[n++] = (char)c;
+        }
+    }
+    buf[n] = '\0';
+    return utf8 != NULL ? buf : NULL;
+}
+
+/* the space or line break at s: its length (a space, a line break, the European disc's \r\n; Japanese's
+ * full-width space in Shift-JIS or UTF-8), or 0 */
+static size_t spaceAt(const char* s) {
+    const unsigned char* u = (const unsigned char*)s;
+    if (u[0] == ' ' || u[0] == '\n') {
+        return 1;
+    }
+    if ((u[0] == '\r' && u[1] == '\n') || (u[0] == 0x81 && u[1] == 0x40)) {
+        return 2;
+    }
+    return u[0] == 0xE3 && u[1] == 0x80 && u[2] == 0x80 ? 3 : 0;
+}
+
+/* from (in the text's encoding) at s + i, a space in it any one space or line break: its length, or 0. latin:
+ * the text's word ends where from's does (a letter after it is another word) */
+static size_t phraseAt(const char* s, size_t i, const char* from, int latin) {
+    size_t k, j = i, n;
+    if (from == NULL || from[0] == '\0') {
+        return 0;
+    }
+    for (k = 0; from[k] != '\0'; k++) {
+        if (from[k] != ' ') {
+            if (s[j] != from[k]) {
+                return 0;
+            }
+            j++;
+        } else if ((n = spaceAt(s + j)) != 0 && (latin ? n < 3 && (unsigned char)s[j] != 0x81 : 1)) {
+            j += n;
+        } else {
+            return 0;
+        }
+    }
+    if (latin && isLetter((unsigned char)from[k - 1]) && isLetter((unsigned char)s[j])) {
+        return 0;
+    }
+    return j - i;
+}
+
+/* to into o, each space of it the next space or line break of the text it stands for (src, srcLen) */
+static void putPhrase(char** o, const char* to, const char* src, size_t srcLen) {
+    size_t j = 0, n = 0;
+    for (; *to != '\0'; to++) {
+        if (*to != ' ') {
+            *(*o)++ = *to;
+            continue;
+        }
+        while (j < srcLen && (n = spaceAt(src + j)) == 0) {
+            j++;
+        }
+        if (j < srcLen) {
+            put(o, src + j, n);
+            j += n;
+        } else {
+            *(*o)++ = ' ';
+        }
+    }
+}
+
+static int tagIs(const char* tag, const char* want) {
+    const size_t n = strlen(want);
+    if (tag == NULL) {
+        return 0;
+    }
+    if (n > 0 && want[n - 1] == '*') {
+        return strncmp(tag, want, n - 1) == 0;
+    }
+    return strcmp(tag, want) == 0;
+}
+
+/* a phrase of kPhrases for this swap at s + i (a word's start): put in o, its length, or 0; *named: it puts in
+ * the pick's name (for Mario's: the pronouns after it are the pick's) */
+static size_t phraseSwap(const Swap* w, const char* s, size_t i, char** o, int* named) {
+    const int latin = w->lang != LANG_JA;
+    size_t k;
+    char from[160], to[160];
+    for (k = 0; k < sizeof(kPhrases) / sizeof(kPhrases[0]); k++) {
+        const Phrase* p = &kPhrases[k];
+        const char* f;
+        size_t len;
+        if (!(p->picks & (1 << w->chr)) || (p->lang != w->lang) || (p->tag != NULL && !tagIs(w->tag, p->tag))) {
+            continue;
+        }
+        if (latin ? ((unsigned char)p->from[0] < 0x80 && p->from[0] != s[i]) : (p->from[0] != s[i] && p->fromSjis[0] != s[i])) {
+            continue; /* (the quick test: its first letter) */
+        }
+        f = tableText(w, p->from, p->fromSjis, from, sizeof(from));
+        if ((len = phraseAt(s, i, f, latin)) != 0) {
+            putPhrase(o, tableText(w, p->to, p->toSjis, to, sizeof(to)), s + i, len);
+            *named = strstr(p->from, "Mario") != NULL && strstr(p->to, kLatinNames[w->chr][1].name) != NULL;
+            return len;
+        }
+    }
+    return 0;
+}
+
+/* Peach's name about to be put in for Mario's at o (after a space or a line break): the man's word before it
+ * in out made hers (kBefore), and then a chain word before that one (il, del, mein, mon) */
+static void beforePeach(const Swap* w, char* out, char** o) {
+    char* end = *o; /* (just past the space after the word to look at) */
+    int chained = 0;
+    for (;;) {
+        size_t k;
+        char* at = NULL;
+        size_t len = 0;
+        const Word* b = NULL;
+        char from[64], to[64], made[96];
+        size_t sep;
+        if (end <= out || (end[-1] != ' ' && end[-1] != '\n')) {
+            return;
+        }
+        /* (its space: one, or the European disc's line break, two) */
+        sep = end - out >= 2 && end[-1] == '\n' && end[-2] == '\r' ? 2 : 1;
+        for (k = 0; k < sizeof(kBefore) / sizeof(kBefore[0]); k++) {
+            const char* f;
+            b = &kBefore[k];
+            if (b->lang != w->lang || b->chain != chained) {
+                continue;
+            }
+            f = tableText(w, b->from, NULL, from, sizeof(from));
+            len = f != NULL ? strlen(f) : 0;
+            if (len == 0 || (size_t)(end - sep - out) < len) {
+                continue;
+            }
+            at = end - sep - len;
+            if ((at > out && isLetter((unsigned char)at[-1])) || phraseAt(at, 0, f, 0) != len) {
+                continue;
+            }
+            break;
+        }
+        if (k == sizeof(kBefore) / sizeof(kBefore[0])) {
+            return;
+        }
+        {
+            /* the word made hers in place, what follows it moved */
+            char* m = made;
+            const char* t = tableText(w, b->to, NULL, to, sizeof(to));
+            size_t n;
+            if (t == NULL || strlen(t) >= sizeof(made)) {
+                return;
+            }
+            putPhrase(&m, t, at, len);
+            n = (size_t)(m - made);
+            memmove(at + n, at + len, (size_t)(*o - (at + len)));
+            *o += (ptrdiff_t)n - (ptrdiff_t)len;
+            memcpy(at, made, n);
+        }
+        end = at;
+        chained = 1;
+    }
+}
+
+/* after Peach's name, put in for Mario's: a man's words after it (kAfter) made hers, its length or 0 */
+static size_t afterPeach(const Swap* w, const char* s, size_t i, char** o) {
+    size_t k, t = i;
+    char from[96], to[96];
+    /* (past the game's commands just after the name and its line breaks: "Mario\n<wait 250>\nè un cattivo") */
+    for (;;) {
+        size_t u = t;
+        while (s[u] == ' ' || s[u] == '\n' || s[u] == '\r') {
+            u++;
+        }
+        if (w->enc == PORT_TEXT_UTF8 || s[u] != '<' || strchr(s + u, '>') == NULL) {
+            break;
+        }
+        t = (size_t)(strchr(s + u, '>') - s) + 1;
+    }
+    for (k = 0; k < sizeof(kAfter) / sizeof(kAfter[0]); k++) {
+        const Phrase* p = &kAfter[k];
+        const char* f;
+        const char* g;
+        size_t len;
+        int bare; /* (after a command, no space before the words: its own) */
+        if (p->lang != w->lang) {
+            continue;
+        }
+        f = tableText(w, p->from, p->fromSjis, from, sizeof(from));
+        bare = t > i && f != NULL && f[0] == ' ' && s[t] != ' ' && s[t] != '\n' && s[t] != '\r';
+        if ((len = phraseAt(s, t, bare ? f + 1 : f, w->lang != LANG_JA)) != 0) {
+            g = tableText(w, p->to, p->toSjis, to, sizeof(to));
+            put(o, s + i, t - i);
+            putPhrase(o, bare && g[0] == ' ' ? g + 1 : g, s + t, len);
+            return t - i + len;
+        }
+    }
+    return 0;
+}
+
+/* the name at s + i .. end is spoken to, not of: "Mario, ...", "Mario!", "Thanks, Mario.", "Dear Mario," at its
+ * clause's start (after a capital's word, a greeting's, punctuation other than ':'); not "If you see Mario, thank
+ * him", "This is Mario, and he's...", "everyone: Mario, his friends" */
+static int spokenTo(const char* s, size_t i, size_t end) {
+    static const char* const kGreetings[] = {"dear", "dearest", "hey", "oh", "lieber", "liebster", "liebe", "cher",
+                                             "querido", "caro", "carissimo", "hola", "ciao", "salut", "hallo"};
+    size_t b = i, w;
+    const char c = s[end];
+    if (!(c == ',' || c == '!' || c == '?' || c == '.')) {
+        return 0;
+    }
+    while (b > 0 && (s[b - 1] == ' ' || s[b - 1] == '\n')) {
+        b--;
+    }
+    if (c == '.' && !(b > 0 && s[b - 1] == ',')) {
+        return 0; /* (a sentence's end: only "..., Mario.") */
+    }
+    if (b == 0) {
+        return 1;
+    }
+    if (s[b - 1] == ':') {
+        return 0;
+    }
+    if (!isLetter((unsigned char)s[b - 1])) {
+        return 1;
+    }
+    for (w = b; w > 0 && isLetter((unsigned char)s[w - 1]); w--) {
+    }
+    if (upperAt((const unsigned char*)s + w)) {
+        return 1;
+    }
+    for (b = 0; b < sizeof(kGreetings) / sizeof(kGreetings[0]); b++) {
+        const size_t n = strlen(kGreetings[b]);
+        if (strncmp(s + w, kGreetings[b], n) == 0 && !isLetter((unsigned char)s[w + n])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* s with Mario's and the pick's names swapped (and, for Peach, his pronouns hers where he is named);
+ * out has room for twice s */
 static void substitute(const Swap* w, const char* s, char* out) {
     char* o = out;
     size_t i = 0;
     int prevWide = 0;
     int n, st;
     size_t end;
+    const int u = w->enc == PORT_TEXT_UTF8;
+    const int jp = w->lang == LANG_JA && w->enc != PORT_TEXT_LATIN1;
+    /* the pronouns: 0 not now; 1 in a sentence that names Mario; 2 at the next one's start */
+    const int pronouns = w->chr == PORT_PLAY_AS_PEACH && w->lang >= 0 && w->lang < LANG_OTHER;
+    int scope = 0;
 
     while (s[i] != '\0') {
         unsigned char c = (unsigned char)s[i];
         size_t cl;
         if (c == '<' && w->enc != PORT_TEXT_UTF8) { /* a command, <col ...>, <p>: as it is */
+            if (startsWith(s + i, "<p>") || startsWith(s + i, "<k>")) {
+                scope = scope != 0 ? 2 : 0; /* (a page turned, a key waited for: as a sentence's end) */
+            }
             while (s[i] != '\0' && s[i] != '>') {
                 *o++ = s[i++];
             }
@@ -1086,13 +1519,39 @@ static void substitute(const Swap* w, const char* s, char* out) {
             prevWide = 0;
             continue;
         }
+        if (jp || i == 0 || prevWide || !isLetter((unsigned char)s[i - 1])) {
+            int named = 0;
+            const size_t len = phraseSwap(w, s, i, &o, &named); /* a nickname, a misremembered name (kPhrases) */
+            if (len > 0) {
+                if (pronouns && named) {
+                    scope = 1;
+                }
+                i += len;
+                prevWide = 0;
+                continue;
+            }
+        }
         for (n = 0; n < NAMES; n++) {
             if (nameAt(w, s, i, n, prevWide, &end, &st)) {
                 const int other = n ^ 1;
                 const char* to = nameOf(w, other);
+                const int asPeach = w->chr == PORT_PLAY_AS_PEACH && NAME_IS_MARIO(n);
+                if (asPeach && !NAME_IS_JP(n)) {
+                    beforePeach(w, out, &o); /* "Mr." "Ms.", "il Signor" "la Signora" */
+                }
                 put(&o, to, strlen(to));
                 for (; st > 0; st--) {
                     *o++ = kLatinNames[w->chr][other].stretch;
+                }
+                if (pronouns && !NAME_IS_MARIO(n)) {
+                    scope = 0; /* (the pick's own name: whose pronoun is whose isn't clear) */
+                } else if (pronouns && NAME_IS_JP(n)) {
+                    scope = startsWith(s + end, kJpCall[u][0]) || startsWith(s + end, kJpCall[u][1]) ? 0 : 1;
+                } else if (pronouns) {
+                    scope = spokenTo(s, i, end) ? 0 : 1;
+                }
+                if (asPeach) {
+                    end += afterPeach(w, s, end, &o); /* "est devenu" "est devenue" */
                 }
                 i = end;
                 break;
@@ -1101,6 +1560,47 @@ static void substitute(const Swap* w, const char* s, char* out) {
         if (n < NAMES) {
             prevWide = NAME_IS_JP(n);
             continue;
+        }
+        if (scope != 0 && jp) {
+            /* (not the end of a longer katakana word: a katakana or ー before it) */
+            const int kanaBefore = u ? i >= 3 && (unsigned char)s[i - 3] == 0xE3 &&
+                                           ((unsigned char)s[i - 2] == 0x83 || ((unsigned char)s[i - 2] == 0x82 &&
+                                                                                 (unsigned char)s[i - 1] >= 0xA1))
+                                     : i >= 2 && ((unsigned char)s[i - 2] == 0x83 ||
+                                                  ((unsigned char)s[i - 2] == 0x81 && (unsigned char)s[i - 1] == 0x5B));
+            if (!kanaBefore && startsWith(s + i, kJpHe[u]) && !startsWith(s + i + strlen(kJpHe[u]), kJpHeNot[u][0]) &&
+                !startsWith(s + i + strlen(kJpHe[u]), kJpHeNot[u][1])) {
+                put(&o, kJpShe[u], strlen(kJpShe[u]));
+                i += strlen(kJpHe[u]);
+                prevWide = 1;
+                continue;
+            }
+            for (n = 0; n < 3; n++) {
+                if (startsWith(s + i, kJpEnds[u][n])) {
+                    scope = scope == 1 ? 2 : 0; /* (Japanese: on through the next sentence) */
+                    break;
+                }
+            }
+        } else if (scope != 0) {
+            const unsigned char before = i > 0 ? (unsigned char)s[i - 1] : 0;
+            /* (after a double-byte character, a word's start; in UTF-8 an accented letter's bytes are its word's) */
+            const int wordStart =
+                i == 0 || (prevWide && !u) || !(isLetter(before) || (u && before >= 0x80 && before < 0xC0));
+            if (wordStart && isLetter(c)) {
+                const size_t len = pronounAt(w, s, i, &o);
+                if (len > 0) {
+                    i += len;
+                    scope = 1;
+                    prevWide = 0;
+                    continue;
+                }
+                if (scope == 2) {
+                    scope = 0; /* (the next sentence doesn't start with one: he is someone else's now) */
+                }
+            }
+            if (c == '.' || c == '!' || c == '?') {
+                scope = 2;
+            }
         }
         /* a double-byte character as a whole */
         cl = charLen(w, s + i);
@@ -1135,15 +1635,270 @@ int portPlayAsHasName(const char* text, int chr) {
             return 1;
         }
     }
-    return strstr(text, JP_MARIO_SJIS) != NULL || strstr(text, JP_MARIO_UTF8) != NULL ||
-           strstr(text, kJpNames[chr][0]) != NULL || strstr(text, kJpNames[chr][1]) != NULL;
+    if (strstr(text, JP_MARIO_SJIS) != NULL || strstr(text, JP_MARIO_UTF8) != NULL ||
+        strstr(text, kJpNames[chr][0]) != NULL || strstr(text, kJpNames[chr][1]) != NULL) {
+        return 1;
+    }
+    /* a phrase that names the player another way ("Mr. Mustache", "Captain 'Stache") */
+    for (n = 0; n < (int)(sizeof(kPhrases) / sizeof(kPhrases[0])); n++) {
+        const Phrase* p = &kPhrases[n];
+        if ((p->picks & (1 << chr)) &&
+            (p->key[0] == '\0' || strstr(text, p->key) != NULL || (p->keySjis != NULL && strstr(text, p->keySjis) != NULL))) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
-void portPlayAsSwapText(const char* text, char* out, int chr, int enc) {
+/* the game's text's language (LANG_*): the JP release's Japanese; the European release's chosen one
+ * (mariost.c's gp->language: 0 Japanese, 1 English .. 5 Italian); the US release's English, or the
+ * European disc's language it shows (port/include/port/text_language.h) */
+static int gameTextLang(void) {
+#if VERSION < VERSION_US
+    return LANG_JA;
+#elif VERSION >= VERSION_DEMO_EU
+    static const int kLang[6] = {LANG_JA, LANG_EN, LANG_DE, LANG_FR, LANG_ES, LANG_IT};
+    return gp != NULL && gp->language >= 0 && gp->language < 6 ? kLang[gp->language] : LANG_EN;
+#else
+    const char* dir = portTextLanguageDir();
+    if (dir == NULL) {
+        return LANG_EN;
+    }
+    return !strcmp(dir, "DE") ? LANG_DE : !strcmp(dir, "FR") ? LANG_FR : !strcmp(dir, "SP") ? LANG_ES
+         : !strcmp(dir, "IT") ? LANG_IT : LANG_OTHER;
+#endif
+}
+
+static void swapText(const char* text, char* out, int chr, int enc, int lang, const char* tag) {
     Swap w;
     w.chr = chr > PORT_PLAY_AS_MARIO && chr < PORT_PLAY_AS_COUNT ? chr : PORT_PLAY_AS_MARIO;
     w.enc = enc;
+    w.lang = lang >= 0 && lang < LANG_OTHER ? lang : LANG_OTHER;
+    w.tag = tag;
     substitute(&w, text, out);
+}
+
+void portPlayAsSwapTextIn(const char* text, char* out, int chr, int enc, int lang) {
+    swapText(text, out, chr, enc, lang, NULL);
+}
+
+void portPlayAsSwapText(const char* text, char* out, int chr, int enc) {
+    /* the game's messages: its language; Paper Cut's own: the menus' (port/include/port/tr.h: 0 English ..
+       5 Japanese, the same order; a language pack's own, 6 and on, none) */
+    portPlayAsSwapTextIn(text, out, chr, enc, enc == PORT_TEXT_GAME ? gameTextLang() : portTrLanguage());
+}
+
+/* $TTYD_PLAY_AS_PRONOUN_TEST=1 (tr.cpp, once): Peach's pronouns in each language, checked ("[play-as] ...") */
+void portPlayAsPronounTest(void) {
+    static const struct {
+        int lang;
+        const char* in;
+        const char* want;
+    } kCases[] = {
+        {LANG_EN, "Mario's attack goes up by 2, but he takes double damage.",
+         "Peach's attack goes up by 2, but she takes double damage."},
+        {LANG_EN, "Mario's HP is low. His defense drops, and the badge is his. He rests. Koops waves at him.",
+         "Peach's HP is low. Her defense drops, and the badge is hers. She rests. Koops waves at him."},
+        {LANG_EN, "Mario, he went that way! Thanks, Mario. He is gone.", "Peach, he went that way! Thanks, Peach. He is gone."},
+        {LANG_EN, "Mario saw Peach and he waved. MARIO HIMSELF!", "Peach saw Mario and he waved. PEACH HERSELF!"},
+        {LANG_EN, "The hero, the man: Mario took them himself, and then the theme...",
+         "The hero, the man: Peach took them herself, and then the theme..."},
+        {LANG_DE, "Mario greift an, aber er nimmt doppelten Schaden, und sein Hut f\xC3\xA4llt. Er kann es sein.",
+         "Peach greift an, aber sie nimmt doppelten Schaden, und ihr Hut f\xC3\xA4llt. Sie kann es sein."},
+        {LANG_DE, "Marios Angriff steigt, aber seine Abwehr sinkt, und es freut ihn. Es ist ihm egal.",
+         "Peachs Angriff steigt, aber ihre Abwehr sinkt, und es freut sie. Es ist ihm egal."},
+        {LANG_FR, "Mario attaque, mais il subit le double de d\xC3\xA9g\xC3\xA2ts. Il y a un risque.",
+         "Peach attaque, mais elle subit le double de d\xC3\xA9g\xC3\xA2ts. Il y a un risque."},
+        {LANG_ES, "Mario ataca, pero \xC3\xA9l recibe el doble de da\xC3\xB1o. \xC3\x89l mismo lo sabe.",
+         "Peach ataca, pero ella recibe el doble de da\xC3\xB1o. Ella misma lo sabe."},
+        {LANG_IT, "Mario attacca, ma lui subisce il doppio dei danni.", "Peach attacca, ma lei subisce il doppio dei danni."},
+        /* (the words around the name, play_as_text.txt: a title before it, agreement after it, a nickname) */
+        {LANG_EN, "Hello, Mr. Mario! If you see Mario, thank him. Hi, Mr. Mustache!",
+         "Hello, Ms. Peach! If you see Peach, thank her. Hi, Miss Crown!"},
+        {LANG_IT, "Lei non \xC3\xA8 il Signor Mario? Mario\n\xC3\xA8 arrivato.",
+         "Lei non \xC3\xA8 la Signora Peach? Peach\n\xC3\xA8 arrivata."},
+        {LANG_FR, "Cher M. Mario, Mario est devenu Superstar!", "Ch\xC3\xA8re Mme Peach, Peach est devenue Superstar!"},
+        /* (マリオは　カレの　ボウシを　みた！: ピーチは　カノジョの ...) */
+        {LANG_JA,
+         "\xE3\x83\x9E\xE3\x83\xAA\xE3\x82\xAA\xE3\x81\xAF\xE3\x80\x80\xE3\x82\xAB\xE3\x83\xAC\xE3\x81\xAE\xE3\x80\x80"
+         "\xE3\x83\x9C\xE3\x82\xA6\xE3\x82\xB7\xE3\x82\x92\xE3\x80\x80\xE3\x81\xBF\xE3\x81\x9F\xEF\xBC\x81",
+         "\xE3\x83\x94\xE3\x83\xBC\xE3\x83\x81\xE3\x81\xAF\xE3\x80\x80\xE3\x82\xAB\xE3\x83\x8E\xE3\x82\xB8\xE3\x83\xA7"
+         "\xE3\x81\xAE\xE3\x80\x80\xE3\x83\x9C\xE3\x82\xA6\xE3\x82\xB7\xE3\x82\x92\xE3\x80\x80\xE3\x81\xBF\xE3\x81\x9F"
+         "\xEF\xBC\x81"},
+    };
+    static const char* const kLangName[LANG_OTHER] = {"en", "de", "fr", "es", "it", "ja"};
+    char out[512];
+    char luigi[512];
+    size_t k;
+    int bad = 0;
+    for (k = 0; k < sizeof(kCases) / sizeof(kCases[0]); k++) {
+        portPlayAsSwapTextIn(kCases[k].in, out, PORT_PLAY_AS_PEACH, PORT_TEXT_UTF8, kCases[k].lang);
+        portPlayAsSwapTextIn(kCases[k].in, luigi, PORT_PLAY_AS_LUIGI, PORT_TEXT_UTF8, kCases[k].lang);
+        if (strcmp(out, kCases[k].want) != 0) {
+            bad++;
+            printf("[play-as] pronouns %s %d: FAIL: %s\n", kLangName[kCases[k].lang], (int)k, out);
+        } else {
+            printf("[play-as] pronouns %s %d: ok\n", kLangName[kCases[k].lang], (int)k);
+        }
+        if (strstr(luigi, "she") != NULL || strstr(luigi, " sie ") != NULL || strstr(luigi, "elle") != NULL ||
+            strstr(luigi, " lei ") != NULL) {
+            bad++;
+            printf("[play-as] pronouns %s %d: FAIL: Luigi's are hers: %s\n", kLangName[kCases[k].lang], (int)k, luigi);
+        }
+    }
+    printf("[play-as] pronoun test done: %d problems\n", bad);
+    fflush(stdout);
+}
+
+/* Paper Cut's own texts that keep Mario's name whoever the pick is, by their English (tr.cpp's playAs):
+ * a choice that is a name itself (the Play as choice, a side, a sticker), Play as's and the voice
+ * toggle's own help (and an achievement's "playing as Luigi"), the looks and colours named after the
+ * brothers, versus (always the brothers: Mario's side against Luigi's), Brothers mode (Luigi with
+ * Mario, and it turns Play as off), and the model files' names. */
+int portPlayAsKeepsMario(const char* english) {
+    static const char* const kWhole[] = {
+        "Mario", "Luigi", "Peach", "Bowser", "Fire Mario", "Luigi green",
+        /* the colour slots, each named after the one it dresses (cosmetics.cpp: all four's listed together) */
+        "Mario's cap and shirt", "Mario's overalls", "Luigi's cap and shirt", "Luigi's overalls", "Peach's dress",
+        "Peach's crown", "Peach's hair", "Peach's gloves", "Peach's earrings", "Peach's shoes", "Bowser's shell",
+        "Bowser's hair", "Bowser's skin", "Bowser's horns and spikes", "Bowser's bracelets"};
+    static const char* const kPart[] = {
+        "Mario's place", "Luigi's voice for Mario", "sound as Luigi's", "as his brother or his rivals",
+        "Mario's side", "Luigi's side", "Mario's player", "against Luigi", "against the computer's Luigi",
+        "Mario's badges", "Mario's items", "Luigi's badges", "Luigi's items", "Luigi joins Mario",
+        "Luigi follows Mario", "walks Luigi", "Brothers mode's Luigi", "Mario is a_mario", "Play as", "playing as",
+        "Luigi's higher jump", "While Luigi is picked",
+        /* texts written for each pick already (the Wardrobe's tab and costume notes, wardrobe_aurora.c):
+         * swapped again, Peach's would read "Mario, her partners" (the pick and Mario trade places) */
+        "partners and the status bar look", "This outfit doesn't fit",
+    };
+    size_t k;
+    if (english == NULL) {
+        return 0;
+    }
+    for (k = 0; k < sizeof(kWhole) / sizeof(kWhole[0]); k++) {
+        if (strcmp(english, kWhole[k]) == 0) {
+            return 1;
+        }
+    }
+    for (k = 0; k < sizeof(kPart) / sizeof(kPart[0]); k++) {
+        if (strstr(english, kPart[k]) != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* $TTYD_PLAY_AS_TEXT_DUMP=<file> (portTraceFrame, at the first frame, then the game exits): every text in
+ * the file swapped for Luigi, Peach and Bowser by the game's own rules, into <file>.out, for
+ * tools/port/playas_text_check.py. Each line of the file: kind (g the game's text: Shift-JIS in Japanese,
+ * else Latin-1; u Paper Cut's own: UTF-8; what follows the letter, its source, isn't read), language (en de fr
+ * es it ja), the key (the game's: file/tag, the tag for kPhrases; Paper Cut's own: its English, for the texts
+ * that keep Mario's name), the text; tab apart, with \\ \n \t \r escaped. Each line of
+ * <file>.out: the three swaps, tab apart, escaped the same way. */
+static char* dumpUnescape(char* s) {
+    char *r = s, *w = s;
+    for (; *r != '\0'; r++) {
+        if (*r == '\\' && r[1] != '\0') {
+            r++;
+            *w++ = *r == 'n' ? '\n' : *r == 't' ? '\t' : *r == 'r' ? '\r' : *r;
+        } else {
+            *w++ = *r;
+        }
+    }
+    *w = '\0';
+    return s;
+}
+
+static void dumpEscaped(FILE* f, const char* s) {
+    for (; *s != '\0'; s++) {
+        if (*s == '\\' || *s == '\n' || *s == '\t' || *s == '\r') {
+            fputc('\\', f);
+            fputc(*s == '\n' ? 'n' : *s == '\t' ? 't' : *s == '\r' ? 'r' : '\\', f);
+        } else {
+            fputc(*s, f);
+        }
+    }
+}
+
+void portPlayAsTextDump(const char* path) {
+    static const char* const kLangs[LANG_OTHER] = {"en", "de", "fr", "es", "it", "ja"};
+    char outPath[1024];
+    FILE* in = fopen(path, "rb");
+    FILE* out;
+    char* data;
+    char* line;
+    char* buf = NULL;
+    size_t bufSize = 0;
+    long size;
+    int count = 0;
+    snprintf(outPath, sizeof(outPath), "%s.out", path);
+    out = in != NULL ? fopen(outPath, "wb") : NULL;
+    if (in == NULL || out == NULL || fseek(in, 0, SEEK_END) != 0 || (size = ftell(in)) < 0 ||
+        fseek(in, 0, SEEK_SET) != 0 || (data = (char*)malloc((size_t)size + 1)) == NULL) {
+        printf("[play-as] text dump: can't read %s or write %s\n", path, outPath);
+        fflush(stdout);
+        if (in != NULL) {
+            fclose(in);
+        }
+        if (out != NULL) {
+            fclose(out);
+        }
+        return;
+    }
+    data[fread(data, 1, (size_t)size, in)] = '\0';
+    fclose(in);
+    for (line = data; *line != '\0';) {
+        char* next = strchr(line, '\n');
+        char* field[4];
+        int n = 1, lang, chr;
+        if (next != NULL) {
+            *next++ = '\0';
+        } else {
+            next = line + strlen(line);
+        }
+        field[0] = line;
+        while (n < 4 && (field[n] = strchr(field[n - 1], '\t')) != NULL) {
+            *field[n]++ = '\0';
+            n++;
+        }
+        line = next;
+        if (n < 4) {
+            continue;
+        }
+        for (lang = 0; lang < LANG_OTHER && strcmp(field[1], kLangs[lang]) != 0; lang++) {
+        }
+        dumpUnescape(field[2]);
+        dumpUnescape(field[3]);
+        if (strlen(field[3]) * 2 + 1 > bufSize) {
+            bufSize = strlen(field[3]) * 2 + 1;
+            free(buf);
+            buf = (char*)malloc(bufSize);
+            if (buf == NULL) {
+                break;
+            }
+        }
+        for (chr = PORT_PLAY_AS_LUIGI; chr <= PORT_PLAY_AS_BOWSER; chr++) {
+            if (field[0][0] == 'u' && portPlayAsKeepsMario(field[2])) {
+                strcpy(buf, field[3]);
+            } else {
+                const int enc = field[0][0] == 'u' ? PORT_TEXT_UTF8 : lang == LANG_JA ? PORT_TEXT_SJIS : PORT_TEXT_LATIN1;
+                const char* tag = field[0][0] == 'g' && strchr(field[2], '/') != NULL ? strchr(field[2], '/') + 1 : NULL;
+                swapText(field[3], buf, chr, enc, lang, tag);
+            }
+            if (chr != PORT_PLAY_AS_LUIGI) {
+                fputc('\t', out);
+            }
+            dumpEscaped(out, buf);
+        }
+        fputc('\n', out);
+        count++;
+    }
+    free(buf);
+    free(data);
+    fclose(out);
+    printf("[play-as] text dump: %d texts swapped into %s\n", count, outPath);
+    fflush(stdout);
 }
 
 
@@ -1155,16 +1910,33 @@ typedef struct LuigiText {
     char* in;
     char* out; /* NULL: the same as in */
     int chr;   /* the pick it was made for */
+    char* tag; /* the message's tag, when a phrase of kPhrases is that message's own (else NULL: any message's) */
 } LuigiText;
 static LuigiText* sTexts[1024];
 
+/* a phrase of kPhrases is this message's own, for chr */
+static int tagHasPhrases(const char* tag, int chr) {
+    size_t k;
+    for (k = 0; tag != NULL && k < sizeof(kPhrases) / sizeof(kPhrases[0]); k++) {
+        if ((kPhrases[k].picks & (1 << chr)) && kPhrases[k].tag != NULL && tagIs(tag, kPhrases[k].tag)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 const char* portLuigiText(const char* msg) {
+    return portLuigiTextTag(NULL, msg);
+}
+
+const char* portLuigiTextTag(const char* tag, const char* msg) {
     unsigned int hash = 2166136261u;
     const unsigned char* p;
     LuigiText* t;
     size_t len;
     char* out;
     const int chr = portPlayAsText();
+    int tagged;
 
     if (msg == NULL || chr == PORT_PLAY_AS_MARIO) {
         return msg;
@@ -1176,8 +1948,9 @@ const char* portLuigiText(const char* msg) {
     for (p = (const unsigned char*)msg; *p != '\0'; p++) {
         hash = (hash ^ *p) * 16777619u;
     }
+    tagged = tagHasPhrases(tag, chr);
     for (t = sTexts[hash % 1024]; t != NULL; t = t->next) {
-        if (t->chr == chr && !strcmp(t->in, msg)) {
+        if (t->chr == chr && !strcmp(t->in, msg) && (tagged ? t->tag != NULL && !strcmp(t->tag, tag) : t->tag == NULL)) {
             return t->out != NULL ? t->out : msg;
         }
     }
@@ -1197,7 +1970,11 @@ const char* portLuigiText(const char* msg) {
     }
     memcpy(t->in, msg, len + 1);
     t->chr = chr;
-    portPlayAsSwapText(msg, out, chr, PORT_TEXT_GAME);
+    t->tag = NULL;
+    if (tagged && (t->tag = (char*)malloc(strlen(tag) + 1)) != NULL) {
+        memcpy(t->tag, tag, strlen(tag) + 1);
+    }
+    swapText(msg, out, chr, PORT_TEXT_GAME, gameTextLang(), t->tag);
     if (!strcmp(out, msg)) {
         free(out);
         t->out = NULL;

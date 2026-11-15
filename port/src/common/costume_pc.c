@@ -11,6 +11,7 @@
 #include "port/costume.h"
 #include "port/lua_mods.h"
 #include "port/luigi.h"
+#include "port/pm64.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "battle/battle_unit.h"
@@ -198,6 +199,7 @@ void portLooksFrame(void) {
     /* (in a game only: not the title, a map's or battle's loading) */
     const SequenceType seq = seqGetSeq();
     portSkinsFrame();
+    portPm64ModelsFrame(); /* (the PM64 partners' own models' stand-ins: pm64_models_pc.c) */
     /* what's wanted, from the game's state (never from what was drawn: a game that skips a draw
      * would load and let go of poses on other frames than the others of a session); with the
      * menu's since the last frame (the Wardrobe's stage) */

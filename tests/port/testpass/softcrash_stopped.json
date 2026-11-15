@@ -1,0 +1,15 @@
+{
+ "desc": "Soft crash, 4 of 6: the same, but the run is ended at frame 1500 as a device reset ends it (TTYD_FLIGHT_KILL_AT: no crash report, stopped on screen)",
+ "groups": ["platform", "recovery", "softcrash"],
+ "versions": ["us"],
+ "settings": {"tex_filter": 0},
+ "env": {"TTYD_MAP": "gor_01", "TTYD_SETTING_CHANGE_TEST": "tex_filter=1@300", "TTYD_CRASH_SAFE_EVERY": 600,
+         "TTYD_CRASH_SAFE_ROOM_GAP": 300, "TTYD_FLIGHT_KILL_AT": 1500, "TTYD_EXIT_FRAMES": 3000},
+ "log_must": [
+  "^\\[undo\\] noted: tex_filter 0 -> 1",
+  "^\\[crashsafe\\] written crashsafe_G8ME01_2\\.gci: gor_01, file 1",
+  "^\\[flight\\] test: ended at frame 1500 with no exit handlers"
+ ],
+ "exit": [9],
+ "timeout": 180
+}

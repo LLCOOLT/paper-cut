@@ -1,0 +1,33 @@
+{
+ "desc": "Play as's text check, step 2: playas_text_dump's swaps checked (tools/port/playas_text_check.py, docs/PLAY_AS.md's Text: the rules): Mario's name left where it is the player's or the pick's where it was the NPC's, Peach's pronouns, titles and agreement, mustache nicknames for Peach and Bowser, Luigi's 'big brother' when he is the pick; a finding the allowlist (tools/port/playas_text_allow.txt) doesn't name, an allowlist line no longer found, or tables older than port/assets/play_as_text.txt fail it",
+ "groups": [
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "user_from": "playas_text_dump",
+ "user_gen": [
+  {
+   "script": "tools/port/playas_text_check.py",
+   "args": [
+    "verdict"
+   ],
+   "dest": "playas_text_verdict.txt"
+  }
+ ],
+ "env": {
+  "TTYD_EXIT_FRAMES": 30
+ },
+ "log_must": [
+  "^\\[warp\\] ok: no warp"
+ ],
+ "file_must": {
+  "user/playas_text_verdict.txt": [
+   "^0 findings, \\d+ allowed, 0 stale"
+  ]
+ },
+ "timeout": 300
+}

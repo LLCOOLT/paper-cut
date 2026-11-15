@@ -159,10 +159,11 @@ def beros():
         if not re.fullmatch(r"[a-z]{3}_\d\d", stem):
             continue
         src = open(path, encoding="utf-8", errors="replace").read()
-        for m in re.finditer(r'"(\w+)", // hitName(.*?)// nextBeroName', src, re.S):
+        # (names may be in brackets: hei_10's ("w_bero"))
+        for m in re.finditer(r'"(\w+)"\)*, // hitName(.*?)// nextBeroName', src, re.S):
             body = m.group(2)
-            nm = re.search(r'"(\w*)", // nextMapName', body)
-            nb = re.search(r'(NULL|"(\w*)"),\s*$', body)
+            nm = re.search(r'"(\w*)"\)*, // nextMapName', body)
+            nb = re.search(r'(NULL|"(\w*)")\)*,\s*$', body)
             out[stem].append((m.group(1), nm.group(1) if nm else stem, (nb.group(2) or "") if nb else ""))
     return out
 

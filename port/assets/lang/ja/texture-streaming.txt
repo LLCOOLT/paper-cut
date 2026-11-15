@@ -3,8 +3,8 @@
 Texture pack memory
 テクスチャパックのメモリ
 
-How much graphics memory a texture pack's pictures may use, and how large they load. Low keeps them to 512 MB at up to 1024 pixels, Medium 1 GB at up to 2048, High 2 GB and Maximum 4 GB at full size. Auto: Low on phones, tablets, handhelds and machines with little memory, Medium on a Steam Deck, Maximum elsewhere. They load in the background; the game's own pictures show until they are ready.
-テクスチャパックの画像が使えるグラフィックメモリの量と、読み込む大きさ。低は512 MB・最大1024ピクセル、中は1 GB・最大2048、高は2 GB、最大は4 GBでそのままの大きさ。自動：スマホ、タブレット、携帯ゲーム機、メモリの少ない機械では低、Steam Deckでは中、ほかでは最大。画像は裏で読み込まれ、それまではゲーム本来の画像が表示されます。
+How much graphics memory a texture pack may use: lower saves memory with less detailed pictures. Auto picks for your device. The game's own pictures show until a pack's are loaded.
+テクスチャパックが使えるグラフィックメモリの量。少ないほどメモリを節約し、絵は細かくなくなります。「自動」は機器に合わせます。パックの絵が読み込まれるまではゲームの絵が出ます。
 
 Auto
 自動

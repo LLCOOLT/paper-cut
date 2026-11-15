@@ -1,0 +1,67 @@
+# Safe graphics, the graphics API and the flight record (port/settings/features/safe_graphics.cpp)
+
+Safe graphics
+Grafica sicura
+
+The least the graphics card is asked for, for a device whose screen slows right down or that restarts while playing: no anti-aliasing, supersampling, upscaling or effects, the picture at 480 lines, smaller graphics buffers. Most of it at once, the rest from the next start.
+Il minimo richiesto alla scheda grafica, per un dispositivo la cui immagine rallenta moltissimo o che si riavvia mentre giochi: niente antialiasing, supersampling, upscaling o effetti, l'immagine a 480 linee, buffer grafici più piccoli. Quasi tutto subito, il resto dal prossimo avvio.
+
+Graphics API
+API grafica
+
+How the game talks to the graphics chip. Try OpenGL ES if the game slows right down or the device restarts with Vulkan.
+Come il gioco parla con il chip grafico. Prova OpenGL ES se con Vulkan il gioco rallenta moltissimo o il dispositivo si riavvia.
+
+Auto (Vulkan)
+Automatica (Vulkan)
+
+Vulkan
+Vulkan
+
+OpenGL ES
+OpenGL ES
+
+Copy the last graphics record
+Copia l'ultimo registro grafico
+
+flight_record_last.txt in the save folder: what the graphics were doing as the last run ended, kept even when the device restarted. Paste it to whoever is helping you.
+flight_record_last.txt nella cartella dei salvataggi: cosa faceva la grafica quando l'ultima partita è finita, conservato anche se il dispositivo si è riavviato. Incollalo a chi ti sta aiutando.
+
+Paper Cut stopped while drawing
+Paper Cut si è fermato mentre disegnava
+
+Last time the game stopped while it was on screen, with no crash report: the device or its graphics driver ended it. If the picture slowed right down first, or the device restarted, try Safe graphics.
+L'ultima volta il gioco si è fermato mentre era sullo schermo, senza rapporto di crash: l'ha chiuso il dispositivo o il suo driver grafico. Se prima l'immagine ha rallentato moltissimo, o il dispositivo si è riavviato, prova Grafica sicura.
+
+Turn on Safe graphics
+Attiva Grafica sicura
+
+Safe graphics is on: most of it now, the rest from the next start.
+Grafica sicura è attiva: quasi tutto ora, il resto dal prossimo avvio.
+
+Use Vulkan
+Usa Vulkan
+
+Use OpenGL ES
+Usa OpenGL ES
+
+Close Paper Cut and open it again to switch.
+Chiudi Paper Cut e riaprilo per cambiare.
+
+Copy the record
+Copia il registro
+
+The record of what the graphics were doing, to paste to whoever is helping you (also in Settings > General > Crash reports):
+Il registro di cosa faceva la grafica, da incollare a chi ti sta aiutando (anche in Impostazioni > Generali > Rapporti di crash):
+
+How the game talks to the graphics card. Try Direct3D 11 if the screen goes white, the game stops or lags badly with an older or Intel graphics driver. Safe graphics on Auto uses Direct3D 11.
+Come il gioco parla con la scheda grafica. Prova Direct3D 11 se lo schermo diventa bianco, il gioco si ferma o rallenta moltissimo con un driver grafico vecchio o Intel. La grafica sicura in Automatica usa Direct3D 11.
+
+Auto (Direct3D 12)
+Automatica (Direct3D 12)
+
+Direct3D 12
+Direct3D 12
+
+Direct3D 11
+Direct3D 11

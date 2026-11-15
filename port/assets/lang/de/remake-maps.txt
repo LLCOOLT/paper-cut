@@ -9,6 +9,12 @@ Warp-Röhren in den Katakomben
 The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
 Die Röhrenräume des Director's Cut öffnen sich vom Raum vor dem Duellkerker, und ihre letzte Röhre fragt nach dem Ziel: Rohlingens Marktplatz und der Ort jedes Kapitels, sobald sein Sternjuwel da ist. »Reisen nach« bleibt, wie es ist.
 
+The remake's pipe room
+Der Röhrenraum des Remakes
+
+The sewers' two warp pipe rooms, with the pipes to the towns of chapters 1, 2, 5 and 6, get the rest of the remake's pipe room: a pipe to Rogueport once chapter 1 is over, and one to the town of chapters 3, 4 and 7 each once that chapter is over.
+Die beiden Warp-Röhrenräume in den Katakomben, mit den Röhren zu den Orten der Kapitel 1, 2, 5 und 6, bekommen den Rest des Röhrenraums aus dem Remake: eine Röhre nach Rohlingen, sobald Kapitel 1 vorbei ist, und je eine zum Ort der Kapitel 3, 4 und 7, sobald das Kapitel vorbei ist.
+
 The remake's shortcut pipes
 Die Abkürzungsröhren des Remakes
 
@@ -30,8 +36,8 @@ Röhren für die langen Wege hin und zurück: Düsterdorf und die Spukabtei in b
 Keelhaul Key and the Grotto
 Isla Corsaria und die Höhle
 
-Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
-Sprungfedern zwischen dem Lager der Schiffbrüchigen und dem Schädelfelsen, sobald Bart-omb dabei ist, das treibende Fass der Piratenhöhle nach Kapitel 5 wieder da, und die Fuzzys im Dschungel bleiben.
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrels back after chapter 5 (two, as in the remake), and the jungle's Fuzzies stay. The barrels and the Fuzzies from the next room.
+Sprungfedern zwischen dem Lager der Schiffbrüchigen und dem Schädelfelsen, sobald Bart-omb dabei ist, die treibenden Fässer der Piratenhöhle nach Kapitel 5 wieder da (zwei, wie im Remake), und die Fuzzys im Dschungel bleiben. Die Fässer und die Fuzzys ab dem nächsten Raum.
 
 Jump down the Steeple's stairs
 Von den Treppen der Spukabtei springen
@@ -54,8 +60,8 @@ Die Speicher- und Herzblöcke, die das Remake hinzufügte: Wunderwald, Düsterwe
 New ambush battles
 Neue Hinterhalte
 
-The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
-Die neuen Hinterhalte des Remakes: auf dem Weg zur Geröllburg, in der Piratenhöhle und ein Elite-Soldat im Crucionen-HQ.
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress. From the next room.
+Die neuen Hinterhalte des Remakes: auf dem Weg zur Geröllburg, in der Piratenhöhle und ein Elite-Soldat im Crucionen-HQ. Ab dem nächsten Raum.
 
 Charlieton and a Grotto salesman
 Ramschnik und ein Händler in der Höhle

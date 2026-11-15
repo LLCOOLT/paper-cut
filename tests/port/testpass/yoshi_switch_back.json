@@ -1,0 +1,39 @@
+{
+ "desc": "Yoshi out, then Goombella, then Yoshi again in Rogueport's underground (tik_01): the game goes on (a headless script that switched 4, 1, 4 here once hung)",
+ "groups": [
+  "world",
+  "partners"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": "70",
+  "TTYD_WATCHDOG": "60",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "wait 200",
+  "party 4",
+  "wait 120",
+  "party 1",
+  "wait 120",
+  "party 4",
+  "wait 120",
+  "party 1",
+  "wait 60",
+  "party 4",
+  "wait 200",
+  "end"
+ ],
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "(?i)fatal:",
+  "watchdog"
+ ],
+ "timeout": 120
+}

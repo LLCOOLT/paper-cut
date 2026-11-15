@@ -1,0 +1,43 @@
+{
+ "desc": "the layout editor's presets with the touch Spin Dash button (Spin Dash on, a ROM linked; a faked 16:9 phone sideways): Handheld takes it into the bottom corner with A's cluster; Left-handed takes the cluster to the left and the button to A's other side (where the left thumb rolls off A), clear of every control; Done, and played that way ($TTYD_TOUCH_EDIT_DO, Aurora built with TTYD_TOUCH_OVERLAY=ON; ui_shots: touch_830_ui.png Handheld, touch_850_ui.png Left-handed, touch_920_ui.png after)",
+ "groups": [
+  "touchsize",
+  "touchedit",
+  "touchspin",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "build": "touch",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_TOUCH_DEVICE": "1920x1080@400",
+  "TTYD_TOUCH_SHOT": "830,850,920",
+  "TTYD_TOUCH_EDIT": "800-880",
+  "TTYD_TOUCH_EDIT_DO": "820:preset=1;840:preset=3",
+  "TTYD_EXIT_FRAMES": 960
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 960",
+  "end"
+ ],
+ "log_must": [
+  "\\[touch\\] preset Handheld: the spin button at .*: clear of the other controls",
+  "\\[touch\\] preset Left-handed: the spin button at .*: clear of the other controls",
+  "\\[touch\\] saved: control 16 \\(sideways\\)",
+  "\\[touch\\] layout editor closed \\(saved\\)",
+  "\\[touch\\] test: shot touch_920"
+ ],
+ "log_must_not": [
+  "TOUCHES control",
+  "PAST THE EDGE"
+ ],
+ "timeout": 180,
+ "ui_shots": true
+}

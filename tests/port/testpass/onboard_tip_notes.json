@@ -2,6 +2,7 @@
  "desc": "the first-time tip for paper notes (TTYD_TIPS=1: tips are off in map-warp tests otherwise; TTYD_NOTES_TEST: four notes round Mario in Rogueport's harbour, no relay): once the first notes are drawn, the line \"Notes from other players: {NOTE} reads one. Turn them off in Settings: Multiplayer.\" (the notes' button as the controller in hand shows it) shows low on the picture, once in the run",
  "groups": ["notes", "onboard"],
  "versions": ["us"],
+ "settings": {"paper_notes": 1},
  "env": {
   "TTYD_MAP": "gor_00,s_bero",
   "TTYD_STORY": "150",

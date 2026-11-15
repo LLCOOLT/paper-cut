@@ -1,0 +1,27 @@
+{
+ "desc": "An input script's `loop`: back to its first step, round and round, until $TTYD_EXIT_FRAMES end it as its `end` would, exit 0 (the online soak's scripts ran out of steps at about 55% of 2 game-hours and every game stood still after)",
+ "groups": [
+  "input"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 2000
+ },
+ "input": [
+  "wait 300",
+  "stick 127 0 100",
+  "stick -127 0 100",
+  "loop"
+ ],
+ "log_must": [
+  "\\[input\\] frame 1\\d{3}: loop",
+  "\\[input\\] end"
+ ],
+ "timeout": 120
+}

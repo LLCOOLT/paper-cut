@@ -1,0 +1,35 @@
+{
+ "desc": "Pirate's Grotto, the floodgate room (dou_03) before the floodgate (story 245) with remake_keelhaul on: the GameCube's one barrel and bottle, no second barrel (it comes only after chapter 5)",
+ "groups": [
+  "world",
+  "maps_remake",
+  "keelhaul"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "dou_03",
+  "TTYD_STORY": "245",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "remake_keelhaul": 1
+ },
+ "input": [
+  "wait 60",
+  "where",
+  "shot room_before",
+  "end"
+ ],
+ "expect_shots": [
+  "room_before"
+ ],
+ "timeout": 150,
+ "log_must": [
+  "\\[input\\] where: map 'dou_03'"
+ ],
+ "log_must_not": [
+  "\\[remake maps\\] dou_03: a second"
+ ]
+}

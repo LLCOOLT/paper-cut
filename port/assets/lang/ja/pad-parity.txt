@@ -1,0 +1,28 @@
+# Controller and touch parity (port/settings/features/qol.cpp, pad_keyboard.cpp, pm64_media.cpp, port/settings/settings_ui.cpp, port/src/aurora/pm64_journal_aurora.c), in Japanese for the settings page: an English line, then its translation, then a blank line.
+
+Where to next?
+次はどこへ？
+
+Turn Partner hint on first.
+先に「仲間のヒント」をオンにしてください。
+
+Ask your partner
+仲間に聞く
+
+The partner says where the story goes next, as {HINT} does.
+{HINT}と同じように、仲間が物語の次の行き先を教えてくれます。
+
+%s saves to slot 1, %s loads it.
+%sでスロット1にセーブ、%sでロードします。
+
+%s type   %s delete   %s space   %s Shift   %s done
+%s 入力   %s 削除   %s スペース   %s シフト   %s 完了
+
+A Paper Mario boss
+マリオストーリーのボス
+
+Not tattled yet. Have Goombella tattle this Paper Mario boss in its fight.
+まだしらべていません。このマリオストーリーのボスを、たたかいの中でクリスチーヌにしらべてもらいましょう。
+
+Bosses: %d of %d tattled
+ボス：%d / %d しらべた

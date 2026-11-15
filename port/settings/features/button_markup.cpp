@@ -72,6 +72,7 @@ const Token kTokens[] = {
     {"LOADSTATE", kAction, PORT_BIND_LOAD_STATE, nullptr},
     {"LUA", kAction, PORT_BIND_LUA_CONSOLE, nullptr},
     {"LAUNCHER", kAction, PORT_BIND_LAUNCHER, nullptr},
+    {"HINT", kAction, PORT_BIND_PARTNER_HINT, nullptr},
     // what opens a paper note: its action's binding where it works, else the game's L (putNote)
     {"NOTE", kNote, PORT_BIND_NOTE_READ, nullptr},
     // a controller's own buttons by where they are, for what reads them so (photo mode, the

@@ -33,11 +33,11 @@ Each chapter's title card offers three badges: pick one.
 Remix: enemies
 リミックス：てき
 
-Same seed, same remix: share it with a challenge code.
-おなじ　シードなら　おなじ　リミックス（チャレンジコードで　シェアできます）
+Same seed, same remix: share it with a challenge code. From the next room.
+おなじ　シードなら　おなじ　リミックス（チャレンジコードで　シェアできます）　つぎの　へやから
 
-The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
-フィールドの　てきとの　バトルが　その　エリアの　すべての　バトル（ボスいがい）から　えらばれます　部屋と　シードが　おなじなら　おなじ　つぎの　部屋から
+Each field enemy leads to a random fight from its area (never a boss), the same every time for a room and seed. From the next room.
+フィールドの　てきとの　バトルが　その　エリアの　バトルから　えらばれます　つぎの　部屋から
 
 Trick practice
 テクニック　れんしゅう

@@ -1,0 +1,43 @@
+{
+ "desc": "Brothers mode: quick resume keeps Luigi's HP and FP as they were (hurt, the snapshot made, then Continued as the launcher's Continue loads it: no heal)",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "settings": {
+  "quick_resume": 1
+ },
+ "env": {
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_LOAD_SAVE": "{repo}/tests/port/upgrade/0.4.1/card1.gci",
+  "TTYD_LOAD_SAVE_SLOT": "0",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "input": [
+  "wait_seq 2 3000",
+  "press_until_control a 3000",
+  "wait 120",
+  "bros_hp 3",
+  "bros_fp 2",
+  "wait 120",
+  "resume_continue",
+  "wait 600",
+  "end"
+ ],
+ "log_must": [
+  "^\\[brothers\\] Luigi HP 3/\\d+ FP 2/",
+  "\\[resume\\] continue: file 1",
+  "(?s)\\[resume\\] continue: file 1.*\\[warp\\] save resume_",
+  "^\\[brothers\\] quick resume: Luigi HP 3 FP 2 as they were",
+  "^\\[input\\] end"
+ ],
+ "log_must_not": [
+  "(?s)\\[brothers\\] quick resume: .*\\[brothers\\] Luigi HP (?!3/)\\d+/"
+ ],
+ "timeout": 240
+}

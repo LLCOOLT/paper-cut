@@ -16,6 +16,12 @@ const bool sAdded = [] {
                         "Star is in. Travel to stays as it is.",
                         kPlay, portRemakeMapKey(PORT_RM_WARP_PIPES),
                         "remake warp pipe sewers hub travel crystal star rogueport");
+  portSettingsAddToggle(kTab, "The remake's pipe room",
+                        "The sewers' two warp pipe rooms, with the pipes to the towns of chapters 1, 2, 5 and 6, "
+                        "get the rest of the remake's pipe room: a pipe to Rogueport once chapter 1 is over, and "
+                        "one to the town of chapters 3, 4 and 7 each once that chapter is over.",
+                        kPlay, portRemakeMapKey(PORT_RM_PIPE_ROOM),
+                        "remake pipe room warp sewers rogueport glitzville twilight town fahr outpost crystal star");
   portSettingsAddToggle(kTab, "The remake's shortcut pipes",
                         "A pipe where Last Stand P was in Hooktail Castle, down to the castle's gate; one in the "
                         "Creepy Steeple's basement to Twilight Town; one in the Palace of Shadow's last hall back "
@@ -35,7 +41,8 @@ const bool sAdded = [] {
                         "remake chapter shortcut pipe backtracking twilight trail keelhaul key fortress palace");
   portSettingsAddToggle(kTab, "Keelhaul Key and the Grotto",
                         "Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the "
-                        "Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.",
+                        "Pirate's Grotto's floating barrels back after chapter 5 (two, as in the remake), and the "
+                        "jungle's Fuzzies stay. The barrels and the Fuzzies from the next room.",
                         kPlay, portRemakeMapKey(PORT_RM_KEELHAUL),
                         "remake keelhaul key pirate's grotto barrels jump stand fuzzies");
   portSettingsAddToggle(kTab, "Jump down the Steeple's stairs",
@@ -55,7 +62,7 @@ const bool sAdded = [] {
                         "remake save block heart block recovery new");
   portSettingsAddToggle(kTab, "New ambush battles",
                         "The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and "
-                        "an Elite X-Naut in the X-Naut Fortress.",
+                        "an Elite X-Naut in the X-Naut Fortress. From the next room.",
                         kPlay, portRemakeMapKey(PORT_RM_AMBUSHES),
                         "remake ambush battle shhwonk fortress pirate's grotto elite x-naut");
   portSettingsAddToggle(kTab, "Charlieton and a Grotto salesman",

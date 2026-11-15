@@ -1,0 +1,121 @@
+# After a crash (port/settings/features/soft_crash.cpp, report_problem.cpp, crash_report.cpp), in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Crash-safe snapshots
+クラッシュたいさく　スナップショット
+
+Keeps a copy of where you are every few minutes and at room changes; after a crash, the next start offers to continue from it. Not online, in leaderboard runs, the daily seed or bingo, or on a Hardcore file.
+すうふんごとと　へやを　うつるたびに　いまの　場所の　コピーを　のこします　クラッシュしたら　つぎの　きどうで　そこから　つづけられます
+
+Undone: it is back as it was. A setting used at start takes effect from the next start.
+もとに　もどしました　きどうじに　つかう　せっていは　つぎの　きどうから　かわります
+
+Paper Cut closed after you changed %s. Undo it?
+%sを　かえたあとに　Paper Cutが　おわりました　もとに　もどしますか？
+
+Paper Cut closed after you changed %s and %d other settings. Undo them?
+%sと　ほか%dこの　せっていを　かえたあとに　Paper Cutが　おわりました　もとに　もどしますか？
+
+Last time the game stopped with no crash report: the system or the graphics driver ended it.
+まえかい　ゲームは　クラッシュレポートなしで　とまりました　システムか　グラフィックドライバーが　おわらせました
+
+Load your save as usual
+いつもどおり　セーブを　ロード
+
+at %s
+%s
+
+Continue from a few minutes ago: %s, %s.
+すうふん前から　つづける：%s　%s
+
+An earlier snapshot: %s, %s.
+もっと前の　スナップショット：%s　%s
+
+Continue from a few minutes ago
+すうふん前から　つづける
+
+Continue from the earlier one
+もっと前から　つづける
+
+No snapshots were made while playing online: the world was the host's, not yours to come back to alone.
+オンラインちゅうは　スナップショットを　つくりません　せかいは　ホストの　もので　ひとりで　もどる　ものでは　ないからです
+
+No snapshots were made during a replay or a ghost race: it plays from its own start.
+リプレイと　ゴーストレースの　あいだは　スナップショットを　つくりません　さいしょから　さいせいされるからです
+
+No snapshots were made during a leaderboard run: its replay is what counts.
+ランキングの　ちょうせんちゅうは　スナップショットを　つくりません　その　リプレイが　きろくに　なるからです
+
+No snapshots were made on the daily seed: its clock is a race against everyone's.
+デイリーシードでは　スナップショットを　つくりません　タイムは　みんなとの　きょうそうだからです
+
+No snapshots were made in a bingo lockout room: it is a race against the others.
+ビンゴの　ロックアウトの　へやでは　スナップショットを　つくりません　ほかの人との　きょうそうだからです
+
+No snapshots were made on a hardcore file: it has one life.
+ハードコアの　ファイルでは　スナップショットを　つくりません　いのちは　ひとつだけです
+
+the version, the build, the system and the graphics card
+バージョン　ビルド　システム　グラフィックカード
+
+the last crash report
+さいごの　クラッシュレポート
+
+what the graphics were doing as the last run ended
+まえかいの　おわりに　グラフィックが　していたこと
+
+the memory record of the last run (phones and tablets)
+まえかいの　メモリーの　きろく(スマホと　タブレット)
+
+the online diagnostics: the connection, no names or codes
+オンラインの　しんだん：せつぞくの　ようす(名前や　コードは　なし)
+
+your settings' values (numbers only)
+せっていの　あたい(すうじだけ)
+
+the settings you changed lately, and when
+さいきん　かえた　せっていと　その　時こく
+
+the last lines of this run's log
+こんかいの　ログの　さいごの　ぎょう
+
+%d bytes
+%dバイト
+
+%d KB
+%d KB
+
+The zip couldn't be made in the save folder.
+セーブフォルダーに　zipを　つくれませんでした
+
+Made %s in the save folder. Add what happened on the GitHub page and attach the zip there.
+セーブフォルダーに　%sを　つくりました　GitHubの　ページで　なにが　おきたかを　かいて　zipを　そえてください
+
+Saved a copy of the zip.
+zipの　コピーを　ほぞんしました
+
+Report a problem...
+もんだいを　ほうこく...
+
+One zip of what helps a bug report, shown before it is made. Nothing is sent: you attach it on GitHub yourself.
+バグの　ほうこくに　やくだつ　ものを　ひとつの　zipに　まとめます　つくる前に　中みを　見せます　なにも　おくりません　GitHubには　じぶんで　そえます
+
+The zip will hold:
+zipの　中み：
+
+Taken out first: your name in folder paths, online names, the secret half of room codes and IP addresses. Nothing is sent anywhere: you attach the zip to the GitHub issue yourself.
+さきに　とりのぞく　もの：フォルダーの　パスの　名前　オンラインの　名前　ルームコードの　ひみつの　はんぶん　IPアドレス　どこにも　なにも　おくりません　GitHubの　issueには　じぶんで　zipを　そえます
+
+Make the zip and open GitHub
+zipを　つくって　GitHubを　ひらく
+
+Save a copy of the zip...
+zipの　コピーを　ほぞん...
+
+It is here: %s
+ばしょ：%s
+
+Report a problem
+もんだいを　ほうこく
+
+One zip of what helps a bug report (the records, your settings' values, the last log lines), shown before it is made; then GitHub's page for a new issue, to attach it to.
+バグの　ほうこくに　やくだつ　もの(きろく　せっていの　あたい　ログの　さいごの　ぎょう)を　ひとつの　zipに　まとめて　つくる前に　中みを　見せます　その　あと　そえるための　GitHubの　あたらしい　issueの　ページを　ひらきます

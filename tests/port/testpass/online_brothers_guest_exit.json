@@ -1,0 +1,69 @@
+{
+ "desc": "Brothers mode online on a relay room: in Petalburg (nok_00) the guest takes Luigi and runs him alone east, then west into the town's west exit, then up and down, while the host's Mario stands still. The host decides room changes (its Mario's), so Luigi must stay on the room's floor at an exit, held at the floor's edge like a wall (past the exit's doorway he walked off the map's edge and fell, over and over, put back beside Mario each time)",
+ "groups": [
+  "online",
+  "together"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_GOD": 1,
+  "TTYD_MAP": "nok_00",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 2900,
+  "TTYD_SET_brothers_mode": 1,
+  "TTYD_LOOK_CHECK": 1
+ },
+ "online": {
+  "link": "relay",
+  "pace": 60,
+  "faults": "delay:30-90",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer coop1 4000",
+     "wait_peer room1 4000",
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "co-op: seat 2's character walked by player 2's own game"
+    ],
+    "log_must_not": [
+     "\\[brothers\\] Luigi .*(fell|put back)",
+     "co-op: seat 2's character: a jump of"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 4000",
+     "wait_peer room1 4000",
+     "wait 120",
+     "stick 127 0 500",
+     "stick -127 0 900",
+     "stick 0 -127 200",
+     "stick 0 127 300",
+     "wait 200"
+    ],
+    "log_must": [
+     "co-op: this guest walks its own character \\(seat 2\\)"
+    ],
+    "log_must_not": [
+     "\\[brothers\\] Luigi .*(fell|put back)"
+    ]
+   }
+  ],
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 420
+}

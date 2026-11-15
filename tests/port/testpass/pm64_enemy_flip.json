@@ -1,0 +1,82 @@
+{
+ "desc": "Paper Mario 64 enemies' battle states: Petal Meadows' Koopa Troopa and Goomba (hei, battle 6) as their PM64 cousins; Mario stomps the Koopa, which falls on its back (ToppleStruggle, not its standing pose) and struggles there on the enemies' turn; Cool Mode on, the sunglasses on every PM64 face (Kooper's too) following it as it animates",
+ "groups": [
+  "pm64",
+  "pm64_enemy_anims",
+  "cool_pm64"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": 25,
+  "TTYD_PARTY": "2,1,3,4,5,6,7",
+  "TTYD_WHEEL_TEST": "10,60",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_EXIT_FRAMES": 3600
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 0,
+  "pm64_met_all": 1,
+  "pm64_story_enemies": 2,
+  "fun_cool": 1
+ },
+ "input": [
+  "wait 160",
+  "shot field",
+  "battle 6 foe",
+  "wait 300",
+  "shot start",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 50",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 10",
+  "press a",
+  "wait 60",
+  "shot stomped",
+  "wait 120",
+  "shot flipped",
+  "press a",
+  "wait 40",
+  "press a",
+  "wait 40",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 10",
+  "press a",
+  "wait 200",
+  "shot partner_done",
+  "wait 300",
+  "shot enemy_turn",
+  "wait 300",
+  "shot later",
+  "end"
+ ],
+ "expect_shots": [
+  "start",
+  "stomped",
+  "flipped",
+  "enemy_turn"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[pm64\\] Kooper in 2's place",
+  "\\[pm64\\] story: hei_01 Koopa Troopa for kind",
+  "\\[pm64\\] anim: Koopa Troopa flipped \\(NKT_S_2\\): row 15"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 300
+}

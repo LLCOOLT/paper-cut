@@ -1,0 +1,47 @@
+{
+ "desc": "Spin Dash (#51) ends into the run with the stick held, as Paper Mario's: from a run, L, and the stick held right through the spin's end, Mario runs on at the run's speed at once (no let-go of the stick first); from a walk with the gentler stick, he walks on alike (back west, clear of the meadow's enemies)",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_EXIT_FRAMES": 1400
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 160",
+  "where",
+  "stick 127 0 30",
+  "stick 127 0 2 l",
+  "stick 127 0 70",
+  "where",
+  "stick -127 0 30",
+  "stick -50 0 20",
+  "stick -50 0 2 l",
+  "stick -50 0 70",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[spin\\] Mario spins at .* toward 90: 48 frames, 4\\.50",
+  "\\[spin\\] Mario's spin ends \\((its end|a wall)\\): \\d+ units in \\d+ frames, at \\([^)]*\\), then runs",
+  "\\[input\\] where: .*motion 2, pose M_R_1",
+  "\\[spin\\] Mario's spin ends \\((its end|a wall)\\): \\d+ units in \\d+ frames, at \\([^)]*\\), then walks",
+  "\\[input\\] where: .*motion 1, pose M_W_1"
+ ],
+ "log_must_not": [
+  "then stands",
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 150
+}

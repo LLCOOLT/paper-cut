@@ -1,0 +1,64 @@
+{
+ "desc": "a flood (the test relay's --flood: three seconds after the host is in, a connection in player 3's place sends 400 messages a second): closed by the relay's message cap within a few seconds, as port/relay closes one with 1008; the host and guest play on with the same progress, the flooder never keyed",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 1200",
+     "give 149",
+     "flag 1000",
+     "wait 1600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: player 3 is in the room: the key",
+     "net: session with player 2"
+    ],
+    "log_must_not": [
+     "key agreed with player 3",
+     "the game in player 3's place hasn't agreed the key"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 60",
+     "give 154",
+     "wait 1200",
+     "coins 10",
+     "wait 1600"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--flood",
+   "3"
+  ]
+ },
+ "file_must": {
+  "relay.txt": [
+   "2TST peer0 in \\(flood\\)",
+   "2TST peer0 closed: too fast \\(flood\\)",
+   "flood: the attacker sent \\d+ messages"
+  ]
+ },
+ "timeout": 300
+}

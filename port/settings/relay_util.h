@@ -10,8 +10,16 @@
 
 namespace portrelay {
 
-// the first wss:// relay online uses, as https:// ("" when there is none)
+// the services' address (portOnlineServices) when set, else the first wss:// relay online uses, as
+// https:// ("" when there is none)
 inline std::string relayBase() {
+  const std::string services = portOnlineServices();
+  if (services.compare(0, 6, "wss://") == 0) {
+    return "https://" + services.substr(6);
+  }
+  if (services.compare(0, 8, "https://") == 0) {
+    return services;
+  }
   for (int i = 0; portOnlineRelayAt(i) != nullptr; i++) {
     const std::string relay = portOnlineRelayAt(i);
     if (relay.compare(0, 6, "wss://") == 0) {

@@ -1,0 +1,63 @@
+{
+ "desc": "a join whose host never sends its adventure (TTYD_SYNC_NO_SNAPSHOT; the black screen's shape): the guest's join stops at step 4, logs it as taking long once its time passes (TTYD_JOIN_TIMEOUT_MS 4000), the window comes up with Keep waiting, Copy diagnostics and Leave the room, and Copy diagnostics makes the report: the build, the join at step 4, the last online lines, no player name and no secret half of the code",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1800
+ },
+ "online": {
+  "pace": 60,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1700"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_NO_SNAPSHOT": 1
+    },
+    "log_must": [
+     "test: the whole progress for (player 2|every player) not sent"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1700"
+    ],
+    "env": {
+     "TTYD_JOIN_TIMEOUT_MS": 4000,
+     "TTYD_JOIN_PICK": "copy"
+    },
+    "log_must": [
+     "join: step 3 version done",
+     "join: step 4 progress taking long \\(\\d+ ms\\): The host's adventure hasn't come yet",
+     "join: the window is up \\(step 4 progress taking long\\)",
+     "join: chose \"Copy diagnostics\"",
+     "join: diagnostics copied \\(\\d+ bytes\\)",
+     "diag: Paper Cut online diagnostics \\(made on this computer; nothing was sent anywhere\\)",
+     "diag: build .* \\| protocol \\d+ \\| disc G8ME01",
+     "diag: online: guest \\(player 2\\) \\| through the relay",
+     "diag: join: under way, step 4 progress \\(taking long\\)",
+     "diag: last online lines"
+    ],
+    "log_must_not": [
+     "join: step 4 progress done"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 300
+}

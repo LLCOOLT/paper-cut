@@ -10,6 +10,9 @@
 #include "manager/fontmgr.h"
 #include "mario/mariost.h"
 #include "sdk/DEMOInit.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "driver/dispdrv.h"
 #include "string.h"
 #include "driver/npcdrv.h"
@@ -119,10 +122,19 @@ static void movie_draw(CameraId camera, void* param) {
         FontDrawStart();
         FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, 0xFF});
         FontDrawString(-FontGetMessageWidth(msg) / 2, 0.0f, msg);
+#ifdef TARGET_PC
+        if (!portInterpInBetween()) /* the frame count: the game's own frames */
+#endif
         (*wp[0])++;
     } else {
         width = gp->fbWidth;
         height = gp->efbHeight;
+#ifdef TARGET_PC
+        /* decoding takes the movie's next frame: a frame drawn between the game's shows the current one */
+        if (portInterpInBetween()) {
+            *wp[0] = THPSimpleDrawCurrentFrame(DEMOGetRenderModeObj(), 0, 0, width, height);
+        } else
+#endif
         if (THPSimpleDecode(0) == 1) {
 #if VERSION >= VERSION_DEMO_EU
             sysDebugReport("dig_00.c", 130, /*"THP Video Decode 失敗\n"*/ "THP Video Decode \x8E\xB8\x94\x73\n");

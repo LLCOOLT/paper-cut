@@ -66,11 +66,9 @@ void tick(int /*pageOpen*/) {
 const bool sAdded = [] {
   sLevel = portSettingsDeclare("texture_pack_memory", 0, 0, 4);
   portSettingsAddChoice("Graphics", "Texture pack memory",
-                        "How much graphics memory a texture pack's pictures may use, and how large they load. Low "
-                        "keeps them to 512 MB at up to 1024 pixels, Medium 1 GB at up to 2048, High 2 GB and "
-                        "Maximum 4 GB at full size. Auto: Low on phones, tablets, handhelds and machines with "
-                        "little memory, Medium on a Steam Deck, Maximum elsewhere. They load in the background; the game's own pictures show until "
-                        "they are ready.",
+                        "How much graphics memory a texture pack may use: lower saves memory with less detailed "
+                        "pictures. Auto picks for your device. The game's own pictures show until a pack's are "
+                        "loaded.",
                         0, "texture_pack_memory", kLevels, 5, "texture pack memory vram streaming hd budget");
   portSettingsAddOverlay(tick, nullptr);
   return true;

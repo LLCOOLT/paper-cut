@@ -249,8 +249,8 @@ Mods neu laden
 Reads the mods folder again: a mod added or changed.
 Liest den Mods-Ordner neu: ein Mod hinzugefügt oder geändert.
 
-Shows the mods folder on the desktop.
-Zeigt den Mods-Ordner auf dem Desktop.
+Shows the mods folder, in the user folder: the system's folder for app data, or User beside the program with portable.txt. The full page shows its path.
+Zeigt den Mods-Ordner im Benutzerordner: dem Systemordner für App-Daten, oder User neben dem Programm mit portable.txt. Die volle Seite zeigt seinen Pfad.
 
 Its code follows at the next start.
 Sein Code folgt beim nächsten Start.

@@ -1,0 +1,67 @@
+{
+ "desc": "\"!\" prompts with the remake rules on: Twilight Trail's end (gra_06), its shortcut pipe's setting turned off, on and off again in the room; each time the room's prompt spots are listed again: no case left behind by the pipe taken away (its case was kept when it had case id 0), no prompt where it stood, and back on, its prompt again",
+ "groups": [
+  "prompts",
+  "maps_remake"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "settings": {
+  "talk_prompts": 1,
+  "remake_pipe_a": 1,
+  "remake_warp_pipes": 1,
+  "remake_shortcut_pipes": 1,
+  "remake_express_skip": 1,
+  "remake_chapter_shortcuts": 1,
+  "remake_keelhaul": 1,
+  "remake_steeple_stairs": 1,
+  "remake_twilight": 1,
+  "remake_blocks": 1,
+  "remake_ambushes": 0,
+  "remake_merchants": 1,
+  "remake_pipe_room": 1
+ },
+ "env": {
+  "TTYD_MAP": "gra_06",
+  "TTYD_STORY": "405",
+  "TTYD_PROMPT_AUDIT": "1",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "timeout": 240,
+ "input": [
+  "wait 240",
+  "goto 0 10 160",
+  "wait 30",
+  "setting remake_chapter_shortcuts 0",
+  "wait 150",
+  "goto -220 45 160",
+  "wait 40",
+  "where",
+  "goto 0 10 160",
+  "wait 30",
+  "setting remake_chapter_shortcuts 1",
+  "wait 200",
+  "goto 0 10 160",
+  "wait 30",
+  "setting remake_chapter_shortcuts 0",
+  "wait 150",
+  "goto -220 45 160",
+  "wait 40",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[prompt\\] spot gra_06 'MOBJ_me[0-9]+_0' case 6 at -220 30 160: ok",
+  "\\[prompt\\] stood gra_06 'MOBJ_me[0-9]+_0' \\(on 'MOBJ_me[0-9]+_0'\\): shown",
+  "\\[map edits\\] gra_06: the remake's changes: 1 taken away",
+  "\\[prompt\\] room gra_06: settings changed, audited again",
+  "\\[input\\] where: map 'gra_06', Mario at -220 0 160,"
+ ],
+ "log_must_not": [
+  "LEFTOVER",
+  "\\[prompt\\] shown .*STRAY",
+  "\\[prompt\\] shown in gra_06 at -220 0 160"
+ ]
+}

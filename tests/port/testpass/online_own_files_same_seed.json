@@ -1,0 +1,56 @@
+{
+ "desc": "Each their own game with two open-world randomizer files of the same seed: the same kind of file, so the session plays on (no refusal), the progress merged and the rooms the same (no DRIFT); the counterpart of online_own_files_refused",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400,
+  "TTYD_OPEN_SEED": "TRIAGE1"
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "open world: seed TRIAGE1",
+     "merge: joined the other game's progress"
+    ],
+    "log_must_not": [
+     "DRIFT",
+     "file is another kind",
+     "net: refused"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 400
+    },
+    "log_must": [
+     "open world: seed TRIAGE1",
+     "merge: joined the other game's progress"
+    ],
+    "log_must_not": [
+     "DRIFT",
+     "file is another kind",
+     "net: refused"
+    ]
+   }
+  ]
+ },
+ "timeout": 300
+}

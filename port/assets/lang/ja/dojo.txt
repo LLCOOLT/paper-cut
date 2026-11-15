@@ -9,8 +9,8 @@ Timing assist by command type
 Action command timing in every battle
 すべてのバトルでタイミングを表示
 
-The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
-すべてのバトルで、アクションコマンド、ガード、アクロバット技のたびに道場のウィンドウを出します：何フレーム早いか遅いか。
+After each action command, guard and Stylish move, in every battle, a note shows how many frames early or late you were.
+すべてのバトルで、アクションコマンド、ガード、アクロバット技のたびに、何フレーム早かったか遅かったかを表示します。
 
 By command type
 コマンドの種類ごと

@@ -1,0 +1,61 @@
+{
+ "desc": "by address, a guest the host turns away because every place is taken keeps asking (2 s, then longer, for the places' grace and a minute more), says so (The room is full: trying again...), and gets in once a place frees: the host here has one place (TTYD_SYNC_PLACES=1, kept 3 s for a dropped player), the first guest leaves the room, and the second takes its place. Before, it stopped at once for good (The host's game has four players already) (the two guests never play at once: no names or progress compared)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 9000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_SYNC_PLACES": 1,
+     "TTYD_SYNC_PLACE_GRACE_MS": 3000
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 3000",
+     "wait 1200",
+     "online leave",
+     "wait 7000"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait 9000"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 800
+    },
+    "log_must": [
+     "net: the host's game has every place taken: trying again in 2 s",
+     "net: session with player 1 \\(joined, new\\)"
+    ],
+    "log_must_not": [
+     "net: refused: The host's game has four players already"
+    ]
+   }
+  ],
+  "check": {
+   "linked": true,
+   "names": false,
+   "progress": false
+  }
+ },
+ "timeout": 300
+}

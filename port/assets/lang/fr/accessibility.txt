@@ -3,8 +3,8 @@
 Colour-blind filter
 Filtre daltonien
 
-Shifts the colours your eyes confuse into ones they can tell apart, over the whole picture (a daltonization correction, not a simulation).
-Déplace les couleurs que vos yeux confondent vers des couleurs qu'ils distinguent, sur toute l'image (une correction par daltonisation, pas une simulation).
+Shifts the colours your eyes mix up into ones you can tell apart, over the whole picture.
+Déplace les couleurs que vos yeux confondent vers des couleurs que vous distinguez, sur toute l'image.
 
 Protanopia (red-blind)
 Protanopie (rouge)

@@ -48,6 +48,6 @@ Not yet: walk there once (or the story keeps it closed now).
 Online: every player must turn fast travel on.
 オンラインでは　みんなが　ファストトラベルを　オンにしてね
 
-In the Journal's map, {A} on a place travels to a room Mario has been in, by a way in he has used; or to a town from Travel to. Only trips he could make on foot now: never out of a stretch the story keeps him in.
-きろくの　地図で　場所に　{A}で　マリオが　行った　ことの　ある　部屋へ　通った　ことの　ある　入口から　いどうします　『いどうさき』から　町へも　行けます　今　あるいて　行ける　いどうだけ：ストーリーが　マリオを　とどめている　間は　出られません
+From the Journal's map, {A} takes Mario to any room he has already reached on foot, or to a town from Travel to. Never out of a part of the story that keeps him in place.
+きろくの　地図で　{A}を　おすと　マリオが　行った　ことの　ある　部屋へ　いどうします　『いきさき』から　町へも　行けます
 

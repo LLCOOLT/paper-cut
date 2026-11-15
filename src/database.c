@@ -16,6 +16,7 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/directors_cut.h"
+#include "port/statesync.h" /* portDefeatsMapLoad */
 #endif
 
 //.sbss
@@ -141,6 +142,9 @@ void setupDataBase(const char* areaName, const char* mapName) {
     NpcAiInfo* ai;
     AreaData* area;
     s32 btl;
+#ifdef TARGET_PC
+    int sharedRule; /* online: the players' shared rule kept or forgot this map's record (below) */
+#endif
 
     fbat = fbatGetPointer();
     dead = fbat->deadInfo;
@@ -177,7 +181,26 @@ void setupDataBase(const char* areaName, const char* mapName) {
         fbat->deadInfo[0] = tmp;
     }
 
+#ifdef TARGET_PC
+    /* Online with others, the players' shared rule decides instead (portDefeatsMapLoad, statesync_room_pc.c):
+       the enemies come back once every player's own game would have let them, never in one game alone while
+       another keeps them gone. It's told the game's own rule here: 2 the area changed (every record forgotten),
+       1 only this map's and the one before it kept, 0 every record kept. */
+    {
+        int rule = 0;
+        if (attr->flags & MAP_ATTR_FLAG_RECORD_DEFEATS) {
+            if (findMapAttr(mapName)->area != findMapAttr(dead1->mapName)->area) {
+                rule = 2;
+            } else if (!(attr->flags & MAP_ATTR_FLAG_KEEP_AREA) && (attr->flags & MAP_ATTR_FLAG_TRIM_RECENT)) {
+                rule = 1;
+            }
+        }
+        sharedRule = portDefeatsMapLoad(mapName, (attr->flags & MAP_ATTR_FLAG_RECORD_DEFEATS) != 0, rule);
+    }
+    if (!sharedRule && (attr->flags & MAP_ATTR_FLAG_RECORD_DEFEATS)) {
+#else
     if (attr->flags & MAP_ATTR_FLAG_RECORD_DEFEATS) {
+#endif
         a = findMapAttr(mapName);
         b = findMapAttr(dead1->mapName);
         if (a->area != b->area) {

@@ -138,15 +138,14 @@ Filtro
 Output
 Salida
 
-
 In the background
 En segundo plano
 
 After the story
 Tras la historia
 
-Extra frames between the game's own 60: smoother motion.
-Fotogramas extra entre los 60 del juego: movimiento más fluido.
+Smoother motion on high-refresh screens; uses more power.
+Movimiento más fluido en pantallas rápidas; gasta más energía.
 
 Every key and controller button: the game's, and Paper Cut's own shortcuts.
 Cada tecla y botón del mando: los del juego y los atajos propios de Paper Cut.

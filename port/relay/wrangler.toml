@@ -14,7 +14,8 @@ class_name = "Room"
 tag = "v1"
 new_sqlite_classes = ["Room"]
 
-# the room list (0.4.0): one Durable Object for every room's listing and count
+# the room list (0.4.0): one Durable Object for every room's listing and count; since 0.5.1 also the
+# relay's day (GET /budget) and its health counts (GET /health): no new binding or migration
 [[durable_objects.bindings]]
 name = "LOBBY"
 class_name = "Lobby"
@@ -63,3 +64,16 @@ class_name = "Raid"
 [[migrations]]
 tag = "raid-v1"
 new_sqlite_classes = ["Raid"]
+
+# 0.5.1's per-address limits (src/index.js, overLimit): without these bindings the Worker counts in
+# its own memory (best effort). If the account's plan offers the rate limiting binding, uncomment
+# these: the counts are then Cloudflare's, per location, and much harder to get around.
+# [[ratelimits]]
+# name = "ROOM_LIMIT"
+# namespace_id = "1001"
+# simple = { limit = 30, period = 60 }
+#
+# [[ratelimits]]
+# name = "HTTP_LIMIT"
+# namespace_id = "1002"
+# simple = { limit = 120, period = 60 }

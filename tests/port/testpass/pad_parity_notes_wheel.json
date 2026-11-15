@@ -1,0 +1,56 @@
+{
+ "desc": "Paper notes' quick wheel by controller (TTYD_NOTES_TEST, no relay; Rogueport's harbour, the one note far off): the notes' button (the game's L) held about half a second where no note is near puts up the wheel of eight notes; the stick up, then L let go, leaves the top one (Thank you!); held again and let go with the stick at rest, the wheel stays; (Mario walked off the note just left) the stick right and A leave that one (a boss ahead); held again, let go, then B closes it with nothing left",
+ "groups": [
+  "notes",
+  "online_ui"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "400 0 0 12 0 1",
+  "TTYD_EXIT_FRAMES": 1500,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "hold l 40",
+  "stick 0 72 12 l",
+  "shot wheel_up",
+  "stick 0 72 6",
+  "wait 30",
+  "stick 127 0 40",
+  "wait 20",
+  "hold l 40",
+  "wait 20",
+  "stick 72 0 12",
+  "shot wheel_right",
+  "stick 72 0 4 a",
+  "wait 30",
+  "stick 127 0 40",
+  "wait 20",
+  "hold l 40",
+  "wait 20",
+  "press b",
+  "wait 30",
+  "end"
+ ],
+ "expect_shots": [
+  "wheel_up",
+  "wheel_right"
+ ],
+ "log_must": [
+  "^\\[notes\\] wheel open$",
+  "^\\[notes\\] wheel: left \"Thank you!\" by the button's release$",
+  "^\\[notes\\] wheel: left \"[Aa] boss ahead\" by A$",
+  "^\\[notes\\] wheel closed \\(B\\)$"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] read "
+ ],
+ "new": true,
+ "timeout": 240
+}

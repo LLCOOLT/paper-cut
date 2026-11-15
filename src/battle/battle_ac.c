@@ -26,6 +26,7 @@
 static s32 BattleACPadCheckRecordTrigger(s32 chan, s32 mask);
 
 #ifdef TARGET_PC
+#include "port/platform.h" /* portInterpKeep: the commands drawn between the game's frames */
 void portAcCueUpdate(BattleWork* wp); /* port/src/common/ac_cue_pc.c */
 void portAcCueJudged(int kind, int result);
 BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit); /* port/src/common/second_player_pc.c */
@@ -103,6 +104,19 @@ void PORT_HOOKABLE(BattleActionCommandManagerInit)(BattleWork* wp) {
 #endif
 }
 
+#ifdef TARGET_PC
+/* The command's draw callback steps its icon's slide (slideTimer: in for 20 frames, held 40, then out) and its
+ * gauge's pulse in each draw. A frame drawn between the game's (Frame rate above 60) or stereo 3D's first eye
+ * draws it too: the commands' state is put back after such a frame (one place for every ac_*.c). */
+static DispCallback sPortAcDisp;
+
+static void portAcDispKept(CameraId camId, void* param) {
+    BattleWork* wp = (BattleWork*)param;
+    portInterpKeep(&wp->actionCommands, sizeof(wp->actionCommands));
+    sPortAcDisp(camId, param);
+}
+#endif
+
 /**
  * Per-frame action-command driver: records the pad, runs the active command's main callback until it returns 0,
  * and queues its draw callback on the 2D camera.
@@ -133,7 +147,12 @@ void PORT_HOOKABLE(BattleActionCommandManager)(BattleWork* wp) {
 
         disp = wp->actionCommands.dispcb;
         if (disp) {
+#ifdef TARGET_PC
+            sPortAcDisp = disp;
+            dispEntry(CAMERA_2D, 900.0f, 1, portAcDispKept, wp);
+#else
             dispEntry(CAMERA_2D, 900.0f, 1, disp, wp);
+#endif
         }
     }
 }

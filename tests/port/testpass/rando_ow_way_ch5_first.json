@@ -1,0 +1,42 @@
+{
+ "desc": "Open world, chapter 5's way in (Rogueport just past the prologue, no chapter done): the harbor with the Old Letter: Flavio waits to sail (story 228) and asks; the one-way trip's guard answers (Keelhaul Key's way in; what the trip needs is the logic's, not held here) (gen_open_world_ways.py)",
+ "groups": [
+  "rando",
+  "open_world_ways"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_00,n_bero",
+  "TTYD_STORY": "21",
+  "TTYD_PARTY": "1",
+  "TTYD_OPEN_SEED": "OWWAYS1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_GOD": "1",
+  "TTYD_EXIT_FRAMES": 20000,
+  "TTYD_OPEN_ITEMS": "0x45",
+  "TTYD_STORY_KICK": "talk:*rel_gor__port_static__rels_gor_src_gor_00__marco_talk",
+  "TTYD_STORY_KICK_AFTER": "60"
+ },
+ "input": [
+  "wait 900",
+  "press_until_control a 6000",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "\\[open\\] file stamped: seed 'OWWAYS1'",
+  "open world: seed OWWAYS1: \\d+ places",
+  "\\[input\\] where: map 'gor_00', Mario at -?\\d+ -?\\d+ -?\\d+, story 228,",
+  "\\[open\\] trip 0 \\(the ship\\): "
+ ],
+ "log_must_not": [
+  "walk_to \\S+: not reached",
+  "\\*\\*\\* crash",
+  "\\[input\\] FAIL"
+ ],
+ "timeout": 420
+}

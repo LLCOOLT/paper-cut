@@ -19,3 +19,6 @@ void marioRideYoshi(void);
 void marioYoshiForceCancel(void);
 void yoshi_jumpStand(void);
 BOOL marioGetoffYoshi(void);
+#ifdef TARGET_PC
+void portYoshiRiderLost(void);
+#endif

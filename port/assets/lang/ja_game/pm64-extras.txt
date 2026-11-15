@@ -36,8 +36,8 @@ beaten
 Paper Mario 64 bosses: Scale to your level
 マリオストーリーの　ボスを　レベルに　あわせる
 
-A fight from the Paper Mario 64 boss list, the Star Haven corner's board or Boss refights: the boss's HP and attack follow Mario's level against the chapter it comes from in Paper Mario, from half of Paper Mario's own numbers for a low level up to exactly them at that level or past it, never more. Off: as strong as the game's post-game. The boss rush keeps its own rules.
-マリオストーリーの　ボスの　HPと　こうげきを　マリオの　レベルに　あわせる　オフ：クリアごの　つよさ
+Paper Mario 64 bosses fought from the boss list, the board or Boss refights match Mario's level, never stronger than in Paper Mario. Off: as strong as the post-game. The boss rush keeps its own rules.
+マリオストーリーの　ボスが　マリオの　レベルに　あわせます
 
 PAPER MARIO 64'S BOSSES\nEach one on its own, then back here. Who will you fight?<o>
 マリオストーリーの　ボス\n1たいずつ　たたかって　ここへ　もどる　\nだれと　たたかう？<o>
@@ -75,8 +75,8 @@ A Paper Mario badge. Link your Paper Mario ROM again to see it as it is.
 Win Paper Mario partners from their bosses
 ボスに　かって　マリオストーリーの　なかまを　ふやす
 
-Each Paper Mario partner waits with its chapter's boss, which comes to Rogueport as the story reaches it (mostly once its TTYD partner has joined): beat the boss there or from the Paper Mario 64 boss list, and the partner joins you.
-マリオストーリーの　なかまは　ボスと　まっている　ボスは　ストーリーが　すすむと　ゴロツキタウンに　くる　そこか　ボスリストで　かつと　なかまに　なる
+Each Paper Mario partner waits with its chapter's boss, which comes to Rogueport as the story reaches it (mostly once its TTYD partner has joined): beat the boss there or from the Paper Mario 64 boss list, and the partner joins you. A partner who already joined stays.
+マリオストーリーの　なかまは　ボスと　まっている　ボスは　ストーリーが　すすむと　ゴロツキタウンに　くる　そこか　ボスリストで　かつと　なかまに　なる　もう　なかまに　なった　なかまは　のこる
 
 Koopa Bros. (rematch)
 ノコブロス（リベンジ）

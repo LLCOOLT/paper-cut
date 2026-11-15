@@ -1,0 +1,31 @@
+# Online, guest 1 (mp_online_two_pads3): two players at this computer. Its second controller (pad 2) presses Start
+# and takes the last free seat (4P), walks and hops that companion in the host's world, is unplugged a moment (its
+# seat kept) and comes back, lets the seat go with Start held, takes it again; then this game leaves the room and
+# joins the same code again, and the second controller is back in seat 4 by itself.
+wait_seq 2 3000
+wait_peer here2 6000
+wait_peer room2 6000
+wait 300
+pad 2 start                     # the second controller asks for a seat: 4P (seats 2 and 3 are the guests')
+wait 240
+pad 2 right 40                  # walks seat 4's companion (the host's game walks it from this controller)
+wait 60
+pad 2 a                         # a hop
+wait 200
+unplug 2 200                    # pulled out a moment: the seat is kept
+wait 360
+pad 2 left 30                   # back: it plays on
+wait 600                        # (guest 2's second controller asks meanwhile: no free seat)
+pad 2 start 100                 # Start held: the seat let go (guest 2's second controller takes it)
+wait 900                        # (guest 2's walks it, then lets it go)
+pad 2 start                     # seat 4 again
+wait 300
+online leave
+wait 600
+wait_seq 2 3000
+online join 2TST-RXYM
+wait_peer here 6000
+wait 900
+pad 2 right 30                  # the second controller plays seat 4 again
+wait 900
+end

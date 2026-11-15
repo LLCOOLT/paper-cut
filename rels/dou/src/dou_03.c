@@ -523,6 +523,16 @@ EVT_BEGIN(dou_03_init_evt)
         CALL(evt_hitobj_onoff, STRING("A_taru"), 1, 0)
         CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_bin"), MAPOBJ_FLAG_HIDE)
     END_IF
+#ifdef TARGET_PC
+    // ... and a second barrel beside the first, as the remake has two (the map's own barrel again, added as the
+    // room loaded: portRemakeMapsJoints); it bobs as the first, a platform to stand on.
+    CALL(portEvtRemakeTwins, LW(14))
+    IF_INT_EQUAL(LW(14), 1)
+        SET_VALUE(LW(0), STRING("S_taru_2"))
+        SET_VALUE(LW(1), STRING("A_taru_2"))
+        SPAWN_EVENT(dou_puka_event_main0)
+    END_IF
+#endif
     SET_VALUE(LW(0), STRING("s03_fune"))
     SET_VALUE(LW(1), 0)
     SPAWN_EVENT_GET_ID(PTR(dou_puka_event_main2), LW(10))

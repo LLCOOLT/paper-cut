@@ -1,0 +1,10 @@
+# online-guards: see tools/port/gen_lang.py
+
+Removed: the host removed you from the room.
+退出：ホストがあなたをルームから外しました。
+
+The relay is holding this network's tries back a moment: it tries again by itself.
+中継サーバーがこのネットワークからの接続を少しの間止めています。自動でもう一度試します。
+
+The relay closed the connection: this game sent too much at once.
+中継サーバーが接続を閉じました。このゲームが一度に送りすぎました。

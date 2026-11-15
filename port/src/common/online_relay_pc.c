@@ -22,6 +22,9 @@ const char* portOnlineRelayAt(int i) {
     (void)i;
     return NULL;
 }
+const char* portOnlineServices(void) {
+    return "";
+}
 
 #else
 
@@ -76,6 +79,32 @@ const char* portOnlineRelay(void) {
 const char* portOnlineRelayAt(int i) {
     loadRelays();
     return i >= 0 && i < sRelayCount ? sRelays[i] : NULL;
+}
+
+/* notes, boards, bingo, daily and raid: their own address when the build or $TTYD_ONLINE_SERVICES
+   gives one (so their requests could be kept off the rooms' relay), else "" (the relay's) */
+const char* portOnlineServices(void) {
+    static char sServices[256];
+    static int sLoaded;
+    if (!sLoaded) {
+        const char* env = getenv("TTYD_ONLINE_SERVICES");
+#ifdef PORT_ONLINE_SERVICES_URL
+        const char* p = env != NULL ? env : PORT_ONLINE_SERVICES_URL;
+#else
+        const char* p = env != NULL ? env : "";
+#endif
+        size_t n;
+        while (*p == ' ') {
+            p++;
+        }
+        snprintf(sServices, sizeof(sServices), "%s", p);
+        n = strlen(sServices);
+        while (n > 0 && (sServices[n - 1] == '/' || sServices[n - 1] == ' ')) {
+            sServices[--n] = '\0';
+        }
+        sLoaded = 1;
+    }
+    return sServices;
 }
 
 #ifdef __EMSCRIPTEN__

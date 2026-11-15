@@ -280,6 +280,11 @@ static void envCapture2(CameraId camId, void* param) { // 1:1
         GXInitTexObjLOD(&wp->envBlurObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
     }
     if (wp->flags & ENV_FLAG_BLUR) {
+#ifdef TARGET_PC
+        /* when the blur stops taking new frames is decided here, in each draw: as it was after a frame drawn between
+         * the game's (Frame rate above 60, stereo 3D's first eye) */
+        portInterpKeep(&wp->flags, sizeof(wp->flags));
+#endif
         if ((wp->blurWork & 1) && (wp->flags & ENV_FLAG_BLUR_READY)) {
             wp->flags &= ~ENV_FLAG_BLUR_CAPTURE;
         }
@@ -1424,6 +1429,14 @@ void PORT_HOOKABLE(envSetWater)(MapTevCallbackInfo* info) {
                 break;
             }
         }
+#ifdef TARGET_PC
+        /* No group above the water object: no screen box was read and x0..y1 stay unset, then size a
+         * screen copy and its buffer (on PC whatever the stack held, a huge allocation or a garbage
+         * copy). No box: nothing to copy, as for a group seen the first time. */
+        if (obj == NULL) {
+            return;
+        }
+#endif
     } else {
         if (!(obj->flags & MAPOBJ_FLAG_BBOX)) {
 #ifdef TARGET_PC

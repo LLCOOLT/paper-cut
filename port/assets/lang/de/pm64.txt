@@ -95,3 +95,14 @@ Nicht während eines Online-Spiels: Verknüpfe oder löse die Verknüpfung, wenn
 
 Reading the ROM...
 Das ROM wird gelesen …
+
+# Paper Mario's Spin Dash (0.5.1, GitHub #51: pm64_link.cpp, bindings.cpp)
+
+Spin Dash
+Spin Dash
+
+Paper Mario Spin Dash
+Paper-Mario-Spin-Dash
+
+With your Paper Mario ROM linked: Mario dashes forward spinning, as in Paper Mario, with Z on the keyboard or a tap of L (Spin Dash in Bindings). With Paper Mario 64 badges on, Rowf sells badges that improve it. Online, only when everyone has the ROM linked.
+Mit verknüpftem Paper-Mario-ROM: Mario sprintet sich drehend nach vorn, wie in Paper Mario, mit Z auf der Tastatur oder einem kurzen Tippen auf L (Spin Dash unter Belegung). Mit Paper-Mario-64-Orden verkauft Rowf Orden, die ihn verbessern. Online nur, wenn alle das ROM verknüpft haben.

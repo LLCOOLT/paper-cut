@@ -274,6 +274,12 @@ Schwache Kämpfe sofort gewinnen
 Touching a field enemy at least 10 levels below Mario wins at once, with the usual coins and drops (never bosses, scripted fights, the Pit, Master Quest, challenges or online).
 Wer einen Gegner berührt, der mindestens 10 Level unter Mario liegt, gewinnt sofort, mit den üblichen Münzen und Funden (nie bei Bossen, vorgegebenen Kämpfen, der Grube, Master Quest, Herausforderungen oder online).
 
+Spring Jump from standing only
+Ultra-Sprung nur aus dem Stand
+
+With the Ultra Boots, the Spring Jump starts only while Mario stands still: holding A and turning the stick as he comes down from a jump no longer springs him up the moment he lands.
+Mit den Ultra-Stiefeln startet der Ultra-Sprung nur, während Mario still steht: A halten und den Stick drehen, während er von einem Sprung herunterkommt, lässt ihn beim Landen nicht mehr sofort hochfedern.
+
 <p>\nIt's the title match, son!\nNo special conditions this\ntime. Just beat the champ!\n<k>\n<p>\nNow go on out there an'\nbring the house down!\n<k>
 <p>\nDas ist der Titelkampf, Junge!\nDiesmal gibt's keine\nBedingungen. Schlag den Champ!\n<k>\n<p>\nUnd jetzt rein da und reiß\ndie Hütte ab!\n<k>
 

@@ -1,0 +1,69 @@
+{
+ "desc": "Autosave on (every room) through moderun_pit's endless Glitz Pit: each round won kept as the best in modes.txt at once (1, 2, 3, then 4), not only at the run's end; the story's file never saved meanwhile (the mode lends the battles' scaling and its rings: no way out but the fight)",
+ "groups": [
+  "autosave"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "achievements": 1,
+  "skip_scenes": 1,
+  "skip_any_scene": 1,
+  "battle_speed": 2,
+  "autosave": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_ACHIEVEMENT_FILE": "1",
+  "TTYD_MODE_TEST": "pit",
+  "TTYD_MODERUN_PIT_RULE": "5",
+  "TTYD_MODERUN_PIT_ROUNDS": "4",
+  "TTYD_AUTO_BATTLE": "1",
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_GOD": "1",
+  "TTYD_GOD_POWER": "10",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MODERUN": "1",
+  "TTYD_MODERUN_EXIT": "60",
+  "TTYD_EXIT_FRAMES": 120000
+ },
+ "log_must": [
+  "\\[modes\\] endless pit started \\(from gor_01",
+  "\\[moderun\\] Endless Glitz Pit started",
+  "\\[moderun\\] Endless Glitz Pit round 1: condition 5",
+  "\\[modes\\] map tou_m1: battle \\d+ \\(step 1,",
+  "\\[modes\\] pit round 2: enemies at 110% HP",
+  "\\[modes\\] pit round 4: enemies at 130% HP, 115% attack",
+  "\\[moderun\\] Endless Glitz Pit: 4 rounds won",
+  "\\[moderun\\] Endless Glitz Pit: leave asked \\(in the field\\)",
+  "\\[modes\\] leave: Endless Glitz Pit$",
+  "\\[modes\\] endless pit stopped at step 5: back to gor_01",
+  "\\[modes\\] the Pit's scaling off",
+  "\\[modes\\] back at .* in gor_01",
+  "\\[moderun\\] Endless Glitz Pit over after",
+  "\\[moderun\\] control back after Endless Glitz Pit: .*lending 0",
+  "\\[moderun\\] check after Endless Glitz Pit: stats \\w+, partners same, badges same, items \\w+, key items same, coins \\d+ -> \\d+, star points \\d+ -> \\d+, story same",
+  "\\[moderun\\] done",
+  "^\\[autosave\\] endless Glitz Pit: 1 rounds kept as the best$",
+  "^\\[autosave\\] endless Glitz Pit: 3 rounds kept as the best$",
+  "^\\[autosave\\] endless Glitz Pit: 4 rounds kept as the best$"
+ ],
+ "log_must_not": [
+  "\\[modes\\] fight refused",
+  "\\[modes\\] endless pit lost",
+  "\\[modes\\] test not started",
+  "\\[moderun\\] leave refused",
+  "\\[moderun\\] control not back",
+  "Another mode is running",
+  "^\\[autosave\\] file \\d saved in tou_"
+ ],
+ "timeout": 1000,
+ "file_must": {
+  "user/modes.txt": [
+   "^pit 4$"
+  ]
+ }
+}

@@ -21,6 +21,7 @@
 #include "port/platform.h"
 #include "port/settings.h"
 #include "port/stereo.h"
+#include "port/interp_replay.h"
 #include "port/widescreen.h"
 
 /* the eyes' separation at 100% depth, as a share of the screen distance */
@@ -31,6 +32,7 @@ static int* sDepth;
 static int* sScreen;
 
 static int sEye = -1;     /* the eye being drawn, -1 none */
+static int sLiveEye;      /* frame interpolation by replay: the game's one draw is the right eye (the left a replay) */
 static int sPureOwn;      /* the left eye's redraw begun here (the game's frame; not an in-between one) */
 static float sSeparation; /* half the eyes' separation, in the 3D camera's view units */
 static float sDistance;   /* the screen's distance, the same */
@@ -53,7 +55,8 @@ int portStereoMode(void) {
 }
 
 int portStereoEyes(void) {
-    if (portStereoMode() == PORT_STEREO_OFF || !portInterpListRedrawable()) {
+    if (portStereoMode() == PORT_STEREO_OFF || portInterpReplayOn() || !portInterpListRedrawable()) {
+        /* (replay: the game draws once, the right eye, and the left is its frame replayed: interp_replay_aurora.c) */
         return 1; /* (a frame whose draw makes extdrv's textures: the game's own draw only, shown to both eyes) */
     }
     return 2;
@@ -82,6 +85,12 @@ static void measure(void) {
 
 void portStereoEyeBegin(int eye, int eyes) {
     if (eyes < 2) {
+        if (eye == 0 && portStereoMode() != PORT_STEREO_OFF && portInterpReplayOn()) {
+            measure(); /* the game's one draw: the right eye */
+            sEye = 1;
+            sSaved = 0;
+            sLiveEye = 1;
+        }
         return;
     }
     if (eye == 0) {
@@ -142,7 +151,7 @@ void portStereoCamera(int cameraId) {
 
 void portStereoEyeEnd(int eye, int eyes) {
     int id;
-    if (eyes < 2) {
+    if (eyes < 2 && !sLiveEye) {
         return;
     }
     for (id = 0; id < CAMERA_MAX; id++) {
@@ -154,6 +163,10 @@ void portStereoEyeEnd(int eye, int eyes) {
     }
     sSaved = 0;
     sEye = -1;
+    if (sLiveEye) {
+        sLiveEye = 0;
+        return;
+    }
     if (eye == 0) {
         if (sPureOwn) {
             portInterpPureEnd();
@@ -170,4 +183,46 @@ void portStereoCompose(void) {
     if (mode != PORT_STEREO_OFF) {
         portStereoGpuCompose(mode);
     }
+}
+
+/* Frame interpolation by replay (interp_replay_aurora.c): the left eye from the right's draw. What a camera's
+ * draws need changed: viewDx added to each position matrix's x translation, projK times the projection's x scale
+ * added to a perspective projection's x skew, orthoShift to a flat background's x offset. 0: the camera is the
+ * same for both eyes. */
+int portStereoReplayShift(int cameraId, float* viewDx, float* projK, float* orthoShift) {
+    CameraEntry* cam;
+    float e;
+    *viewDx = *projK = *orthoShift = 0.0f;
+    if (portStereoMode() == PORT_STEREO_OFF || cameraId < 0 || cameraId >= CAMERA_MAX) {
+        return 0;
+    }
+    switch (cameraId) {
+    case CAMERA_BACKGROUND:
+    case CAMERA_3D:
+    case CAMERA_3D_EFFECTA:
+    case CAMERA_3D_IMAGE:
+    case CAMERA_3D_EFFECTB:
+    case CAMERA_DEBUG_3D:
+        break;
+    default:
+        return 0;
+    }
+    cam = camGetPtr((CameraId)cameraId);
+    if (cam == NULL) {
+        return 0;
+    }
+    e = sSeparation; /* the right eye's, as drawn; the left's is -e */
+    if (portWidescreenScaleX() < 0.0f) {
+        e = -e;
+    }
+    if (cam->projType == GX_PERSPECTIVE) {
+        *viewDx = 2.0f * e;
+        *projK = 2.0f * e / sDistance;
+        return 1;
+    }
+    if (cameraId == CAMERA_BACKGROUND) {
+        *orthoShift = -2.0f * sP00 * e / sDistance;
+        return 1;
+    }
+    return 0;
 }

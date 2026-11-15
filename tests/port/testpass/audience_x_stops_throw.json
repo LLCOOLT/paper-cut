@@ -1,0 +1,37 @@
+{
+ "desc": "The audience's throw stopped with X, as in the game (Frankly's lesson's 'press X'): in Petal Meadows (hei_01, battle 0: a crowd with kinds that throw; the sewers' battle 25 seats none), the command ring up, an audience member winds up a throw (the script's audience_throw, as the crowd's own start) and X goes for them. While one winds up, the battle menu's layer keeps X on the button the field has it on (0.5.0 gave that button the menu's back there on an Xbox controller, so the X the field and the lesson show backed out instead)",
+ "groups": [
+  "battles",
+  "menus",
+  "gh60"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "hei_01",
+  "TTYD_STORY": 70,
+  "TTYD_PARTY": "1",
+  "TTYD_EXIT_FRAMES": 1400
+ },
+ "input": [
+  "wait 160",
+  "stars 0xff",
+  "audience 150",
+  "battle 0",
+  "wait 300",
+  "audience_throw",
+  "wait 4",
+  "press x",
+  "wait 400",
+  "end"
+ ],
+ "log_must": [
+  "^\\[input\\] audience_throw: member \\d+$",
+  "^\\[menuback\\] port 1: the menu layer keeps X where the field has it$",
+  "^\\[audience\\] X: Mario goes for member \\d+, who wound up a throw$"
+ ],
+ "timeout": 180
+}

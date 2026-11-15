@@ -1,0 +1,63 @@
+{
+ "desc": "The relay's diet, two players each in their own game at real speed (60 frames a second): standing in the same room, walking (the guest's ghost of the host interpolated), a shared battle. Each game sends the relay at most 800 messages a minute of play (0.5.0: 1,200 each, every 3 frames), nothing sent twice while linked, the same progress",
+ "groups": [
+  "online",
+  "relaydiet"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 9000
+ },
+ "online": {
+  "pace": 60,
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait 900",
+     "hold right 90",
+     "wait 120",
+     "hold left 90",
+     "wait 900",
+     "give 148",
+     "battle 4",
+     "wait 4800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: relay messages: \\d+ in all over \\d+ frames"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer battle 8000",
+     "wait 4000"
+    ],
+    "log_must": [
+     "ghost: player 1 is here"
+    ]
+   }
+  ],
+  "check": {
+   "battle_ended": true,
+   "relay_per_min": 800
+  }
+ },
+ "log_must_not": [
+  "\\| sent \\d+ got \\d+ resent [1-9]"
+ ],
+ "timeout": 420
+}

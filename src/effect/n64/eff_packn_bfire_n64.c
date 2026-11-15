@@ -3,6 +3,9 @@
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "memory.h"
 #include "system.h"
 #include <dolphin/gx.h>
@@ -230,6 +233,10 @@ static void effPacknBfireDisp(CameraId cameraId, EffectEntry* effect) {
 
     camera = camGetPtr(cameraId);
     work = effect->userdata;
+#ifdef TARGET_PC
+    /* the flames' texture scrolls in each draw: as it was after a frame drawn between the game's (Frame rate above 60, stereo 3D) */
+    portInterpKeep(effect->userdata, (unsigned int)effect->count * sizeof(*work));
+#endif
     a = work->color[3];
     sc = work->scaleArg;
     if (work->type != 0) {

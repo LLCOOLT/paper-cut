@@ -937,6 +937,142 @@ int portPm64SpriteEyes(const Pm64Sprite* s, int raster, float* x, float* y, floa
     return 1;
 }
 
+/* component i of a as drawn (x0, x1, y0, y1, half units: x1 < x0 for a mirrored part); 0 if it draws nothing */
+static int faceBox(const Pm64Anim* a, int i, float b[4]) {
+    const Pm64Part* p;
+    int w, h;
+    if (a == NULL || a->sprite == NULL || i < 0 || i >= a->count) {
+        return 0;
+    }
+    p = &a->part[i];
+    if (p->raster < 0 || !portPm64SpriteRaster(a->sprite, p->raster, &w, &h, NULL) || w <= 0 || h <= 0) {
+        return 0;
+    }
+    b[0] = (p->x - (float)(w / 2) * p->sx) * 0.5f;
+    b[1] = (p->x + (float)(w - w / 2) * p->sx) * 0.5f;
+    b[2] = p->y * 0.5f;
+    b[3] = (p->y + (float)h * p->sy) * 0.5f;
+    return fabsf(b[1] - b[0]) > 0.01f && fabsf(b[3] - b[2]) > 0.01f;
+}
+
+int portPm64AnimFace(const Pm64Anim* const* list, int n, Pm64Face* f, int detect, const float seed[3], float box[4],
+                     float at[3], int* which) {
+    float b[4];
+    int k, i;
+    if (n <= 0 || list[0] == NULL || list[0]->sprite == NULL) {
+        return 0;
+    }
+    if (f->sprite != list[0]->sprite) {
+        memset(f, 0, sizeof(*f));
+        f->sprite = list[0]->sprite;
+        f->anim = list[0]->anim;
+        f->part = -1;
+    }
+    if (f->anim != list[0]->anim) {
+        /* (another animation's components are its own: the nearest to the last place is picked below) */
+        f->anim = list[0]->anim;
+        f->part = -1;
+    }
+    if (f->part >= 0 &&
+        (f->part / PM64_MAX_PARTS >= n || !faceBox(list[f->part / PM64_MAX_PARTS], f->part % PM64_MAX_PARTS, b))) {
+        f->part = -1; /* (its component draws nothing this frame) */
+    }
+    if (detect) {
+        /* the eyes this frame's rasters show: the surest, unless the held component's own are near as sure (one
+           face, not glasses hopping between two eye-like spots) */
+        float best = 0.0f, held = 0.0f, bu = 0.0f, bv = 0.0f, bw = 0.0f, hu = 0.0f, hv = 0.0f, hw = 0.0f;
+        int bestPart = -1;
+        for (k = 0; k < n; k++) {
+            for (i = 0; list[k] != NULL && i < list[k]->count; i++) {
+                float ex, ey, ew, score;
+                if (!faceBox(list[k], i, b) ||
+                    !portPm64SpriteEyes(list[k]->sprite, list[k]->part[i].raster, &ex, &ey, &ew, &score) ||
+                    score <= 0.0f) {
+                    continue;
+                }
+                if (k * PM64_MAX_PARTS + i == f->part) {
+                    held = score, hu = ex, hv = 1.0f - ey, hw = ew * fabsf(b[1] - b[0]);
+                }
+                if (score > best) {
+                    best = score, bu = ex, bv = 1.0f - ey, bw = ew * fabsf(b[1] - b[0]);
+                    bestPart = k * PM64_MAX_PARTS + i;
+                }
+            }
+        }
+        if (held > 0.0f && held * 2.0f >= best) {
+            f->u = hu, f->v = hv, f->width = hw;
+        } else if (bestPart >= 0) {
+            f->part = bestPart;
+            f->u = bu, f->v = bv, f->width = bw;
+        }
+    }
+    if (f->part < 0) {
+        /* no eyes seen on a held component: the component nearest the last place (or the seed's, the first time),
+           the place kept on it from now on */
+        float px, py, wd, nearest = 1e30f;
+        if (f->have) {
+            px = f->x, py = f->y, wd = f->width;
+        } else if (seed != NULL) {
+            float u[4] = {1e30f, -1e30f, 1e30f, -1e30f};
+            for (k = 0; k < n; k++) {
+                for (i = 0; list[k] != NULL && i < list[k]->count; i++) {
+                    if (faceBox(list[k], i, b)) {
+                        u[0] = fminf(u[0], fminf(b[0], b[1]));
+                        u[1] = fmaxf(u[1], fmaxf(b[0], b[1]));
+                        u[2] = fminf(u[2], fminf(b[2], b[3]));
+                        u[3] = fmaxf(u[3], fmaxf(b[2], b[3]));
+                    }
+                }
+            }
+            if (u[1] <= u[0] || u[3] <= u[2]) {
+                return 0;
+            }
+            px = u[0] + (u[1] - u[0]) * seed[0];
+            py = u[2] + (u[3] - u[2]) * seed[1];
+            wd = (u[1] - u[0]) * seed[2];
+        } else {
+            return 0;
+        }
+        for (k = 0; k < n; k++) {
+            for (i = 0; list[k] != NULL && i < list[k]->count; i++) {
+                float dx, dy, d;
+                if (!faceBox(list[k], i, b)) {
+                    continue;
+                }
+                dx = fmaxf(fmaxf(fminf(b[0], b[1]) - px, px - fmaxf(b[0], b[1])), 0.0f);
+                dy = fmaxf(fmaxf(fminf(b[2], b[3]) - py, py - fmaxf(b[2], b[3])), 0.0f);
+                /* (inside several: the smallest, a head before the body behind it) */
+                d = dx * dx + dy * dy + 1e-4f * fabsf((b[1] - b[0]) * (b[3] - b[2]));
+                if (d < nearest) {
+                    nearest = d;
+                    f->part = k * PM64_MAX_PARTS + i;
+                    f->u = (px - b[0]) / (b[1] - b[0]);
+                    f->v = (py - b[2]) / (b[3] - b[2]);
+                    f->width = wd;
+                }
+            }
+        }
+        if (f->part < 0) {
+            return 0;
+        }
+    }
+    k = f->part / PM64_MAX_PARTS;
+    if (!faceBox(list[k], f->part % PM64_MAX_PARTS, b) || f->width <= 0.0f) {
+        return 0;
+    }
+    box[0] = b[0], box[1] = b[1], box[2] = b[2], box[3] = b[3];
+    at[0] = f->u;
+    at[1] = f->v;
+    at[2] = f->width / fabsf(b[1] - b[0]);
+    f->x = b[0] + (b[1] - b[0]) * f->u;
+    f->y = b[2] + (b[3] - b[2]) * f->v;
+    f->have = 1;
+    if (which != NULL) {
+        *which = k;
+    }
+    return 1;
+}
+
 static void spritesForget(void) {
     int i, j;
     for (i = 0; i < MAX_SPRITES; i++) {
@@ -1090,6 +1226,28 @@ int portPm64SpritePaletteCount(const Pm64Sprite* s) {
     return s != NULL ? s->paletteCount : 0;
 }
 
+int portPm64SpritePaletteRGBA(const Pm64Sprite* s, int pal, uint8_t out[16][4]) {
+    const uint8_t* p;
+    int k;
+    if (s == NULL || pal < 0 || pal >= s->paletteCount || s->palette[pal] + 32 > s->size) {
+        return 0;
+    }
+    p = s->data + s->palette[pal];
+    for (k = 0; k < 16; k++) {
+        const unsigned v = be16(p + k * 2);
+        out[k][0] = (uint8_t)(((v >> 11) & 31) * 255 / 31);
+        out[k][1] = (uint8_t)(((v >> 6) & 31) * 255 / 31);
+        out[k][2] = (uint8_t)(((v >> 1) & 31) * 255 / 31);
+        out[k][3] = (v & 1) ? 255 : 0;
+    }
+    return 1;
+}
+
+int portPm64SpriteRasterPalette(const Pm64Sprite* s, int i) {
+    int pal = -1;
+    return portPm64SpriteRaster(s, i, NULL, NULL, &pal) ? pal : -1;
+}
+
 int portPm64SpriteRaster(const Pm64Sprite* s, int i, int* width, int* height, int* palette) {
     const uint8_t* r;
     if (s == NULL || i < 0 || i >= s->rasterCount) {
@@ -1194,6 +1352,135 @@ const void* portPm64RasterTexture(const Pm64Sprite* cs, int i, int pal, int* tex
     free(rgba);
     s->tex[slot] = out;
     return out;
+}
+
+static void tileRGBA(const uint8_t* rgba, int w, int h, uint8_t* out);
+
+#define MASKED_MAX 256
+static struct {
+    const Pm64Sprite* s;
+    unsigned gen;
+    int i, pal;
+    unsigned mask, edge, notNear;
+    uint8_t* tex;
+} sMasked[MASKED_MAX];
+static int sMaskedN;
+
+const void* portPm64RasterTextureMasked(const Pm64Sprite* s, int i, int pal, unsigned mask, int* texW, int* texH) {
+    return portPm64RasterTextureCut(s, i, pal, mask, 0, 0, texW, texH);
+}
+
+const void* portPm64RasterTextureCut(const Pm64Sprite* s, int i, int pal, unsigned mask, unsigned edge,
+                                     unsigned notNear, int* texW, int* texH) {
+    const uint8_t* r;
+    const uint8_t* pixels;
+    uint8_t* rgba;
+    uint8_t* out;
+    int w, h, k, at;
+    mask &= 0xFFFF;
+    edge &= 0xFFFF;
+    notNear &= 0xFFFF;
+    if ((mask == 0 || mask == 0xFFFF) && edge == 0) {
+        return portPm64RasterTexture(s, i, pal, texW, texH);
+    }
+    if (mask == 0) {
+        mask = 0xFFFF;
+    }
+    if (!portPm64SpriteRaster(s, i, &w, &h, NULL) || w == 0 || h == 0) {
+        return NULL;
+    }
+    if (pal < 0 || pal >= s->paletteCount) {
+        pal = -1;
+    }
+    if (texW != NULL) {
+        *texW = (w + 3) / 4 * 4;
+    }
+    if (texH != NULL) {
+        *texH = (h + 3) / 4 * 4;
+    }
+    for (k = 0; k < sMaskedN; k++) {
+        if (sMasked[k].s == s && sMasked[k].gen == portPm64Generation() && sMasked[k].i == i &&
+            sMasked[k].pal == pal && sMasked[k].mask == mask && sMasked[k].edge == edge &&
+            sMasked[k].notNear == notNear) {
+            return sMasked[k].tex;
+        }
+    }
+    if (sMaskedN >= MASKED_MAX) {
+        return portPm64RasterTexture(s, i, pal, texW, texH); /* (full: the whole drawing) */
+    }
+    r = s->data + s->raster[i];
+    if (be32(r) + (size_t)(w * h + 1) / 2 > s->size) {
+        return NULL;
+    }
+    rgba = (uint8_t*)malloc((size_t)w * h * 4);
+    out = (uint8_t*)calloc((size_t)((w + 3) / 4) * ((h + 3) / 4), 64);
+    if (rgba == NULL || out == NULL || !portPm64SpriteRGBA(s, i, pal, rgba)) {
+        free(rgba);
+        free(out);
+        return NULL;
+    }
+    pixels = s->data + be32(r);
+#define CI_AT(x, y) (((y) * w + (x)) & 1 ? (pixels[((y) * w + (x)) >> 1] & 15) : (pixels[((y) * w + (x)) >> 1] >> 4))
+    for (at = 0; at < w * h; at++) {
+        const int c = (at & 1) ? (pixels[at >> 1] & 15) : (pixels[at >> 1] >> 4);
+        int keep = (mask >> c) & 1;
+        if (!keep && ((edge >> c) & 1)) {
+            /* an edge pixel (an outline's colour): kept where it touches a kept pixel and none of notNear */
+            const int x = at % w, y = at / w;
+            int dx, dy, touch = 0, near = 0;
+            for (dy = -1; dy <= 1; dy++) {
+                for (dx = -1; dx <= 1; dx++) {
+                    int n;
+                    if ((dx == 0 && dy == 0) || x + dx < 0 || x + dx >= w || y + dy < 0 || y + dy >= h) {
+                        continue;
+                    }
+                    n = CI_AT(x + dx, y + dy);
+                    touch |= (mask >> n) & 1;
+                    near |= (notNear >> n) & 1;
+                }
+            }
+            keep = touch && !near;
+        }
+        if (!keep) {
+            memset(rgba + (size_t)at * 4, 0, 4);
+        }
+    }
+#undef CI_AT
+    tileRGBA(rgba, w, h, out);
+    free(rgba);
+    sMasked[sMaskedN].s = s;
+    sMasked[sMaskedN].gen = portPm64Generation();
+    sMasked[sMaskedN].i = i;
+    sMasked[sMaskedN].pal = pal;
+    sMasked[sMaskedN].mask = mask;
+    sMasked[sMaskedN].edge = edge;
+    sMasked[sMaskedN].notNear = notNear;
+    sMasked[sMaskedN].tex = out;
+    sMaskedN++;
+    return out;
+}
+
+/* GX RGBA8 tiles of rgba (w x h) into out ((w+3)/4 x (h+3)/4 tiles, zeroed) */
+static void tileRGBA(const uint8_t* rgba, int w, int h, uint8_t* out) {
+    const int tw = (w + 3) / 4, th = (h + 3) / 4;
+    int tx, ty, x, y;
+    for (ty = 0; ty < th; ty++) {
+        for (tx = 0; tx < tw; tx++) {
+            uint8_t* tile = out + ((size_t)ty * tw + tx) * 64;
+            for (y = 0; y < 4; y++) {
+                for (x = 0; x < 4; x++) {
+                    const int px = tx * 4 + x, py = ty * 4 + y, k = y * 4 + x;
+                    if (px < w && py < h) {
+                        const uint8_t* p = rgba + ((size_t)py * w + px) * 4;
+                        tile[k * 2] = p[3];
+                        tile[k * 2 + 1] = p[0];
+                        tile[32 + k * 2] = p[1];
+                        tile[32 + k * 2 + 1] = p[2];
+                    }
+                }
+            }
+        }
+    }
 }
 
 /* --- animations */
@@ -1389,27 +1676,29 @@ static void stepPart(Pm64Anim* a, int i, float frames) {
 
 void portPm64AnimStep(Pm64Anim* a, float frames) {
     int i;
-    float cx[PM64_MAX_PARTS], cy[PM64_MAX_PARTS], cz[PM64_MAX_PARTS];
     if (a->sprite == NULL) {
         return;
     }
     for (i = 0; i < a->count; i++) {
         stepPart(a, i, frames);
     }
-    /* where each is: its offset, its parent's added (a parent comes first) */
+    /* where each is: its offset, its parent's added, in component order as PM64's spr_component_update_finish:
+       a parent before its child gives this step's place, one after it the last step's (Bow's body follows her
+       later head that way) */
     for (i = 0; i < a->count; i++) {
         Pm64Part* p = &a->part[i];
-        cx[i] = p->ox;
-        cy[i] = p->oy;
-        cz[i] = p->oz;
-        if (p->parent >= 0 && p->parent < i) {
-            cx[i] += cx[p->parent];
-            cy[i] += cy[p->parent];
-            cz[i] += cz[p->parent];
+        p->cx = p->ox;
+        p->cy = p->oy;
+        p->cz = p->oz;
+        if (p->parent >= 0 && p->parent < a->count) {
+            const Pm64Part* q = &a->part[p->parent];
+            p->cx += q->cx;
+            p->cy += q->cy;
+            p->cz += q->cz;
         }
-        p->x = cx[i] + p->bx;
-        p->y = cy[i] + p->by;
-        p->z = cz[i] + p->bz;
+        p->x = p->cx + p->bx;
+        p->y = p->cy + p->by;
+        p->z = p->cz + p->bz;
     }
 }
 

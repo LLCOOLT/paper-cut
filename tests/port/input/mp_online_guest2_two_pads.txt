@@ -1,0 +1,13 @@
+# Online, guest 2 (mp_online_two_pads3): its second controller asks for a seat while all four are taken (it waits,
+# "no free seat"), takes seat 4 once guest 1's second controller lets it go, walks it, then lets it go itself.
+wait_seq 2 3000
+wait_peer here2 6000
+wait_peer room2 6000
+wait 1000
+pad 2 start                     # the four seats taken: it waits
+wait 1200                       # seat 4 its own since guest 1's let go
+pad 2 right 30
+wait 120
+pad 2 start 100                 # Start held: let go
+wait 4000
+end

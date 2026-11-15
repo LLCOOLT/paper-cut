@@ -55,7 +55,7 @@ def main():
              "#include <dolphin/ai.h>", "#include <musyx/musyx.h>", "#include <stdio.h>", "",
              "#define STUB_BEGIN(name) \\",
              "    static int name##_logged; \\",
-             "    if (!name##_logged) { name##_logged = 1; fprintf(stderr, \"STUB \" #name \"\\n\"); }",
+             "    if (!name##_logged) { name##_logged = 1; fprintf(stdout, \"STUB \" #name \"\\n\"); }",
              ""]
     unknown = []
     for n in names:

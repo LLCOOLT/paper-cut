@@ -1,0 +1,51 @@
+{
+ "desc": "The Ragged Diary from the second screen's Start menu (TTYD_COMPANION_WINDOW, the Items tab's important items): a tap on it there (the mouse and touch's way; a tap on the selected one is A) closes its menu and sends the tap; the game reads it as its own item list starts it (win_main.c states 300-301: \"Read the diary?\"), at the point its own Start menu could open",
+ "groups": [
+  "menus",
+  "companion"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "rsh_03_a",
+  "TTYD_STORY": "405",
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_DUMP": 1,
+  "TTYD_COMPANION_TAB": 2,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 100",
+  "give 78",
+  "wait 200",
+  "companion button a",
+  "wait 100",
+  "companion button down",
+  "wait 60",
+  "companion button a",
+  "wait 100",
+  "companion shot c00_important",
+  "wait 100",
+  "companion tap 0.37 0.27",
+  "wait 60",
+  "companion shot c01_diary",
+  "wait 100",
+  "companion tap 0.37 0.27",
+  "wait 300",
+  "shot g00_diary",
+  "wait 100",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[companion\\] menu closed \\(-3\\)",
+  "\\[companion\\] tap 12 2 ",
+  "\\[companion\\] the Ragged Diary read"
+ ],
+ "log_must_not": [
+  "\\[companion\\] tap refused",
+  "\\[msg\\] missing 'stg6_rsh_diary"
+ ],
+ "new": true
+}

@@ -1,0 +1,35 @@
+{
+ "desc": "Brothers mode: Mario jumps in place, up onto a ledge, down off it and five times in a row in Petalburg's square. Luigi copies each jump once, as a partner following (the place trace, TTYD_BROS_TRACE: his hops against Mario's jumps, 'jumps-copied': three for three, five for five, never more: no 'chain' or 'hops'), keeps his place beside or behind Mario the whole time (never nearer him than 24 across the ground: no 'close'), and once Mario stands on the ledge he stands on it too (floors=20/20, no 'lower'). Before, he hopped again at each of the points of Mario's jump in the air, walked onto Mario while Mario jumped in place (each jump's height counted as steps along Mario's way), and copied the jump up the ledge from beside Mario, landing below it",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "env": {
+  "TTYD_MAP": "nok_00",
+  "TTYD_STORY": "405",
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1",
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "input": "tests/port/input/brothers_jumps.txt",
+ "timeout": 200,
+ "log_must": [
+  "^\\[bros-trace\\] jumps-copied f=\\d+ map=nok_00 mario=3 luigi=3 climbs=\\d+ .*verdict=OK",
+  "^\\[bros-trace\\] jumps-copied f=\\d+ map=nok_00 mario=1 luigi=\\d+ climbs=\\d+ closest=\\d+ floors=20/20 verdict=OK",
+  "^\\[bros-trace\\] jumps-copied f=\\d+ map=nok_00 mario=5 luigi=5 climbs=\\d+ .*verdict=OK",
+  "^\\[input\\] where: map 'nok_00', Mario at \\S+ 20 ",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "verdict=BAD:[a-z,]*chain",
+  "verdict=BAD:[a-z,]*close",
+  "verdict=BAD:[a-z,]*lower",
+  "verdict=BAD:hops"
+ ]
+}

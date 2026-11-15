@@ -1,0 +1,65 @@
+{
+ "desc": "a relay message of three bytes reaches the host mid-session (--short host:12: a length's start and nothing after, as a message cut or garbled on the way): the host sees at once that the length runs past what came, goes into the room again and plays on with the guest (0.5.0 waited for the rest for good: every later message, the guest's key rounds among them, was swallowed, and the two never played together again)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 4800
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 3000",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 1800",
+     "wait_peer here 2000",
+     "give 149",
+     "flag 1001",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: a bad message from the relay \\(its length runs past its end\\)",
+     "net: session resumed with player 2"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here 3000",
+     "give 154",
+     "coins 10",
+     "wait 1800",
+     "wait_peer here 2000",
+     "give 155",
+     "flag 1002",
+     "wait 700"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 300
+    },
+    "log_must": [
+     "net: session resumed with player 1"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--short",
+   "host:12"
+  ]
+ },
+ "timeout": 300
+}

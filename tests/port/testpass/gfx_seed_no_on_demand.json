@@ -1,0 +1,59 @@
+{
+ "desc": "The bundled pipeline seed covers play (players' reports: a hitch the first time Mario walked past a paper note or talked to someone, the releases carrying no seed): a fresh cache ({out}/cache) and the seed beside the build (data/initial_pipeline_cache.db, CMakeLists.txt), \"Preparing graphics\" waited for as on a player's first start (TTYD_WARMUP=1), to its end (TTYD_WARMUP_SECONDS: a player's is cut at 90 s; the cache folder made by the game), then Rogueport's harbour with a paper note under Mario's feet (TTYD_NOTES_TEST, no relay): he walks to the NPC over the note, its balloon shows, and he talks to him. No pipeline is built on demand after the warmup (Aurora 0081's log line); the warmup's time and count are in its [warmup] line",
+ "groups": [
+  "gfx",
+  "notes",
+  "seed"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "env": {
+  "TTYD_WARMUP": "1",
+  "TTYD_WARMUP_SECONDS": "400",
+  "TTYD_CACHE_DIR": "{out}/cache",
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "0 0 10 8 5 4",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_NOTES_TEST_AFTER": "650"
+ },
+ "input": [
+  "wait 300",
+  "goto 490 15 -270",
+  "stick 127 0 2",
+  "wait 400",
+  "where",
+  "shot by_npc",
+  "press a",
+  "wait 60",
+  "shot talking",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "press a",
+  "wait 30",
+  "end"
+ ],
+ "expect_shots": [
+  "by_npc",
+  "talking"
+ ],
+ "timeout": 700,
+ "log_must": [
+  "Seeded pipeline cache from '[^']*initial_pipeline_cache\\.db' \\([1-9]\\d* rows merged",
+  "^\\[warmup\\] Preparing graphics done: [1-9]\\d* pipelines built in \\d+ ms \\(\\d+ queued at the start, 0 left, ",
+  "^\\[notes\\] test: 1 notes placed in gor_00",
+  "^\\[notes\\] near t0: ",
+  "^\\[notes\\] drawn: .*balloon t0",
+  "^\\[notes\\] A by t0 was the game's: motion 14$"
+ ],
+ "log_must_not": [
+  "No bundled initial pipeline cache found",
+  "^\\[warmup\\] (nothing to prepare|Preparing graphics (stopped|skipped))",
+  "(?s)^\\[warmup\\] Preparing graphics .*Pipeline built on demand"
+ ],
+ "new": true
+}

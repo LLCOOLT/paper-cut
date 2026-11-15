@@ -118,6 +118,10 @@ void portMapEditsRoom(struct BeroEntry* table);
 /* Each game frame (marioStMain): what was asked from outside the game's frame
  * (the editor's changes, Lua's) done in it. Hooked by portMapEditsInit. */
 void portMapEditsInit(void);
+/* Each game frame, every backend (portTraceFrame): a remake setting changed
+ * in the room now applies at once, its things placed or taken away, and the
+ * remake's own changes to the room redone (portRemakeMapsLive). */
+void portMapEditsLiveFrame(void);
 
 /* Placed now, in the room now, besides its edits (Lua's map.place): 1 if it
  * was (a room in the field, a slot free). Gone at the next room. */

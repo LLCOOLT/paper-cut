@@ -6,8 +6,8 @@ Skip scenes
 Seen only
 見た場面だけ
 
-These scenes go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets, inn rests, Merlon's upgrades, Merlee's charms, Cortez's ship, the Excess Express trips, the prologue, the Palace of Shadow's key stands and globe, and a boss's intro after a Game Over (played fast). Seen only: once seen on this file (the prologue and the palace: on any file). Always: the first time too. What a scene gives is still given, and where to go next is still said.
-これらの場面を早送りか最後までとばします：クリスタルスターのファンファーレと地図、ナンシーの料理、とうぎ場の試合の場面、列車と飛行船の切符、宿屋の休憩、ネイサンのパワーアップ、マジョリンのおまじない、コルテスの船、エクセレント号の旅、プロローグ、影の宮殿の鍵の台と天球儀、ゲームオーバー後のボスの登場（早送り）。見た場面だけ：このファイルで一度見たもの（プロローグと宮殿はどのファイルでも）。いつも：はじめてでも。場面でもらえるものはそのままもらえ、次の行き先もちゃんと伝えます。
+Long repeated scenes go fast or straight to their end: Crystal Star fanfares, cooking, Glitz Pit matches, tickets, inn rests, upgrades, ship and train trips and more. Seen only: once you've seen them on this file. Always: the first time too. You still get everything they give.
+くり返し見る長いシーンを、早送りするか最後まで飛ばします：クリスタルスターのファンファーレ、料理、とうぎ場の試合、きっぷ、宿屋、レベルアップ、船や列車の旅など。見た場面だけ：このファイルで一度見たもの。いつも：初めてでも。もらえる物はちゃんともらえます。
 
 Skip Peach's and Bowser's interludes
 ピーチとクッパの幕間をとばす

@@ -1,0 +1,67 @@
+# Safe graphics, the graphics API and the flight record (port/settings/features/safe_graphics.cpp)
+
+Safe graphics
+セーフグラフィック
+
+The least the graphics card is asked for, for a device whose screen slows right down or that restarts while playing: no anti-aliasing, supersampling, upscaling or effects, the picture at 480 lines, smaller graphics buffers. Most of it at once, the rest from the next start.
+画面がとても遅くなったり、プレイ中に再起動したりする端末のために、グラフィックの負荷を最小にします：アンチエイリアス、スーパーサンプリング、アップスケール、エフェクトなし、画面は480ライン、グラフィックバッファは小さめ。ほとんどはすぐに、残りは次の起動から。
+
+Graphics API
+グラフィックAPI
+
+How the game talks to the graphics chip. Try OpenGL ES if the game slows right down or the device restarts with Vulkan.
+ゲームとグラフィックチップのつなぎ方。Vulkanでゲームがとても遅くなったり端末が再起動したりするときは、OpenGL ESを試してください。
+
+Auto (Vulkan)
+自動（Vulkan）
+
+Vulkan
+Vulkan
+
+OpenGL ES
+OpenGL ES
+
+Copy the last graphics record
+最後のグラフィック記録をコピー
+
+flight_record_last.txt in the save folder: what the graphics were doing as the last run ended, kept even when the device restarted. Paste it to whoever is helping you.
+セーブフォルダのflight_record_last.txt：前回の終了時にグラフィックが何をしていたかの記録で、端末が再起動しても残ります。手伝ってくれる人に貼り付けてください。
+
+Paper Cut stopped while drawing
+Paper Cutが描画中に止まりました
+
+Last time the game stopped while it was on screen, with no crash report: the device or its graphics driver ended it. If the picture slowed right down first, or the device restarted, try Safe graphics.
+前回、ゲームは画面に表示されたままクラッシュレポートなしで止まりました：端末かそのグラフィックドライバーが終了させました。その前に画面がとても遅くなった、または端末が再起動した場合は、セーフグラフィックを試してください。
+
+Turn on Safe graphics
+セーフグラフィックをオン
+
+Safe graphics is on: most of it now, the rest from the next start.
+セーフグラフィックがオンです：ほとんどは今から、残りは次の起動から。
+
+Use Vulkan
+Vulkanを使う
+
+Use OpenGL ES
+OpenGL ESを使う
+
+Close Paper Cut and open it again to switch.
+切り替えるには、Paper Cutを閉じてもう一度開いてください。
+
+Copy the record
+記録をコピー
+
+The record of what the graphics were doing, to paste to whoever is helping you (also in Settings > General > Crash reports):
+グラフィックが何をしていたかの記録です。手伝ってくれる人に貼り付けてください（設定 > 一般 > クラッシュレポートにもあります）：
+
+How the game talks to the graphics card. Try Direct3D 11 if the screen goes white, the game stops or lags badly with an older or Intel graphics driver. Safe graphics on Auto uses Direct3D 11.
+ゲームとグラフィックカードのつなぎ方。古いドライバーやIntelのグラフィックで画面が白くなる、ゲームが止まる、ひどく重いときは、Direct3D 11を試してください。自動のままセーフグラフィックをオンにするとDirect3D 11を使います。
+
+Auto (Direct3D 12)
+自動（Direct3D 12）
+
+Direct3D 12
+Direct3D 12
+
+Direct3D 11
+Direct3D 11

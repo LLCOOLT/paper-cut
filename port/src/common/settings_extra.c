@@ -326,6 +326,11 @@ void portSettingsExtraSaveAs(const char* key, int on, int value) {
     }
 }
 
+int portSettingsExtraHeld(const char* key) {
+    const Extra* e = find(key);
+    return e != NULL && e->savedAs;
+}
+
 int portSettingsExtraCount(void) {
     return sCount;
 }

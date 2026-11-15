@@ -82,3 +82,35 @@ B+X+スタートでタイトルにもどります。
 
 German and French text that shows; menus that fit.
 ドイツ語・フランス語の表示とメニューを修正しました。
+
+# 0.5.1
+
+Online holds together: drops heal, rooms come back.
+オンラインが安定：切断から復帰し、ルームも戻ります。
+
+Paper Mario 64's Spin Dash, with its spin badges.
+マリオストーリーのスピンダッシュとスピンバッジ。
+
+Run from Paper Mario 64's bosses.
+マリオストーリーのボスからも逃げられます。
+
+Visit Mario's house again from the Journal's map.
+きろくのマップからマリオの家へもう一度行けます。
+
+A quick wheel of eight common paper notes.
+よく使う８つのかみのメモをすばやく選べるホイール。
+
+Wardrobe colours cover every part, edge to edge.
+きせかえの色がどのパーツにも端までぬられます。
+
+Smoother at 120 Hz and above.
+120 Hz以上でよりなめらかに。
+
+Low on video memory? Graphics step down instead.
+ビデオメモリが足りないときは画質を下げます。
+
+Paper Mario 64 enemies act out every battle state.
+マリオストーリーの敵がバトルのすべての状態を演じます。
+
+Fixes and features for 15 reported issues.
+報告された15件の問題の修正と追加。

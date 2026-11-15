@@ -644,12 +644,12 @@ extern "C" void portUpdateApplyStaged(int argc, char** argv) {
     }
     const bool had = exists(to);
     if (had && !SDL_RenamePath(to.c_str(), aside.c_str())) {
-      std::fprintf(stderr, "[update] can't move %s aside: %s\n", to.c_str(), SDL_GetError());
+      std::fprintf(stdout, "[update] can't move %s aside: %s\n", to.c_str(), SDL_GetError());
       ok = false;
       break;
     }
     if (!SDL_RenamePath(from.c_str(), to.c_str())) {
-      std::fprintf(stderr, "[update] can't move %s into place: %s\n", from.c_str(), SDL_GetError());
+      std::fprintf(stdout, "[update] can't move %s into place: %s\n", from.c_str(), SDL_GetError());
       if (had) {
         SDL_RenamePath(aside.c_str(), to.c_str());
       }
@@ -669,7 +669,7 @@ extern "C" void portUpdateApplyStaged(int argc, char** argv) {
         SDL_RenamePath((dir + "/old/" + done[i].first).c_str(), to.c_str());
       }
     }
-    std::fprintf(stderr, "[update] Paper Cut %s was not installed; this version goes on\n", version.c_str());
+    std::fprintf(stdout, "[update] Paper Cut %s was not installed; this version goes on\n", version.c_str());
     writeText(dir + "/failed", version);
     return;
   }
@@ -687,7 +687,7 @@ extern "C" void portUpdateApplyStaged(int argc, char** argv) {
   SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_UPDATE_APPLIED", version.c_str(), true);
   SDL_Process* process = exe.empty() ? nullptr : SDL_CreateProcess(args.data(), false);
   if (process == nullptr) {
-    std::fprintf(stderr, "[update] can't start the new version (%s): this one goes on\n", SDL_GetError());
+    std::fprintf(stdout, "[update] can't start the new version (%s): this one goes on\n", SDL_GetError());
     // (and a build of another version started from this launcher later mustn't think it was updated)
     SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_UPDATE_APPLIED");
     return;

@@ -42,8 +42,8 @@ MODを　よみなおす
 Reads the mods folder again: a mod added or changed.
 modsフォルダを　よみなおします
 
-Shows the mods folder on the desktop.
-デスクトップで　modsフォルダを　ひらきます
+Shows the mods folder, in the user folder: the system's folder for app data, or User beside the program with portable.txt. The full page shows its path.
+ユーザーフォルダの　modsフォルダを　ひらきます　portable.txtが　あれば　プログラムの　となりの　Userフォルダです
 
 Its code follows at the next start.
 コードは　つぎの　きどうから　かわります

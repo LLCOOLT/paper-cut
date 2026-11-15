@@ -1,0 +1,63 @@
+{
+ "desc": "a shared battle's choice taken with a target that is gone in the taking game (online_chase's battle; TTYD_SYNC_CORRUPT gone on the guest at the first choice it takes from the host from step 1: its current target is a unit slot empty here, as a Goomba the guest still saw up after a stage event's hit the host's game had seen land, online_guest_battle_mash): the gone target is taken off and the choice is taken with the rest, and the battle ends in the field in both (0.5.1 before: the whole choice was dropped and the unit waited, while the deciding game had played its action)",
+ "groups": [
+  "online",
+  "online_fuzz"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "tik_01",
+  "TTYD_STORY": 21,
+  "TTYD_EXIT_FRAMES": 5800,
+  "TTYD_SYNC_BATTLE_LOG": 1
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 5600"
+    ],
+    "log_must": [
+     "the shared battle begins"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must_not": [
+     "\\*\\*\\* crash"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 150",
+     "goto 443 -50 -40",
+     "wait 5300"
+    ],
+    "log_must": [
+     "test: corrupt: the choice's current target is unit slot \\d+, empty here",
+     "player \\d's choice: 1 of its \\d+ targets not here, taken off",
+     "player \\d's choice for unit \\d+ taken"
+    ],
+    "log_must_not": [
+     "\\*\\*\\* crash",
+     "choice dropped"
+    ],
+    "env": {
+     "TTYD_SYNC_CORRUPT": "gone@1"
+    }
+   }
+  ],
+  "check": {
+   "battle_ended": true
+  }
+ },
+ "timeout": 420
+}

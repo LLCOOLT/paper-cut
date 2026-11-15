@@ -1,10 +1,10 @@
 # Level sync, fun toggles, chaos mode, room transitions and battery saver (port/settings/features/toggles.cpp), en español: an English line, then its translation, then a blank line.
 
-Level sync
-Nivel sincronizado
+Enemies match your level
+Enemigos a tu nivel
 
-Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
-Los enemigos de nivel inferior al de Mario suben a su nivel: más PC, golpes más duros y Puntos Estrella como en un combate igualado. Tras el final y New Game+: después de los créditos, o mientras Mario esté muy por encima del nivel habitual del capítulo.
+Enemies weaker than Mario are raised to his level, so fights stay a challenge and pay full Star Points. Post-game and New Game+: only after the credits or when Mario is far ahead of the chapter.
+Los enemigos más débiles que Mario suben a su nivel: los combates siguen siendo un reto y dan todos los Puntos Estrella. Tras el final y New Game+: solo después de los créditos o cuando Mario va muy por delante del capítulo.
 
 Post-game and New Game+
 Tras el final y New Game+
@@ -45,8 +45,8 @@ Todos dan vueltas y vueltas.
 Chaos mode
 Modo caos
 
-Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online the same for everyone (the host's setting); not in replays.
-Cada 30 segundos pasa algo: Mario gigante o diminuto, controles invertidos, la cámara del revés, lluvia de monedas, un Bob-omb y, en combate, las travesuras del público. En línea, lo mismo para todos (el ajuste del anfitrión); no en las grabaciones.
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online, the same for everyone (the host's setting).
+Cada 30 segundos pasa algo: Mario gigante o diminuto, controles invertidos, la cámara del revés, lluvia de monedas, un Bob-omb y, en combate, las travesuras del público. En línea, lo mismo para todos (el ajuste del anfitrión).
 
 Chaos:
 Caos:
@@ -111,14 +111,14 @@ Papel doblado
 Battery saver
 Ahorro de batería
 
-Draws 30 frames a second (the game still runs at 60), at half the internal resolution and without in-between frames. Online and in replays every frame is still drawn.
-Dibuja 30 imágenes por segundo (el juego sigue a 60), a la mitad de la resolución interna y sin imágenes intermedias. En línea y en las grabaciones se sigue dibujando cada imagen.
+Saves battery: 30 frames a second at half resolution, while the game keeps its full speed. Not while playing online.
+Ahorra batería: 30 imágenes por segundo a media resolución, y el juego mantiene su velocidad. No al jugar en línea.
 
 On battery
 Con batería
 
-Keep game speed when the GPU falls behind
-Mantener la velocidad del juego si la GPU no llega
+Keep game speed when graphics lag
+Mantener la velocidad si los gráficos van lentos
 
-When the graphics card can't draw every frame in time (ray-traced lighting at a high frame rate, say), the game still runs at its real speed and only the picture is less smooth. Off, the whole game slows down instead. Replays, ghost races and console-accurate mode always draw every frame.
-Cuando la tarjeta gráfica no puede dibujar cada imagen a tiempo (por ejemplo, la iluminación con trazado de rayos a muchos fotogramas por segundo), el juego sigue a su velocidad real y solo la imagen es menos fluida. Desactivado, es todo el juego el que va más lento. Las grabaciones, las carreras de fantasma y el modo fiel a la consola siempre dibujan cada imagen.
+When the graphics card can't keep up, the game keeps its real speed and only the picture gets less smooth. Off: the whole game slows down instead. Console-accurate mode always slows down.
+Cuando la tarjeta gráfica no da abasto, el juego mantiene su velocidad real y solo la imagen es menos fluida. Desactivado: todo el juego va más lento. El modo fiel a la consola siempre va más lento.

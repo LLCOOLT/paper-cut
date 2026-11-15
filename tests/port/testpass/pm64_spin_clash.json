@@ -1,0 +1,59 @@
+{
+ "desc": "Spin Dash against Mario's other moves (#51): a jump, the hammer and the partner's move (X) each end a spin under way at once, and A, B and X never start one; L at a standstill still spins after them (after the partner's move, Goombella's Tattle of the place is read through to control before the last L: two fixed presses left her text up and Mario without control)",
+ "groups": [
+  "pm64",
+  "pm64_spin"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_PARTY": "1",
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EXIT_FRAMES": 1100
+ },
+ "settings": {
+  "pm64_spin": 1
+ },
+ "input": [
+  "wait 160",
+  "stick 60 0 3",
+  "wait 20",
+  "press l",
+  "wait 6",
+  "press a",
+  "wait 60",
+  "shot after_jump",
+  "press l",
+  "wait 6",
+  "press b",
+  "wait 60",
+  "shot after_hammer",
+  "press l",
+  "wait 6",
+  "press x",
+  "wait 90",
+  "shot after_partner",
+  "press_until_control b 900",
+  "wait 30",
+  "press l",
+  "wait 80",
+  "where",
+  "end"
+ ],
+ "expect_shots": [
+  "after_jump",
+  "after_hammer"
+ ],
+ "log_must": [
+  "\\[spin\\] Mario's spin ends \\((another move|off the ground)\\)",
+  "\\[spin\\] Mario's spin ends \\(its end\\)|\\[spin\\] Mario's spin ends \\(a wall\\)"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 200
+}

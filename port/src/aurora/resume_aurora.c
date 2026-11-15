@@ -38,6 +38,14 @@
 #include "port/title_menu.h"
 #include "port/postgame_extra.h"
 #include "port/practice.h"
+#include "port/boards.h"
+#include "port/brothers.h"
+#include "port/party.h"
+#include "port/soft_crash.h"
+#include "port/special_places.h"
+
+#include <SDL3/SDL.h>
+#include <stdlib.h>
 
 BOOL portCardSnapshot(void* image); /* cardmgr.c */
 
@@ -52,8 +60,10 @@ static int sHave, sDirty, sSlot;
 static int sUnsynced;
 static long long sSnapTime; /* when the snapshot was made (the computer's clock, Unix seconds) */
 static char sSnapMap[16];   /* and on which map */
+static int sSnapLuigiHp = -1, sSnapLuigiFp = -1; /* Brothers mode: Luigi's then (-1: none), Continue keeps them */
 static unsigned sFrame, sLastWrite;
 static int* sOn;
+static void crashSafeForget(const char* gameId, int slot);
 
 static int on(void) {
     if (sOn == NULL) {
@@ -83,7 +93,8 @@ static int safe(void) {
            !portStateSyncCopyHeld() && /* (online: the host's world, never the guest's own) */
            !portModeLending() &&       /* (a mode's: see above) */
            !portTitleTempFile() && /* (the title menu's file for the modes: never saved, title_menu.h) */
-           !portExhibitionRoom(); /* (an exhibition's room: no way out but its fight, postgame_extra.h) */
+           !portExhibitionRoom() && /* (an exhibition's room: no way out but its fight, postgame_extra.h) */
+           !portSpecialRoom(gp->currentMapName); /* (a special place: a visit, put back as it ends, special_places.h) */
 }
 
 /* quick: the periodic write on the game thread (every 10 s on a handheld), not synced to the disk, so a
@@ -149,6 +160,9 @@ static void resumeWrite(int quick) {
         const char* area = portAreaName(sSnapMap);
         fprintf(f, "%d\nv2\n", sSlot); /* v2: never made inside a house (0.4.1, safe(); warp_pc.c checks) */
         fprintf(f, "time=%lld\nmap=%s\narea=%s\n", sSnapTime, sSnapMap, area != NULL ? area : "");
+        if (sSnapLuigiHp >= 0) {
+            fprintf(f, "luigi=%d %d\n", sSnapLuigiHp, sSnapLuigiFp); /* (warp_pc.c: Continue keeps them) */
+        }
         closeFile(f, path);
     }
     printf("[resume] written: %s, file %d%s\n", sSnapMap, sSlot + 1, quick ? "" : " (synced)");
@@ -166,6 +180,7 @@ void portResumeForget(const char* gameId, int slot) {
     char path[1024];
     FILE* f;
     int of = 3; /* (Continue's slot when the sidecar is gone) */
+    crashSafeForget(gameId, slot); /* (the crash-safe snapshots of that file alike: never the old game over the new) */
     portResumePath(path, sizeof(path), gameId, 1);
     if ((f = portFopen(path, "r")) != NULL) {
         if (fscanf(f, "%d", &of) != 1) {
@@ -201,6 +216,21 @@ int portResumeWriteNow(void) {
     return 1;
 }
 
+/* tests (input_pc.c's resume_continue): the last snapshot written out and loaded as the launcher's Continue
+ * loads it (its own file slot, the sidecar's lines read: warp_pc.c) */
+void portResumeContinueTest(void) {
+    char path[1024];
+    if (!portResumeWriteNow()) {
+        printf("[resume] continue: no snapshot yet\n");
+        fflush(stdout);
+        return;
+    }
+    portResumePath(path, sizeof(path), PORT_GAME_ID, 0);
+    printf("[resume] continue: file %d\n", sSlot + 1);
+    fflush(stdout);
+    portWarpRequestResume(path, sSlot);
+}
+
 /* replays (replay.cpp): the last clean save in memory, its
  * card slot, or NULL */
 const void* portResumeImage(int* slot, size_t* size) {
@@ -212,11 +242,246 @@ const void* portResumeImage(int* slot, size_t* size) {
     return sImage;
 }
 
+/* --- Crash-safe snapshots (port/include/port/soft_crash.h) ---
+ * The clean save above, also written every few minutes of play and at room changes to two files in turn, on a
+ * thread of their own (a phone's flash can take tens of ms for a synced write: never on the game's frame). */
+
+#define CS_EVERY (3 * 60 * 60)  /* frames: 3 minutes */
+#define CS_ROOM_GAP (60 * 60)   /* frames: a room change's at most once a minute */
+#define CS_FILE_SIZE (GCI_HEADER + PORT_CARD_META_SIZE + PORT_CARD_SLOT_SIZE)
+
+static int* sCsOn;
+static unsigned sCsLastFrame;       /* the frame of the last one asked for */
+static long long sCsLastTime;       /* its snapshot's time (only a newer one is written) */
+static char sCsRoom[16];            /* its map */
+static int sCsNext = -1;            /* which file the next one replaces (-1: not looked at yet) */
+static const char* sCsPaused;       /* why none are written now (NULL: they are) */
+static SDL_AtomicInt sCsBusy;       /* a write in flight: the next waits for its turn */
+static SDL_AtomicInt sCsForgotten;  /* bumped by portResumeForget: a write begun before it is dropped */
+
+static int crashSafeOn(void) {
+    if (sCsOn == NULL) {
+        sCsOn = portSettingsDeclare("crash_safe_resume", 1, 0, 1);
+    }
+    return *sCsOn != 0;
+}
+
+void portCrashSafePath(char* out, size_t size, const char* gameId, int which, int sidecar) {
+    snprintf(out, size, "%s/crashsafe_%s_%d.%s", portSettingsUserPath(), gameId, which + 1, sidecar ? "txt" : "gci");
+}
+
+void portCrashSafeStatusPath(char* out, size_t size, const char* gameId) {
+    snprintf(out, size, "%s/crashsafe_%s.txt", portSettingsUserPath(), gameId);
+}
+
+/* why no snapshot may be written now, in a word the recovery screen explains (soft_crash.cpp); NULL: one may.
+ * Online: the world is the host's (or shared), never this player's to come back to alone. The rest would
+ * break a run's rules: a replay or ghost race plays from its own start, a leaderboard run is checked by its
+ * replay, a daily seed and a bingo lockout room are races against others' clocks, a hardcore file has one
+ * life (no save state loads either: savestate_aurora.c). */
+static const char* crashSafeWhy(void) {
+    if (portStateSyncOn() || portStateSyncHostWorld() || portStateSyncCopyHeld()) {
+        return "online";
+    }
+    if (portReplayActive() || portGhostRacing()) {
+        return "replay";
+    }
+    if (portBoardRunState() != PORT_BOARD_RUN_NONE) {
+        return "leaderboard";
+    }
+    if (portDailyFileDate() != 0) {
+        return "daily";
+    }
+    if (portBingoLockout()) {
+        return "bingo";
+    }
+    if (portHardcoreActive()) {
+        return "hardcore";
+    }
+    return NULL;
+}
+
+typedef struct CsJob {
+    char gci[1024], txt[1024], status[1024];
+    char side[256];   /* the .txt's text ("" none: a status write only) */
+    char note[160];   /* the status file's text ("" none) */
+    uint8_t* data;    /* CS_FILE_SIZE bytes, or NULL */
+    int forgotten;    /* sCsForgotten when it was asked for */
+    char map[16];
+    int slot;
+} CsJob;
+
+static int csWrite(void* arg) {
+    CsJob* job = (CsJob*)arg;
+    const Uint64 t0 = SDL_GetTicksNS();
+    int ok = 1;
+    if (job->note[0] != '\0') {
+        portFileWriteAllSdl(job->status, job->note, strlen(job->note));
+    }
+    if (job->data != NULL && SDL_GetAtomicInt(&sCsForgotten) == job->forgotten) {
+        /* the .txt out first, back last: a crash between leaves a .gci with no .txt, never offered */
+        SDL_RemovePath(job->txt);
+        ok = portFileWriteAllSdl(job->gci, job->data, CS_FILE_SIZE) &&
+             SDL_GetAtomicInt(&sCsForgotten) == job->forgotten &&
+             portFileWriteAllSdl(job->txt, job->side, strlen(job->side));
+        {
+            const char* name = strrchr(job->gci, '/');
+            printf("[crashsafe] %s %s: %s, file %d, %u KB in %.1f ms (synced, off the game's thread)\n",
+                   ok ? "written" : "not written", name != NULL ? name + 1 : job->gci, job->map, job->slot + 1,
+                   (unsigned)(CS_FILE_SIZE >> 10), (double)(SDL_GetTicksNS() - t0) / 1e6);
+            fflush(stdout);
+        }
+    }
+    free(job->data);
+    free(job);
+    SDL_SetAtomicInt(&sCsBusy, 0);
+    return ok;
+}
+
+/* the job on its own thread (inline where there are no threads: the browser) */
+static void csStart(CsJob* job) {
+    SDL_Thread* t;
+    SDL_SetAtomicInt(&sCsBusy, 1);
+    t = SDL_CreateThread(csWrite, "crash-safe snapshot", job);
+    if (t != NULL) {
+        SDL_DetachThread(t);
+    } else {
+        csWrite(job);
+    }
+}
+
+/* which file is the older (or missing), from the .txt's time= line */
+static int csOlder(void) {
+    long long when[PORT_CRASH_SAFE_KEPT] = {0, 0};
+    int i;
+    for (i = 0; i < PORT_CRASH_SAFE_KEPT; i++) {
+        char path[1024];
+        char* text;
+        portCrashSafePath(path, sizeof(path), PORT_GAME_ID, i, 1);
+        if ((text = (char*)SDL_LoadFile(path, NULL)) != NULL) {
+            const char* t = strstr(text, "time=");
+            when[i] = t != NULL ? atoll(t + 5) : 0;
+            SDL_free(text);
+        }
+    }
+    return when[1] < when[0] ? 1 : 0;
+}
+
+static unsigned csEnv(const char* name, unsigned def) {
+    const char* v = getenv(name);
+    return v != NULL && v[0] != '\0' ? (unsigned)strtoul(v, NULL, 10) : def;
+}
+
+/* each retrace, after the snapshot (portResumeFrame) */
+static void crashSafeFrame(void) {
+    static unsigned sEvery, sGap;
+    const char* why;
+    int room, due;
+    if (sEvery == 0) {
+        sEvery = csEnv("TTYD_CRASH_SAFE_EVERY", CS_EVERY);
+        sGap = csEnv("TTYD_CRASH_SAFE_ROOM_GAP", CS_ROOM_GAP);
+        sEvery = sEvery > 0 ? sEvery : CS_EVERY;
+    }
+    if (!crashSafeOn() || gp == NULL || SDL_GetAtomicInt(&sCsBusy)) {
+        return;
+    }
+    why = crashSafeWhy();
+    if (why != sCsPaused) {
+        /* the reason's start and end, for the recovery screen ("none while playing online") */
+        CsJob* job = (CsJob*)calloc(1, sizeof(CsJob));
+        const long long now = (long long)time(NULL);
+        static long long sSince;
+        if (job != NULL) {
+            portCrashSafeStatusPath(job->status, sizeof(job->status), PORT_GAME_ID);
+            if (why != NULL) {
+                sSince = now;
+                snprintf(job->note, sizeof(job->note), "paused=%s\nsince=%lld\nuntil=0\n", why, now);
+            } else {
+                snprintf(job->note, sizeof(job->note), "paused=%s\nsince=%lld\nuntil=%lld\n", sCsPaused, sSince, now);
+            }
+            printf("[crashsafe] %s%s\n", why != NULL ? "none while: " : "again after: ", why != NULL ? why : sCsPaused);
+            fflush(stdout);
+            sCsPaused = why;
+            csStart(job);
+        }
+        return;
+    }
+    if (why != NULL || !sHave || sSnapTime <= sCsLastTime || sSlot < 0 || sSlot > 3) {
+        return;
+    }
+    /* every few minutes of play, and when the room changes (not more than once a gap; nor in a run's first gap,
+       so a run continued from one that crashes again soon leaves both in place) */
+    room = strncmp(sSnapMap, sCsRoom, sizeof(sCsRoom)) != 0 && sFrame - sCsLastFrame >= sGap && sFrame >= sGap;
+    due = sFrame - sCsLastFrame >= sEvery && sFrame >= sGap;
+    if (!room && !due) {
+        return;
+    }
+    {
+        CsJob* job = (CsJob*)calloc(1, sizeof(CsJob));
+        uint8_t* data = (uint8_t*)calloc(1, CS_FILE_SIZE);
+        const char* area = portAreaName(sSnapMap);
+        if (job == NULL || data == NULL) {
+            free(job);
+            free(data);
+            return;
+        }
+        if (sCsNext < 0) {
+            sCsNext = csOlder();
+        }
+        /* a GCI as quick resume's (resumeWrite): the game ID, the card's file header (unused), the slot */
+        memcpy(data, PORT_GAME_ID, 6);
+        memcpy(data + GCI_HEADER + PORT_CARD_META_SIZE, sImage, sizeof(sImage));
+        job->data = data;
+        job->forgotten = SDL_GetAtomicInt(&sCsForgotten);
+        job->slot = sSlot;
+        snprintf(job->map, sizeof(job->map), "%s", sSnapMap);
+        portCrashSafePath(job->gci, sizeof(job->gci), PORT_GAME_ID, sCsNext, 0);
+        portCrashSafePath(job->txt, sizeof(job->txt), PORT_GAME_ID, sCsNext, 1);
+        snprintf(job->side, sizeof(job->side), "%d\nv2\ntime=%lld\nmap=%s\narea=%s\n", sSlot, sSnapTime, sSnapMap,
+                 area != NULL ? area : "");
+        printf("[crashsafe] snapshot %d asked for (%s): %s\n", sCsNext + 1, room ? "room change" : "minutes of play",
+               sSnapMap);
+        fflush(stdout);
+        sCsNext = (sCsNext + 1) % PORT_CRASH_SAFE_KEPT;
+        sCsLastFrame = sFrame;
+        sCsLastTime = sSnapTime;
+        memcpy(sCsRoom, sSnapMap, sizeof(sCsRoom));
+        csStart(job);
+    }
+}
+
+/* the save file slot replaced from outside (portResumeForget): its snapshots go too */
+static void crashSafeForget(const char* gameId, int slot) {
+    int i;
+    SDL_AddAtomicInt(&sCsForgotten, 1);
+    for (i = 0; i < PORT_CRASH_SAFE_KEPT; i++) {
+        char path[1024];
+        char* text;
+        int of = -1;
+        portCrashSafePath(path, sizeof(path), gameId, i, 1);
+        if ((text = (char*)SDL_LoadFile(path, NULL)) != NULL) {
+            of = text[0] >= '0' && text[0] <= '3' ? text[0] - '0' : -1;
+            SDL_free(text);
+        }
+        if (slot < 0 || of == slot || of < 0) {
+            SDL_RemovePath(path);
+            portCrashSafePath(path, sizeof(path), gameId, i, 0);
+            if (SDL_RemovePath(path)) {
+                printf("[crashsafe] %s's snapshot %d dropped: the file was replaced\n", gameId, i + 1);
+                fflush(stdout);
+            }
+        }
+    }
+}
+
 /* once a retrace (vi_aurora.c); in replays, in memory even with the setting off
- * (a recording from where the player is starts from it) */
+ * (a recording from where the player is starts from it); with crash-safe snapshots on, too */
 void portResumeFrame(void) {
     sFrame++;
-    if (sFrame % SNAP_EVERY != 0 || (!on() && !portReplayActive())) {
+    if (sFrame % SNAP_EVERY == 0) {
+        crashSafeFrame(); /* (the last snapshot's: this frame's comes next time) */
+    }
+    if (sFrame % SNAP_EVERY != 0 || (!on() && !crashSafeOn() && !portReplayActive())) {
         /* (in replays, made with the setting off too: the snapshot reads the
            clock, so the recording and its playback make the same ones) */
         return;
@@ -260,6 +525,10 @@ void portResumeFrame(void) {
         sSlot = gp->saveSlot;
         sSnapTime = (long long)time(NULL);
         snprintf(sSnapMap, sizeof(sSnapMap), "%.15s", gp->currentMapName);
+        sSnapLuigiHp = sSnapLuigiFp = -1;
+        if (portBrothersOn()) {
+            portBrothersGetStats(&sSnapLuigiHp, &sSnapLuigiFp);
+        }
     }
 write:
     /* (a handheld: every 10 seconds, as its firmware may end the game without a word) */

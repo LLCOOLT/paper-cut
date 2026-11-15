@@ -1,5 +1,5 @@
 {
- "desc": "the launcher's What's new card (TTYD_LAUNCHER_NEWS=1, as on the first launch after an update): 0.5.0's headline lines, each with its button to its page or setting, over the dimmed stage; Close at the end",
+ "desc": "the launcher's What's new card (TTYD_LAUNCHER_NEWS=1, as on the first launch after an update): this build's version in the title and its release notes' highlights (whats_new.h), each with its button to its page or setting where it has one, over the dimmed stage; Close at the end",
  "groups": ["menus", "onboard"],
  "versions": ["us"],
  "library": ["us"],
@@ -10,6 +10,14 @@
   "TTYD_LAUNCHER_STILL": 1
  },
  "expect_shots": ["launcher_news"],
+ "log_must": [
+  "\\[launcher news\\] What's new in Paper Cut 0\\.5\\.1",
+  "\\[launcher news\\] - Online holds together: drops heal, rooms come back\\. \\[button\\]",
+  "\\[launcher news\\] - Paper Mario 64's Spin Dash, with its spin badges\\. \\[button\\]",
+  "\\[launcher news\\] - Smoother at 120 Hz and above\\. \\[button\\]",
+  "\\[launcher news\\] - Fixes and features for 15 reported issues\\.\\r?$"
+ ],
+ "log_must_not": ["\\[launcher news\\] .*0\\.5\\.0"],
  "exit": "any",
  "timeout": 30,
  "disc": false

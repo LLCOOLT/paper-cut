@@ -1,0 +1,4 @@
+# A graphics API that ended the game while it started, passed over (port/src/aurora/gpu_start_aurora.c): see tools/port/gen_lang.py
+
+Last time, Paper Cut closed while starting its graphics with %s: the graphics driver stopped it. This time it uses %s instead, and will from now on.\n\nTo try %s again, update your graphics driver (from the maker of your graphics card or PC), then change Settings > Graphics > Graphics API.
+La última vez, Paper Cut se cerró al iniciar sus gráficos con %s: el controlador gráfico lo detuvo. Esta vez usa %s en su lugar, y lo seguirá haciendo.\n\nPara volver a probar %s, actualiza tu controlador gráfico (del fabricante de tu tarjeta gráfica o PC) y luego cambia Ajustes > Gráficos > API gráfica.

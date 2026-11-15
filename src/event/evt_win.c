@@ -9,9 +9,11 @@
 #include "evt/evt_win.h"
 #include "evt/evt_cmd.h"
 #ifdef TARGET_PC
+#include "port/brothers.h"
 #include "port/scene_skip.h"
 #include "port/menu_tap.h"
 #include "port/view.h"
+#include "port/platform.h"
 #endif
 #include "driver/icondrv.h"
 #include "driver/camdrv.h"
@@ -1413,6 +1415,13 @@ static void evt_unitwin_disp_func(CameraId cameraId, void* param) {
     s32 lv;
 
     flag = 0; // FAKE: dead store, moves flag's variable record before i so the case 5-7 flag web is a split temp coloured before i's (target r21)
+#ifdef TARGET_PC
+    /* The coin and Shine Sprite counts tick toward the pouch's in each draw. A frame drawn between the game's
+     * (Frame rate above 60) or stereo 3D's first eye draws this too: the counts as they were after it, and its
+     * tick sound and the HUD's coins left to the game's own frame (else they count twice as fast). */
+    portInterpKeep(wp, sizeof(*wp));
+    portInterpKeep(&unitwin_coin_se_wait, sizeof(unitwin_coin_se_wait));
+#endif
     if (wp->flags & UNITWIN_FLAG_ITEM_SELECTED) {
         const char* name = itemDataTable[wp->goods[wp->goodsIdx]].id;
         const char* desc = itemDataTable[wp->goods[wp->goodsIdx]].description;
@@ -1498,6 +1507,9 @@ static void evt_unitwin_disp_func(CameraId cameraId, void* param) {
             }
             if (wp->coinFrame & 1) {
                 wp->coin += delta;
+#ifdef TARGET_PC
+                if (!portInterpInBetween())
+#endif
                 statusWinForceUpdateCoin();
             }
             wp->coinFrame++;
@@ -1509,6 +1521,9 @@ static void evt_unitwin_disp_func(CameraId cameraId, void* param) {
         }
 #else
             if (!unitwin_coin_se_wait) {
+#ifdef TARGET_PC
+                if (!portInterpInBetween())
+#endif
                 psndSFXOn("SFX_COUNT_COIN1");
                 unitwin_coin_se_wait = 7;
             }
@@ -2409,6 +2424,9 @@ USER_FUNC(unitwin_setmariolevel) {
     } else {
         r = FALSE;
     }
+#ifdef TARGET_PC
+    portBrothersHealFull("Chet Rippo's"); /* Brothers mode: Luigi's too (port/include/port/brothers.h) */
+#endif
     evtSetValue(event, args[3], r);
     return EVT_RETURN_DONE;
 }

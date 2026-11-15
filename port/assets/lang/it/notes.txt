@@ -307,3 +307,29 @@ Tocca: Leggi
 
 Read a paper note
 Leggi un biglietto di carta
+
+# 0.5.1: a note of one's own taken back
+
+Take back
+Riprendi
+
+Taking it back...
+Lo riprendo...
+
+Your note is taken back.
+Il tuo biglietto è stato ripreso.
+
+It can only be taken back from where it was left.
+Si può riprendere solo da dove è stato lasciato.
+
+This relay can't take notes back yet.
+Questo relay non può ancora riprendere i biglietti.
+
+Only the device that left it can take it back.
+Solo il dispositivo che l'ha lasciato può riprenderlo.
+
+Choose it again to take your note back.
+Sceglilo di nuovo per riprendere il tuo biglietto.
+
+Yours: choose it to take it back.
+Tuo: sceglilo per riprenderlo.

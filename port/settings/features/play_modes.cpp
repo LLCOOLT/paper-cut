@@ -123,7 +123,7 @@ const char* chapterAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return "Not on the second screen: use the game's Start menu.";
+    return portPauseSecondScreenAct(id, dir);
   }
   if (id == kRowLeave) {
     portChapterAbandon();
@@ -291,7 +291,11 @@ void frame(void*) {
     sLeaveIn = 0;
     portChapterAbandon();
   }
-  // the boxes at the top right, under the status bar's rows when they are out (port/overlay_place.h)
+  // the boxes at the top right, under the status bar's rows when they are out (port/overlay_place.h); none
+  // while a battle's speech bubble is up (never across its words)
+  if (portBattleBubbleUp()) {
+    return;
+  }
   const float dy = portOverlayDrop480(8.0f, 4.0f);
   // a ghost race: its time, and for a few seconds after each room how the player stands against the ghost
   if (portGhostRacing()) {
@@ -349,7 +353,6 @@ void frame(void*) {
 // Online and in replays the page holds these (what changes play stays as the run began): the Start
 // menu's rows are dimmed alike (the starts say why themselves)
 constexpr const char* kHeld = "Not during online play or a replay.";
-constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 bool held() { return portReplayActive(); }
 
@@ -388,7 +391,7 @@ const char* hardcoreAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   const int was = next != nullptr ? *next : 0;
   if (next != nullptr) {
@@ -438,7 +441,7 @@ const char* pitAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   if (id == kRowEnd) {
     portPitCoopStop();
@@ -459,13 +462,14 @@ struct Register {
     portPauseAddForm(&kChapterForm);
     portRemixDeclare();
     portSettingsAddToggle(kTab, "Remix: enemies",
-                          "The fight behind each enemy in the field is drawn from all of its area's fights (not the "
-                          "bosses'), the same for a room and a seed. From the next room.",
+                          "Each field enemy leads to a random fight from its area (never a boss), the same every "
+                          "time for a room and seed. From the next room.",
                           PORT_SETTING_CHANGES_PLAY, "remix_enemies", "remix random enemies placement shuffle");
     portSettingsAddToggle(kTab, "Remix: badge draft",
                           "Each chapter's title card offers three badges: pick one.",
                           PORT_SETTING_CHANGES_PLAY, "remix_badge_draft", "remix badge draft choose pick");
-    portSettingsAddSlider(kTab, "Remix seed", "Same seed, same remix: share it with a challenge code.",
+    portSettingsAddSlider(kTab, "Remix seed",
+                          "Same seed, same remix: share it with a challenge code. From the next room.",
                           PORT_SETTING_CHANGES_PLAY, "remix_seed", 0, 99999, "%d", "remix seed");
     portSettingsAddSection(kTab, "Hardcore", nullptr, PORT_SETTING_CHANGES_PLAY, hardcoreSection,
                            "hardcore one life permadeath ironman remix ghost");

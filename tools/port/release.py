@@ -2,6 +2,7 @@
 """Build and package a release of the port (docs/RELEASING.md).
 
   release.py VERSION [--out DIR] [--targets LIST] [--no-android] [--publish TAG]
+             [--no-refresh-seed] [--seed-from DIR ...] [--seed-min N]
 
 Targets (--targets, comma-separated; by default this machine's):
   desktop  this machine's own build: Windows, macOS or Linux (Linux: the zip,
@@ -34,6 +35,16 @@ workflow, GITHUB_TOKEN): a new draft with the notes, or, when the release is
 there already (another runner made it), added to it with their checksums.
 Nothing from the disc is ever packaged.
 
+The pipeline seed (data/initial_pipeline_cache.db, tools/port/pipeline_cache.py):
+every package carries it, so a first start builds the game's pipelines on
+"Preparing graphics" and not while the player walks past a note or talks to
+someone. First (--refresh-seed, the default) the test pass's latest caches
+(local-docs/testpass/.cache, and each --seed-from DIR) are merged into it; then
+the release stops unless it is there, at the GX configuration version this
+checkout's Aurora writes, with at least --seed-min GX pipelines (4000). Each
+package is checked to hold that very file. It is made on the user's own disc
+and holds render states only, nothing of the disc's; it is never committed.
+
 Code signing (docs/RELEASING.md, "Code signing"), only when the environment
 has its secrets, and skipped with a line saying so when it doesn't: Windows
 Authenticode on the executables and the unsigned libraries
@@ -57,11 +68,63 @@ import zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import local_ci
+import pipeline_cache
 import third_party
 
 ROOT = local_ci.ROOT
 VERSIONS = {"jp": "G8MJ01", "us": "G8ME01", "eu": "G8MP01"}
 TOOLCHAINS = os.path.join(ROOT, "cmake", "toolchains")
+
+
+SEED = os.path.join(ROOT, "data", "initial_pipeline_cache.db")
+SEED_NAME = "initial_pipeline_cache.db"
+# the test pass's Aurora caches (tools/port/testpass.py: one per build and runner thread)
+TESTPASS_CACHES = os.path.join(ROOT, "local-docs", "testpass", ".cache")
+
+
+def refresh_seed(extra):
+    """The seed with every pipeline the latest test pass (and each extra folder: map sweeps' shots) built merged in;
+    rows of configuration versions this checkout's Aurora doesn't write are left out"""
+    missing = [d for d in extra if not os.path.exists(d)]
+    if missing:
+        sys.exit(f"release: --seed-from {', '.join(missing)}: not there")
+    sources = [d for d in [TESTPASS_CACHES] + list(extra) if os.path.exists(d)]
+    if not sources:
+        print(f"pipeline seed: no test-pass caches ({TESTPASS_CACHES}) to refresh it from: left as it is")
+        return
+    print("pipeline seed: refreshing from " + ", ".join(sources))
+    pipeline_cache.merge(SEED, ([SEED] if os.path.isfile(SEED) else []) + sources,
+                         pipeline_cache.aurora_versions(ROOT))
+
+
+def require_seed(minimum):
+    """The seed's SHA-256, once it is one the builds' Aurora uses; else the release stops, saying how to make one"""
+    why = pipeline_cache.check(SEED, minimum, pipeline_cache.aurora_versions(ROOT))
+    if why:
+        sys.exit(f"release: no usable pipeline seed: {why}.\n"
+                 "Without it every player builds the game's pipelines while playing (a hitch at the first paper "
+                 "note, talk or room). Run the test pass on this checkout's Aurora build (tools/port/testpass.py), "
+                 "then release.py again: it merges local-docs/testpass/.cache into data/initial_pipeline_cache.db "
+                 "(--seed-from DIR adds a map sweep's shots; docs/RELEASING.md, \"Pipeline seed\").")
+    return hashlib.sha256(open(SEED, "rb").read()).hexdigest()
+
+
+def check_seed_in(path, digest):
+    """The package holds the seed (the very file checked before the builds): beside the builds, in the app bundle's
+    resources, or in the APK's assets, stored uncompressed there (SQLite reads it in place)"""
+    with zipfile.ZipFile(path) as z:
+        found = [i for i in z.infolist() if os.path.basename(i.filename) == SEED_NAME]
+        for info in found:
+            if hashlib.sha256(z.read(info)).hexdigest() != digest:
+                sys.exit(f"release: {os.path.basename(path)}: {info.filename} is not data/{SEED_NAME} as checked")
+            if path.endswith(".apk") and (info.filename != f"assets/{SEED_NAME}" or
+                                          info.compress_type != zipfile.ZIP_STORED):
+                sys.exit(f"release: {os.path.basename(path)}: {info.filename} must be assets/{SEED_NAME}, stored "
+                         "uncompressed (port/android/app/build.gradle)")
+    if not found:
+        sys.exit(f"release: {os.path.basename(path)} has no {SEED_NAME}: its players would build every pipeline "
+                 "while playing")
+    print(f"checked {os.path.basename(path)}: the pipeline seed is in it ({', '.join(i.filename for i in found)})")
 
 
 def host():
@@ -515,6 +578,17 @@ def package_desktop(outs, version_string, dist):
             files.append((exe, f"ttyd-{short}"))
         files += [(p, os.path.basename(p)) for p in sorted(glob.glob(os.path.join(us, "*.so*")))]
         files.append((os.path.join(ROOT, "port", "assets", "icon", "papercut-256.png"), "papercut.png"))
+    if host() != "macos":
+        # Aurora's pipeline seed, beside the executables where Aurora reads it (CMakeLists.txt copies
+        # data/initial_pipeline_cache.db there when the checkout has it; the Mac's app has it in Resources).
+        # require_seed has checked it before the builds; check_seed_in checks the zip holds it. The Linux
+        # AppImage and Flatpak unpack the whole zip, so they carry it too.
+        seed = os.path.join(us, SEED_NAME)
+        if os.path.exists(SEED) and not os.path.exists(seed):
+            sys.exit("release: data/initial_pipeline_cache.db wasn't copied beside the US build")
+        if os.path.exists(seed):
+            check_no_disc_data([seed], VERSIONS["us"])
+            files.append((seed, SEED_NAME))
     # the third-party notices: every component the builds embed and link, with
     # its licence text (tools/port/third_party.py), and the font's licence
     notices = os.path.join(dist, f"_{name}_THIRD_PARTY.txt")
@@ -653,8 +727,9 @@ def package_linux_container(version_string, dist):
     (Docker, OrbStack...; on Apple silicon the x86-64 container runs
     emulated)."""
     import linux_container
+    # (the seed is refreshed and checked out here: the container's run checks the same file)
     if linux_container.run(["python3", "tools/port/release.py", version_string, "--targets", "desktop",
-                            "--out", "/src/dist-linux"]) != 0:
+                            "--out", "/src/dist-linux", "--no-refresh-seed"]) != 0:
         sys.exit("release: the Linux packages' build failed (in the container)")
     out = []
     for z in linux_package_files(os.path.join(ROOT, "dist-linux"), version_string):
@@ -666,10 +741,13 @@ def package_linux_container(version_string, dist):
 def linux_package_files(folder, version_string):
     """This version's Linux packages in folder: the zip, the AppImage
     (Paper_Cut-<version>-x86_64.AppImage, tools/port/linux_packages.py) and
-    its .zsync, the Flatpak; not an earlier release's left there."""
+    its .zsync, the same AppImage under the old name
+    (papercut-<version>-linux-x64.AppImage, which mirrors look for), the
+    Flatpak; not an earlier release's left there."""
     out = []
     patterns = (f"papercut-{version_string}-linux-*.zip", f"Paper_Cut-{version_string}-*.AppImage",
-                f"Paper_Cut-{version_string}-*.AppImage.zsync", f"papercut-{version_string}-linux-*.flatpak")
+                f"Paper_Cut-{version_string}-*.AppImage.zsync", f"papercut-{version_string}-linux-*.AppImage",
+                f"papercut-{version_string}-linux-*.flatpak")
     for pattern in patterns:
         found = sorted(glob.glob(os.path.join(folder, pattern)))
         if not found and PUBLISHING[0]:
@@ -900,6 +978,13 @@ def main():
     ap.add_argument("--altstore-source", action="store_true",
                     help="only write altstore-source.json from the IPAs already in --out (TAG from --publish, "
                          "else vVERSION); nothing is built, removed or uploaded")
+    ap.add_argument("--refresh-seed", action=argparse.BooleanOptionalAction, default=True,
+                    help="merge the test pass's latest Aurora caches (local-docs/testpass/.cache) and each "
+                         "--seed-from into data/initial_pipeline_cache.db before building (default: on)")
+    ap.add_argument("--seed-from", action="append", default=[], metavar="DIR",
+                    help="another folder of pipeline caches to merge into the seed (a map sweep's shots)")
+    ap.add_argument("--seed-min", type=int, default=pipeline_cache.MIN_GX_PIPELINES, metavar="N",
+                    help="the fewest GX pipelines the seed may have (default %(default)s)")
     a = ap.parse_args()
     if a.tested_on:
         print(tested_on(a.version) or f"(docs/tested_on.json has no rows for {a.version})")
@@ -929,6 +1014,10 @@ def main():
 
 
 def make(a, targets):
+    # the pipeline seed first: refreshed from the latest test pass, then required (every package carries it)
+    if a.refresh_seed:
+        refresh_seed(a.seed_from)
+    seed_digest = require_seed(a.seed_min)
     files = []
     if "desktop" in targets:
         # one package: every version's build, behind the launcher
@@ -958,6 +1047,7 @@ def make(a, targets):
     for f in files:  # (each package as it will be uploaded, every file in it)
         if f.endswith((".zip", ".apk", ".ipa")):
             check_package(f)
+            check_seed_in(f, seed_digest)
     sums = checksums(files)
     # the AltStore / SideStore source, beside the IPAs (the Mac's run): uploaded with them, not in the sums
     if "ios" in targets and altstore_source(a.out, a.version, a.publish):

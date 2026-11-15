@@ -12,6 +12,7 @@
 #include "port/mode_leave.h"
 #include "port/pm64_foes.h"
 #include "port/replay.h"
+#include "port/resume.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include <SDL3/SDL.h>
@@ -231,13 +232,34 @@ void frame(void*) {
     }
   }
   const PortModeStatus* s = portModeStatus();
+  // the endless Glitz Pit's best as its run began: autosave keeps a new best round by round (below), and the
+  // end's "a new best!" is against the one before the run
+  static int sRunBestRound = -1;
   if (s->mode == PORT_MODE_NONE || !s->finished) {
     sLastFinished = 0; // (a new run straight after a finished one goes from finished to running)
+  }
+  if (s->mode != PORT_MODE_ENDLESS_PIT) {
+    sRunBestRound = -1;
   }
   if (s->mode == PORT_MODE_NONE) {
     return;
   }
   readBests();
+  if (s->mode == PORT_MODE_ENDLESS_PIT && !s->finished) {
+    if (sRunBestRound < 0) {
+      sRunBestRound = sBestRound;
+    }
+    // autosave on (port/src/common/autosave_pc.c): each round won kept at once when it is a new best, so a crash
+    // or a closed window mid-run loses none of it
+    const int won = s->step - 1;
+    if (won > sBestRound && portAutosaveOn() && !portReplayPlaying()) {
+      sBestRound = won;
+      writeBests();
+      portAutosaveMark(1);
+      std::printf("[autosave] endless Glitz Pit: %d rounds kept as the best\n", won);
+      std::fflush(stdout);
+    }
+  }
   if (s->finished && !sLastFinished) {
     sLastFinished = s->finished;
     if (s->mode == PORT_MODE_REFIGHT) {
@@ -255,13 +277,27 @@ void frame(void*) {
       }
     } else {
       const int rounds = s->step - 1;
-      const bool record = !portReplayPlaying() && rounds > sBestRound;
-      sBestRound = record ? rounds : sBestRound;
+      const bool record = !portReplayPlaying() && rounds > (sRunBestRound >= 0 ? sRunBestRound : sBestRound);
+      sBestRound = record && rounds > sBestRound ? rounds : sBestRound;
+      sRunBestRound = -1;
       sMessage = portTrf(record ? "Endless Glitz Pit: %d rounds won, a new best!" : "Endless Glitz Pit: %d rounds won.",
                          rounds);
     }
     if (s->mode != PORT_MODE_REFIGHT) {
       writeBests();
+    }
+  }
+  {
+    // hidden while a battle's speech bubble is up: never across its words
+    static bool sHidden;
+    const bool hide = portBattleBubbleUp() != 0;
+    if (hide != sHidden) {
+      sHidden = hide;
+      std::printf("[modes] the run's line %s\n", hide ? "hides under a battle bubble" : "shows again");
+      std::fflush(stdout);
+    }
+    if (hide) {
+      return;
     }
   }
   std::string line;
@@ -457,7 +493,6 @@ void refightSection(int inGame) {
 // Online and in replays the page holds these (what changes play stays as the run began): the Start
 // menu's rows are dimmed alike
 constexpr const char* kHeld = "Not during online play or a replay.";
-constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 bool held() { return portReplayActive(); }
 
@@ -542,7 +577,7 @@ const char* rushAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   if (id == kRowStop) {
     portModeStop();
@@ -595,7 +630,7 @@ const char* refightAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   if (anyRunning()) {
     return "Not while another mode runs.";
@@ -638,7 +673,7 @@ const char* pitAct(int id, int dir) {
     return kHeld;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   if (id == kRowStop) {
     portModeStop();

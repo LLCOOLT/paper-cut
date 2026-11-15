@@ -1,0 +1,51 @@
+{
+ "desc": "The memory guard as an 8 GB phone with little room left all along ($TTYD_MEM_GUARD_ROOM=100, steps a second apart): step 1 (supersampling off, texture upscaling 2x, texture pack memory Low), step 2 (texture upscaling off, 480 lines), then only the textures let go; settings.txt keeps the player's own; the harbour still plays to Mario's control",
+ "groups": [
+  "bugs",
+  "gfx",
+  "memory"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MEM_GUARD": 1,
+  "TTYD_MEM_GUARD_ROOM": 100,
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_MEM_GUARD_RAM": 8192,
+  "TTYD_MEM_GUARD_GAP_MS": 1000,
+  "TTYD_SETTINGS_SAVE_AT_END": 1
+ },
+ "settings": {
+  "texture_upscale": 2,
+  "supersample": 1,
+  "texture_pack_memory": 3,
+  "resolution": 0
+ },
+ "input": [
+  "press_until_control a 3000",
+  "wait 600",
+  "where",
+  "shot control",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[memory\\] little memory left \\(\\d+ MB in use, 100 MB left\\): step 1, for this run: supersampling off, texture upscaling 2x, texture pack memory Low, the textures let go",
+  "^\\[memory\\] little memory left .*: step 2, for this run: texture upscaling off, the picture at 480 lines, the textures let go",
+  "^\\[memory\\] little memory left .*: step 3, for this run: the textures let go",
+  "^\\[memory\\] note shown: Memory running low",
+  "where: map 'gor_00'"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "(?m)^texture_upscale=2$",
+   "(?m)^supersample=1$",
+   "(?m)^texture_pack_memory=3$",
+   "(?m)^resolution=0$"
+  ]
+ },
+ "new": true
+}

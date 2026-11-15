@@ -1,0 +1,54 @@
+{
+ "desc": "Restore everything (the Start menu's Settings tab, Enhancements, Restorations: its first row): A turns all seven restorations on (the chalk outline, the bunny ears, the flashes, the 1000 X-Nauts, the bad ending, Hooktail's frogs, the Trial Stew), A again turns them all off",
+ "groups": [
+  "menus",
+  "presets"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_PAUSE_ROW": "Enhancements/Restorations/Restore everything",
+  "TTYD_EXIT_FRAMES": 900
+ },
+ "input": [
+  "wait 300",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 40",
+  "shot restore_row",
+  "press a",
+  "wait 40",
+  "shot restore_on",
+  "press a",
+  "wait 40",
+  "end"
+ ],
+ "expect_shots": [
+  "restore_row",
+  "restore_on"
+ ],
+ "log_must": [
+  "\\[presets\\] restore everything: 7 of 7 on",
+  "\\[presets\\] restore everything: 0 of 7 on"
+ ],
+ "timeout": 120
+}

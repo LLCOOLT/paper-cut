@@ -1,0 +1,38 @@
+{
+ "desc": "Brothers mode: a Heart Block's heal fills Luigi too, with Mario already full (it was a heal only for Mario: Luigi's numbers followed Mario's rises, and a full Mario has none)",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "new": true,
+ "env": {
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_MAP": "gon_00",
+  "TTYD_STORY": "40",
+  "TTYD_EXIT_FRAMES": 1800
+ },
+ "input": [
+  "wait 400",
+  "coins 100",
+  "flag 234",
+  "bros_hp 2",
+  "bros_fp 1",
+  "wait 30",
+  "where mobjs",
+  "mobj_hit mobj_recover",
+  "wait 600",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "^\\[brothers\\] Luigi HP 2/10 FP 1/5 \\(after the battle; Mario HP 10/10",
+  "^\\[input\\] mobj_hit: mobj_recover",
+  "^\\[brothers\\] Luigi HP 10/10 FP 5/5 \\(a Heart Block",
+  "^\\[input\\] end"
+ ],
+ "timeout": 200
+}

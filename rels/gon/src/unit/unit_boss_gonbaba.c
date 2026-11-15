@@ -778,7 +778,11 @@ EVT_BEGIN(negotiation_event)
     SET_VALUE(LW(0), 54)
     SPAWN_EVENT(gon_extra_eaten_event)
     // She recovers to 10 HP with a healing sparkle.
+#ifdef TARGET_PC
+    CALL(btlevtcmd_port_SetKindHp, BTL_UNIT_SELF, 10)
+#else
     CALL(btlevtcmd_SetHp, BTL_UNIT_SELF, 10)
+#endif
     CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     SET_VALUE(LW(0), 40)
     ADD(LW(1), 180)

@@ -14,7 +14,10 @@
 #include "port/pm64_media.h"
 #include "port/settings.h"
 #include "driver/animdrv.h"
+#include "mario/mario.h"
 #include "mario/mariost.h"
+#include "battle/battle.h"
+#include "battle/ac/ac_table.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -163,4 +166,150 @@ int portPm64MarioAnim(const char* ttyd) {
     default:
         return 2;
     }
+}
+
+/* The hammer. TTYD's is a part of Mario's model, shown in his hammer animations (M_H_<n><step>); PM64 has no
+ * hammer of its own to draw beside him: its swings are animations of the player sprites with the hammer in Mario's
+ * hands (the decomp's player_sprite_names.yaml), so those are what the look plays, PM64's own steps at PM64's own
+ * timing (its battle scripts, HammerSupport.inc.c: a Wait(n) is 2n of our frames, as the sprites' own clock).
+ * TTYD's animation says which part of the move it is; how long it has played (frames) says where PM64 would be.
+ *   field (mot_hammer.c): a swing M_H_1 / 4 / 7 by level, M_H_2 / 5 / 8 when it strikes something (R: from the
+ *     back): MarioW1's Smash<L>_Miss / Smash<L>_Hit (_Back); the Spin Hammer M_H_3 / 6 / 9 raised, A charging,
+ *     B released and spinning: PM64 has no field Spin Hammer, so its Spin Smash's (MarioB2 SpinSmash<L>: raised,
+ *     held, Hold2 charged, the pre-swing and the swing around)
+ *   battle (battle_mario.c): A raised (30 frames), B held for the command, C swung (13 / 14 / 15 Piercing Blow's,
+ *     Quake's; 16 Piercing Blow's after): MarioB1's Smash<L>: Begin (the hammer on the ground, 20 frames: the
+ *     raise delay with the stick let go), PullBack (Wait 4), Hold1, Hold2 once the command's gauge is full, then
+ *     PreSwing (Wait 3) and Swing; for the Hammer, its badges (Power and Mega Smash, Head Rattle, Ice Smash,
+ *     Piercing Blow), Quake Hammer and Fire Drive (17 / 18 / 19: TTYD's own, PM64's swing); the Spin Hammer 2 / 6
+ *     / 10 (A raised and held, B spun): MarioB2's SpinSmash<L> (Raise, Hold1 / Hold2, PreSwing, Swing); Hammer
+ *     Throw 3 / 7 / 11 (raised and held as the Hammer: MarioB2's HammerThrow raise and hold are the same frames):
+ *     Throw at once (TTYD lets go of the hammer 4 frames in: PM64's PreThrow first would show it in his hands and
+ *     in the air together for 10 frames; the Throw's own swing still holds it 8); the thrown hammer, a part of its own (4 / 8 / 12): MarioB2's Hammer<L>, the sprite
+ *     PM64 throws, turned as TTYD turns the part */
+#define B1_SMASH(l) (13 + 7 * ((l) - 1)) /* Begin; + 1 PullBack, 2 Hold1, 3 Hold2, 4 PreSwing, 5 Swing */
+#define B2_SPIN(l) (6 * ((l) - 1))       /* SpinSmash Begin; + 1 Raise, 2 Hold1, 3 Hold2, 4 PreSwing, 5 Swing */
+#define B2_HAMMER(l) (18 + (l) - 1)      /* the thrown hammer */
+#define B2_THROW(l) (22 + 6 * ((l) - 1)) /* HammerThrow Begin; + 4 PreThrow, 5 Throw */
+#define W1_SMASH(l) (16 + 4 * ((l) - 1)) /* Miss; + 1 Miss_Back, 2 Hit, 3 Hit_Back */
+#define PM64_WAIT(n) (2 * (n))           /* (a PM64 script's Wait in our frames) */
+
+/* the hammer's action command (TTYD's stick held left, ac_stick_keep_left.c) held with its gauge full: PM64's
+ * Hold2 (HammerSupport: once the action's progress is set) */
+static int hammerCharged(int t) {
+    static unsigned sFullFrom; /* (the animation it was full in: from then on Hold2, as PM64 never goes back) */
+    BattleWork* wp = _battleWorkPointer;
+    const unsigned from = gp != NULL ? gp->retraceCount - (unsigned)t + 1u : 0u;
+    if (wp != NULL && wp->actionCommands.maincb == battleAcMain_StickKeepLeft && wp->actionCommands.acState == 1001 &&
+        wp->actionCommands.params[4] != 0) {
+        sFullFrom = from;
+    }
+    return from != 0u && sFullFrom == from;
+}
+
+static int hammerLook(int n, const char* step, int battle, int t, int* sprite) {
+    int level;
+    const char s = step[0];
+    if (!battle) {
+        if (n < 1 || n > 9) {
+            return -1;
+        }
+        level = (n + 2) / 3;
+        if (n % 3 == 0) {
+            *sprite = PM64_PLAYER_MARIOB2;
+            if (s == 'B') {
+                return B2_SPIN(level) + (t < PM64_WAIT(3) ? 4 : 5);
+            }
+            /* (raised as the stick is turned, A from the first charge on: one Raise played on, then held; Hold2
+               once fully charged, mot_hammer's charge 3) */
+            return B2_SPIN(level) + (marioGetPtr()->hammerChargeLv >= 3 ? 3 : s == 'A' && t >= 24 ? 2 : 1);
+        }
+        *sprite = PM64_PLAYER_MARIOW1;
+        return W1_SMASH(level) + (n % 3 == 2 ? 2 : 0) + (s == 'R' ? 1 : 0);
+    }
+    switch (n) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 13:
+    case 16:
+    case 17:
+        level = 1;
+        break;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 14:
+    case 18:
+        level = 2;
+        break;
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 15:
+    case 19:
+        level = 3;
+        break;
+    default:
+        return -1;
+    }
+    if (n == 4 || n == 8 || n == 12) {
+        *sprite = PM64_PLAYER_MARIOB2;
+        return B2_HAMMER(level);
+    }
+    if (n == 3 || n == 7 || n == 11) {
+        *sprite = PM64_PLAYER_MARIOB2;
+        return B2_THROW(level) + 5;
+    }
+    if (n == 2 || n == 6 || n == 10) {
+        *sprite = PM64_PLAYER_MARIOB2;
+        if (s == 'B') {
+            return B2_SPIN(level) + (t < PM64_WAIT(3) ? 4 : 5);
+        }
+        return B2_SPIN(level) + (t < 24 ? 1 : hammerCharged(t) ? 3 : 2);
+    }
+    *sprite = PM64_PLAYER_MARIOB1;
+    if (n == 16) {
+        return B1_SMASH(level) + 5; /* (Piercing Blow's after: the swing's end, played on) */
+    }
+    if (s == 'A' && n >= 17) {
+        /* (Fire Drive's raise is 20 frames: PM64's raise delay shortened, as with the stick held early) */
+        return B1_SMASH(level) + (t < PM64_WAIT(6) ? 0 : t < PM64_WAIT(10) ? 1 : 2);
+    }
+    if (s == 'A') {
+        return B1_SMASH(level) + (t < PM64_WAIT(10) ? 0 : t < PM64_WAIT(14) ? 1 : hammerCharged(t) ? 3 : 2);
+    }
+    if (s == 'B') {
+        return B1_SMASH(level) + (hammerCharged(t) ? 3 : 2);
+    }
+    return B1_SMASH(level) + (t < PM64_WAIT(3) ? 4 : 5);
+}
+
+int portPm64MarioLookAnim(const char* ttyd, int battle, int frames, int* sprite) {
+    *sprite = PM64_PLAYER_MARIO1;
+    if (ttyd != NULL && strncmp(ttyd, "M_", 2) == 0 && ttyd[2] != '\0' && ttyd[3] == '_') {
+        const char c = ttyd[2];
+        const char* p = ttyd + 4;
+        int n = 0, anim, spr = PM64_PLAYER_MARIO1;
+        while (*p >= '0' && *p <= '9' && n < 100) {
+            n = n * 10 + (*p++ - '0');
+        }
+        if (c == 'H' && (anim = hammerLook(n, p, battle, frames, &spr)) >= 0 && portPm64PlayerSprite(spr) != NULL) {
+            *sprite = spr;
+            return anim;
+        }
+        if (!battle && c == 'A') {
+            /* the Spin Jump (mot_hip.c: A_1A up and turning, A_1B the drop): Mario1's SpinJump, SpinFall */
+            return p[0] == 'B' ? 12 : 11;
+        }
+        if (!battle && c == 'Y' && portPm64PlayerSprite(PM64_PLAYER_MARIOW2) != NULL) {
+            /* on Yoshi's back: MarioW2's RideLaki (seated, as on Lakilester's cloud) */
+            *sprite = PM64_PLAYER_MARIOW2;
+            return 14;
+        }
+    }
+    return portPm64MarioAnim(ttyd);
 }

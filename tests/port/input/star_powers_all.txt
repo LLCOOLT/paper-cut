@@ -1,0 +1,292 @@
+# Every Star Power once, in one battle (hei_00, battle 4, Mario and Goombella; tests/port/testpass/star_powers_all*.json):
+# before each, the enemies' HP raised so the battle lasts and Star Power filled; Mario's menu goes to Special (it
+# stays there for the next turns) and down the list (which opens at its top) to the move.
+# Art Attack gets two loops drawn by the stick. Nothing else is pressed in the moves (their commands fail),
+# so every move plays to its end; then Goombella's Headbonk and the enemies' turn (TTYD_GOD: no one on
+# Mario's side is hurt). wait_command keeps the script in step with the turns.
+wait 60
+stars 0xff
+battle 4
+wait_seq 4
+shot start
+
+# 1: Sweet Treat (row 0)
+wait_command mario 3600
+sp 800
+foe_hp 99
+wait 40
+press right
+wait 12
+press right
+wait 12
+press right
+wait 12
+shot sweet_treat_menu
+press a
+wait 30
+shot sweet_treat_list
+press a
+wait 30
+press a
+wait 120
+shot sweet_treat_a
+wait 200
+shot sweet_treat_b
+wait_command partner 3600
+wait 40
+shot sweet_treat_after
+press a
+wait 30
+press a
+wait 30
+press a
+wait 60
+
+# 2: Clock Out (row 2)
+wait_command mario 3600
+sp 800
+foe_hp 99
+wait 40
+shot clock_out_menu
+press a
+wait 30
+press down
+wait 8
+press down
+wait 8
+shot clock_out_list
+press a
+wait 30
+press a
+wait 120
+shot clock_out_a
+wait 200
+shot clock_out_b
+wait_command partner 3600
+wait 40
+shot clock_out_after
+press a
+wait 30
+press a
+wait 30
+press a
+wait 60
+
+# 3: Power Lift (row 3)
+wait_command mario 3600
+sp 800
+foe_hp 99
+wait 40
+shot power_lift_menu
+press a
+wait 30
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+shot power_lift_list
+press a
+wait 30
+press a
+wait 120
+shot power_lift_a
+wait 200
+shot power_lift_b
+wait_command partner 3600
+wait 40
+shot power_lift_after
+press a
+wait 30
+press a
+wait 30
+press a
+wait 60
+
+# 4: Sweet Feast (row 5)
+wait_command mario 3600
+sp 800
+foe_hp 99
+wait 40
+shot sweet_feast_menu
+press a
+wait 30
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+shot sweet_feast_list
+press a
+wait 30
+press a
+wait 120
+shot sweet_feast_a
+wait 200
+shot sweet_feast_b
+wait_command partner 3600
+wait 40
+shot sweet_feast_after
+press a
+wait 30
+press a
+wait 30
+press a
+wait 60
+
+# 5: Art Attack (row 4)
+wait_command mario 3600
+sp 800
+foe_hp 99
+wait 40
+shot art_attack_menu
+press a
+wait 30
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+shot art_attack_list
+press a
+wait 30
+press a
+wait 120
+shot art_attack_a
+wait 160
+press a
+wait 30
+stick 0 127 14
+stick 127 0 26
+stick 0 -127 28
+stick -127 0 26
+stick 0 127 26
+wait 120
+stick 127 0 10
+stick 0 127 20
+stick -127 0 14
+stick 0 -127 30
+stick 127 0 24
+stick 0 127 20
+wait 120
+shot art_attack_b
+wait_command partner 3600
+wait 40
+shot art_attack_after
+press a
+wait 30
+press a
+wait 30
+press a
+wait 60
+
+# 6: Earth Tremor (row 1)
+wait_command mario 3600
+sp 800
+foe_hp 99
+wait 40
+shot earth_tremor_menu
+press a
+wait 30
+press down
+wait 8
+shot earth_tremor_list
+press a
+wait 30
+press a
+wait 120
+shot earth_tremor_a
+wait 200
+shot earth_tremor_b
+wait_command partner 3600
+wait 40
+shot earth_tremor_after
+press a
+wait 30
+press a
+wait 30
+press a
+wait 60
+
+# 7: Supernova (row 7)
+wait_command mario 3600
+sp 800
+foe_hp 99
+wait 40
+shot supernova_menu
+press a
+wait 30
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+shot supernova_list
+press a
+wait 30
+press a
+wait 120
+shot supernova_a
+wait 200
+shot supernova_b
+wait_command partner 3600
+wait 40
+shot supernova_after
+press a
+wait 30
+press a
+wait 30
+press a
+wait 60
+
+# 8: Showstopper (row 6)
+wait_command mario 3600
+sp 800
+foe_hp 99
+wait 40
+shot showstopper_menu
+press a
+wait 30
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+press down
+wait 8
+shot showstopper_list
+press a
+wait 30
+press a
+wait 120
+shot showstopper_a
+wait 200
+shot showstopper_b
+wait 900
+shot showstopper_after
+wait 60
+shot end
+end

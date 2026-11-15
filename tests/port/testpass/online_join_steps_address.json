@@ -1,0 +1,51 @@
+{
+ "desc": "a guest's join by address, step by step: the connection is the first two steps at once (no key by address), then the version, the host's adventure and its world; the host measures the guest's link (good, its round trip)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 1400"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "quality: player 2 none -> good \\(p90 \\d+ ms"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1400"
+    ],
+    "log_must": [
+     "join: begins \\(by address\\): 5 steps",
+     "join: step 1 relay done in \\d+ ms",
+     "join: step 2 key done in 0 ms",
+     "join: step 3 version done",
+     "join: step 4 progress done",
+     "join: step 5 world done",
+     "join: done after \\d+ ms"
+    ],
+    "log_must_not": [
+     "taking long",
+     "join: step \\d \\w+ failed"
+    ]
+   }
+  ],
+  "link": "address"
+ },
+ "timeout": 300
+}

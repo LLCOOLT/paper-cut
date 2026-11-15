@@ -1,0 +1,76 @@
+{
+ "desc": "Paper notes taken back on the Start menu's page (TTYD_NOTES_PAGE, TTYD_NOTES_TEST: no relay; the test answers with the relay's rules): two notes left where Mario stands, then the nearest of them chosen once (the help asks: chosen again, it is taken back) and again: taken back, forgotten in notes.txt, gone from the list; Refresh then finds one of yours (and the far note someone else left)",
+ "groups": [
+  "notes",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "settings": {"paper_notes": 1},
+ "env": {
+  "TTYD_MAP": "gor_00,s_bero",
+  "TTYD_STORY": "150",
+  "TTYD_NOTES_TEST": "400 0 400 0 0 0",
+  "TTYD_NOTES_PAGE": "1",
+  "TTYD_EXIT_FRAMES": 1400,
+  "TTYD_NOTES_TEST_AFTER": "300"
+ },
+ "input": [
+  "wait 380",
+  "press start",
+  "wait 45",
+  "press left",
+  "wait 30",
+  "press left",
+  "wait 30",
+  "press a",
+  "wait 60",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "press a",
+  "wait 20",
+  "shot left_two",
+  "press down",
+  "wait 10",
+  "press down",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot asks",
+  "press a",
+  "wait 20",
+  "shot taken",
+  "press up",
+  "wait 10",
+  "press a",
+  "wait 20",
+  "shot refreshed",
+  "end"
+ ],
+ "expect_shots": [
+  "left_two",
+  "asks",
+  "taken",
+  "refreshed"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[notes\\] test: 1 notes placed in gor_00",
+  "^\\[notes\\] test: add gor_00 .*: Your note is left here\\.\\n(?:.*\\n)*?\\[notes\\] test: add gor_00 .*: Your note is left here\\.",
+  "^\\[notes\\] page: take back t1\\? \\(chosen again, it is\\)$",
+  "^\\[notes\\] page: take back t1$",
+  "^\\[notes\\] forgot t1 \\(notes\\.txt: 1 of yours\\)$",
+  "^\\[notes\\] test: take gor_00 t1: Your note is taken back\\.$",
+  "^\\[notes\\] test: refresh: 2 notes in gor, 1 yours$"
+ ],
+ "log_must_not": [
+  "^\\[notes\\] test: take gor_00 t2",
+  "^\\[notes\\] page: take back t1\\? .*\\n(?:.*\\n)*?\\[notes\\] page: take back t1\\? "
+ ],
+ "new": true
+}

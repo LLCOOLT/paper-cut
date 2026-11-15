@@ -5,6 +5,7 @@ With a file named `portable.txt` beside the program, Paper Cut keeps everything 
 "Beside the program" is the folder holding `Paper Cut.exe` on Windows, the AppImage (or the binary) on Linux, and the `.app` on macOS. Phones and tablets have no such place; there the section isn't shown.
 
 - The file's contents don't matter; an empty `portable.txt` works.
+- Everything the program writes is then under `User`: mods in `User/mods`, the randomizer's spoiler logs in `User/randomizer`, photos, replays and saves beside them. **Open the mods folder** and **Open the spoiler logs folder** open those, and their pages show the paths.
 - `$TTYD_USER_DIR` and `$TTYD_CACHE_DIR` still win when they are set.
 - Saves > Portable mode shows where the settings and saves are. **Make this copy portable** copies the current user folder into `User` beside the program and writes `portable.txt`; it applies from the next start (Restart now). **Leave portable mode** removes `portable.txt`; `User` stays where it is, and the next start uses the system's folder again.
 - Updates leave `User` alone, as they do any user folder.

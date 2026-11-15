@@ -369,9 +369,17 @@ EVT_BEGIN(to_faker_mario)
     WAIT_MS(500)
     CALL_CHILD(rampell_zoom)
     CALL_CHILD(init_event_fmario)
+#ifdef TARGET_PC
+    CALL(btlevtcmd_port_GetKindHp, BTL_UNIT_SELF, LW(0))
+#else
     CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+#endif
     IF_INT_LESS(LW(0), 10)
+#ifdef TARGET_PC
+        CALL(btlevtcmd_port_SetKindHp, BTL_UNIT_SELF, 10)
+#else
         CALL(btlevtcmd_SetHp, BTL_UNIT_SELF, 10)
+#endif
     END_IF
     CALL(evt_snd_sfxon, STRING("SFX_BOSS_RNPLTRANSFORM5"), 0)
     CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(5), LW(6), LW(7))

@@ -44,6 +44,8 @@ typedef struct TtydRandoEdge {
 #include <string>
 #include <vector>
 
+struct TtydApLocation; // ttyd_ap.h
+
 namespace ttyd_rando {
 
 // What is shuffled: each location whose own item is of a chosen kind gets one
@@ -224,6 +226,11 @@ int gameItemOf(int64_t item);
 int partnerOf(int64_t item);
 // An item's Archipelago id by its name (kTtydRandoItemNames), or 0.
 int64_t itemByName(const char* name);
+// Whether a location's script word, holding `now` (as its area linked), is the item the game gives
+// there, so a seed's item may go in it. Some of the apworld's places are words the TTYD AP mod's
+// reworked scenes read, which in the game's own script are something else (a partner's joining
+// scene's camera curve, a trouble's coin count, a black chest's, Whacka's): those stay as they are.
+bool scriptWordIsItem(const ::TtydApLocation& loc, long long now);
 
 } // namespace ttyd_rando
 #endif

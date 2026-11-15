@@ -1,0 +1,25 @@
+# find-files: see tools/port/gen_lang.py (the mods and spoiler logs folders, the About page's Discord)
+
+Open the spoiler logs folder
+Ouvrir le dossier des journaux de spoilers
+
+Shows the randomizer folder in the user folder, where each start's spoiler log is written: the system's folder for app data, or User beside the program with portable.txt.
+Montre le dossier randomizer du dossier utilisateur, où chaque démarrage écrit son journal de spoilers : le dossier du système pour les données d'applis, ou User à côté du programme avec portable.txt.
+
+The folder didn't open: it is the randomizer folder in the user folder.
+Le dossier ne s'est pas ouvert : c'est le dossier randomizer du dossier utilisateur.
+
+The mods folder: %s
+Le dossier des mods : %s
+
+Spoiler logs: %s
+Journaux de spoilers : %s
+
+The user folder is the system's folder for app data, or the User folder beside the program when portable.txt is there (Saves > Portable mode).
+Le dossier utilisateur est le dossier du système pour les données d'applis, ou le dossier User à côté du programme quand portable.txt s'y trouve (Sauvegardes > Mode portable).
+
+The Paper Cut Discord
+Le Discord de Paper Cut
+
+Help, players for online games and ideas: discord.gg/qkSQuRPzcQ. Bugs still go to GitHub issues.
+De l'aide, des joueurs pour jouer en ligne et des idées : discord.gg/qkSQuRPzcQ. Les bugs vont toujours dans les issues GitHub.

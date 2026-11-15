@@ -1,0 +1,52 @@
+{
+ "desc": "Brothers mode, the full run's segment 4 from its checkpoint, through the Thousand-Year Door's scene in tik_05 (Mario on the pedestal, Frankly, Goombella: 'Hrmmm...'): Luigi stands in a place of his own beside Mario, not inside or right behind the partner, and doesn't hop at the pedestal over and over. Before, he stood in Goombella and jumped 60 times",
+ "groups": [
+  "brothers"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "user_gen": [
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "04_plane"
+   ],
+   "dest": "USA/Card A/01-G8ME-mariost_save_file.gci"
+  },
+  {
+   "script": "tools/port/full_run_card.py",
+   "args": [
+    "04_plane"
+   ],
+   "dest": "start.gci"
+  }
+ ],
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_STORY_WATCH": 120,
+  "TTYD_AUTO_CHOICE": "mac_majin_17:1,mac_0_103_03_yesno:1",
+  "TTYD_WATCHDOG": 60,
+  "TTYD_LOAD_SAVE": "{out}/user/start.gci",
+  "TTYD_SET_brothers_mode": "1",
+  "TTYD_BROS_TRACE": "1"
+ },
+ "input": "tests/port/full_run/04_plane.txt",
+ "log_must": [
+  "^\\[bros-trace\\] scene-end f=\\d+ map=tik_05 .*verdict=OK",
+  "^\\[input\\] end"
+ ],
+ "allow_failures": [
+  "input",
+  "stuck"
+ ],
+ "timeout": 900,
+ "new": true,
+ "log_must_not": [
+  "^\\[bros-trace\\] scene-(mid|end) f=\\d+ map=tik_05 .*verdict=BAD:[a-z,]*(overlap|jumps)",
+  "^\\[bros-trace\\] (arrive|scene-end) .*verdict=BAD:[a-z,]*jumps"
+ ]
+}

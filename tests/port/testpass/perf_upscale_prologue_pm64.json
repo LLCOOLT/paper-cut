@@ -1,0 +1,42 @@
+{
+ "desc": "Texture upscaling's cost (0.5.1 report, RTX 4090: 4x textures with a Paper Mario 64 ROM linked made cutscenes chug): the prologue's cutscenes from the letter to Rogueport's harbour (Goombella, the X-Nauts) with everything from Paper Mario 64 on and textures upscaled 4x, real timing ([upscale] lines, $TTYD_UPSCALE_LOG). The filter runs on Aurora's workers, a frame's end puts their results in within 1.5 ms and one new texture. Before: 9.6 s of the frames' own time upscaling, the longest frame 2.1 s, 29 frames of 4 ms or more; now 0.2-1.1 s in all and 6-18 frames of 4 ms or more on a machine running a dozen other games (its texture creation and uploads, slowed by the load). The limits leave room for a busy test machine (a dozen games at once): under 3 s in all, none of 250 ms or more, fewer than 40 frames of 4 ms or more",
+ "groups": ["perf", "gfx", "pm64"],
+ "versions": ["us"],
+ "settings": {
+  "texture_upscale": 2,
+  "pm64_partners": 1, "pm64_story_enemies": 1, "pm64_bosses": 1, "pm64_boss_music": 1, "pm64_badges": 1,
+  "pm64_recipes": 1, "pm64_sfx": 1, "pm64_sfx_general": 1, "pm64_star_spirits": 1
+ },
+ "env": {
+  "TTYD_FAST": null,
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_EVENT": 0,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_UPSCALE_LOG": 1,
+  "TTYD_FPS_LOG": 1,
+  "TTYD_PACING_LOG": "{out}/pacing.csv"
+ },
+ "input": [
+  "wait 600",
+  "where",
+  "wait 1200",
+  "where",
+  "wait 1200",
+  "where",
+  "end"
+ ],
+ "timeout": 300,
+ "exit": "any",
+ "log_must": [
+  "^\\[upscale\\] frame \\d+: filter [1-9]",
+  "^\\[upscale\\] total at frame 1800: filter [1-9]",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "^\\[upscale\\] total at .* on the frame's thread ([3-9]\\d{3}|\\d{5,})\\.\\d ms",
+  "^\\[upscale\\] total at .* longest (2[5-9]\\d|[3-9]\\d\\d|\\d{4,})\\.\\d\\d ms",
+  "^\\[upscale\\] total at .*, ([4-9]\\d|\\d{3,}) frames 4 ms or more",
+  "\\*\\*\\* crash"
+ ],
+ "new": true
+}

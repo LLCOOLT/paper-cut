@@ -274,6 +274,12 @@ Auto-win weak fights
 Touching a field enemy at least 10 levels below Mario wins at once, with the usual coins and drops (never bosses, scripted fights, the Pit, Master Quest, challenges or online).
 マリオより10レベル以上低いフィールドの敵にふれると、いつものコインやアイテムつきですぐ勝ちます（ボス、イベントの戦い、100階ダンジョン、マスタークエスト、チャレンジ、オンラインでは無効）。
 
+Spring Jump from standing only
+ジャバラジャンプは止まってからだけ
+
+With the Ultra Boots, the Spring Jump starts only while Mario stands still: holding A and turning the stick as he comes down from a jump no longer springs him up the moment he lands.
+ウルトラブーツのジャバラジャンプは、マリオが止まっているときだけ出ます。ジャンプから落ちるあいだにAを押したままスティックを回しても、着地したとたんに跳ね上がらなくなります。
+
 <p>\nIt's the title match, son!\nNo special conditions this\ntime. Just beat the champ!\n<k>\n<p>\nNow go on out there an'\nbring the house down!\n<k>
 <p>\nチャンピオン戦だぞ！\n今回は　とくべつな条件は\nなしだ　チャンプを倒せ！\n<k>\n<p>\nさあ　会場を\nもりあげてこい！\n<k>
 

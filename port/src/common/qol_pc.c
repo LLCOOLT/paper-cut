@@ -8,6 +8,7 @@
 #include "manager/dvdmgr.h"
 #include "system.h"
 #include "port/qol.h"
+#include "port/prompt_check.h"
 #include "port/gameplus.h"
 #include "port/statesync.h"
 #include "port/settings.h"
@@ -896,38 +897,4 @@ int portTouRoster(int i, const char** name, const char** title, int* isPlayer) {
     *name = sName;
     *title = sTitle;
     return 1;
-}
-
-/* --- Tattle prompts: the "!" where Goombella's field Tattle has something new --- */
-
-int portTattlePrompt(void) {
-    static int sWait, sNear;
-    NpcWork* wp;
-    MarioWork* mario = marioGetPtr();
-    int i;
-    if (!portQol("talk_prompts") || marioGetParty() != PARTNER_GOOMBELLA || mario == NULL) {
-        return 0;
-    }
-    if (++sWait < 10) {
-        return sNear; /* (looked at six times a second) */
-    }
-    sWait = 0;
-    sNear = 0;
-    wp = npcGetWorkPtr();
-    for (i = 0; wp != NULL && i < wp->total; i++) {
-        const NpcEntry* npc = &wp->entries[i];
-        float dx, dz;
-        if (!(npc->flags & NPC_FLAG_ACTIVE) || (npc->flags & (NPC_FLAG_ENEMY | NPC_FLAG_HIDDEN)) ||
-            npc->description[0] == '\0') {
-            continue;
-        }
-        dx = npc->position.x - mario->position.x;
-        dz = npc->position.z - mario->position.z;
-        if (dx * dx + dz * dz > 60.0f * 60.0f || portTattleHeard(npc->description, 0)) {
-            continue;
-        }
-        sNear = 1;
-        break;
-    }
-    return sNear;
 }

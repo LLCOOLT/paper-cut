@@ -1,0 +1,10 @@
+# Online, each their own game: a file of another kind refused (port/src/common/statesync_pc.c fileKindRefused), in Japanese: an English line, then its translation, then a blank line.
+
+Your file is a randomizer, Archipelago or hardcore file and the other player's isn't: play your own files with matching seeds, or play together in co-op.
+あなたのファイルはランダマイザー、Archipelago、ハードコアのファイルですが、相手のファイルは違います。同じシードのファイル同士で遊ぶか、協力プレイで一緒に遊んでください。
+
+The other player's file is a randomizer, Archipelago or hardcore file and yours isn't: play your own files with matching seeds, or play together in co-op.
+相手のファイルはランダマイザー、Archipelago、ハードコアのファイルですが、あなたのファイルは違います。同じシードのファイル同士で遊ぶか、協力プレイで一緒に遊んでください。
+
+Your files are different randomizer, Archipelago or hardcore files: play your own files with matching seeds, or play together in co-op.
+二人のファイルは別々のランダマイザー、Archipelago、ハードコアのファイルです。同じシードのファイル同士で遊ぶか、協力プレイで一緒に遊んでください。

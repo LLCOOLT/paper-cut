@@ -89,6 +89,16 @@ JNIEXPORT void JNICALL Java_dev_ttyd_port_TtydCompanion_menuButton(JNIEnv* env, 
     portCompanionMenuButton(button);
 }
 
+/* Tests: $TTYD_COMPANION_ANY_DISPLAY=1 (env.txt) takes any second display that
+ * can show a presentation, such as the emulator's (not built in), for
+ * tools/port/android_dualscreen_test.py. */
+JNIEXPORT jboolean JNICALL Java_dev_ttyd_port_TtydCompanion_anyDisplay(JNIEnv* env, jclass cls) {
+    const char* v = getenv("TTYD_COMPANION_ANY_DISPLAY");
+    (void)env;
+    (void)cls;
+    return v != NULL && atoi(v) != 0;
+}
+
 /* The device has a second display of its own: the setting shows. */
 JNIEXPORT void JNICALL Java_dev_ttyd_port_TtydCompanion_setDualScreen(JNIEnv* env, jclass cls, jboolean dual) {
     (void)env;

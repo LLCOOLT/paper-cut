@@ -2243,3 +2243,30 @@ s32 BeroID[16];
 // the demo has these in .bss (retail: .sbss), before the arrays
 Vec BeroPT, BeroAT;
 #endif
+
+#ifdef TARGET_PC
+#include "driver/casedrv.h"
+/* PC port: an entrance's exit changed in its table after the room registered it (a remake setting turned on or
+ * off in the room, port/include/port/remake_maps.h): its exit case's copy of it (LW(11), LW(13), LW(14), as
+ * evt_bero_get_info_num loaded them for bero_case_entry) made the same, so going in now takes the new one. */
+void portBeroCaseRefresh(BeroEntry* bero) {
+    s32 i;
+    for (i = 0; bero != NULL && i < BeroNUM && i < 16; i++) {
+        CaseEntry* c;
+        if (BeroINFOARR[i] != bero) {
+            continue;
+        }
+        if (BeroID[i] < 0 || BeroID[i] >= 64) { /* (casedrv's 64 cases) */
+            return;
+        }
+        c = caseIdToPtr(BeroID[i]);
+        if (c == NULL || bero->hitName == NULL || strcmp(c->hitObjName, bero->hitName) != 0) {
+            return;
+        }
+        c->lwData[11] = (EvtWord)(bero->exitEvent != NULL ? bero->exitEvent : default_outevt);
+        c->lwData[13] = (EvtWord)bero->nextMapName;
+        c->lwData[14] = (EvtWord)bero->nextBeroName;
+        return;
+    }
+}
+#endif

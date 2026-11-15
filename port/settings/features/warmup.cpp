@@ -5,9 +5,16 @@
 // first time before its pipeline is ready is skipped, and a scene waiting on a
 // character it can't see stalls (the guards in Rogueport's square, on a fresh
 // install). Built once: later starts find them in the cache and go straight on.
+//
+// The log says how long it took and how many it built ("[warmup] ..."), and
+// Aurora logs each pipeline a draw still has to build afterwards ("Pipeline
+// built on demand", port/patches/aurora/0081): one the seed misses.
+// TTYD_WARMUP=1 waits in scripted runs too (tests/port/testpass/
+// gfx_seed_no_on_demand.json; a run's own empty cache, TTYD_CACHE_DIR).
 #include "../launcher_style.h"
 #include "../settings_ui.h"
 #include "port/aurora_pc.h"
+#include "port/gpu_start.h"
 #include "port/tr.h"
 
 #include <SDL3/SDL.h>
@@ -18,29 +25,51 @@
 #include <algorithm>
 #include <cfloat>
 #include <cstdio>
+#include <cstring>
+
+extern "C" void portWatchdogFrame(void); // crash_pc.c (port/platform.h, C only)
 
 extern "C" void portPipelineWarmupWait(void) {
-  // scripted runs (tests, sweeps) have fresh caches each time: no waiting there
-  if (SDL_getenv("TTYD_FAST") != nullptr || SDL_getenv("TTYD_INPUT") != nullptr ||
-      SDL_getenv("TTYD_MAP") != nullptr) {
+  // scripted runs (tests, sweeps) have fresh caches each time: no waiting there, unless TTYD_WARMUP=1 asks
+  const char* forced = SDL_getenv("TTYD_WARMUP");
+  if ((forced == nullptr || std::strcmp(forced, "1") != 0) &&
+      (SDL_getenv("TTYD_FAST") != nullptr || SDL_getenv("TTYD_INPUT") != nullptr ||
+       SDL_getenv("TTYD_MAP") != nullptr)) {
     return;
   }
   const AuroraStats* stats = aurora_get_stats();
-  if (stats == nullptr || stats->queuedPipelines == 0) {
+  if (stats == nullptr) {
+    return;
+  }
+  if (stats->queuedPipelines == 0) {
+    std::printf("[warmup] nothing to prepare: %u pipelines built, %u on demand so far\n", stats->createdPipelines,
+                stats->onDemandPipelines);
+    std::fflush(stdout);
     return;
   }
   uint32_t total = stats->queuedPipelines;
+  const uint32_t createdBefore = stats->createdPipelines;
   const Uint64 start = SDL_GetTicks();
+  const char* how = "done";
   gPortLauncherShown = true; // a tap reaches ImGui here as on the launcher (settings_ui.cpp)
-  // at most a minute and a half, and any key, click, tap or button starts the
-  // game at once: Aurora goes on building in the background either way
-  while (stats->queuedPipelines > 0 && SDL_GetTicks() - start < 90000) {
+  // at most a minute and a half ($TTYD_WARMUP_SECONDS: a test timing the whole
+  // warmup), and any key, click, tap or button starts the game at once: Aurora
+  // goes on building in the background either way
+  const char* limitEnv = SDL_getenv("TTYD_WARMUP_SECONDS");
+  const int limitS = limitEnv != nullptr && SDL_atoi(limitEnv) > 0 ? SDL_atoi(limitEnv) : 90;
+  while (stats->queuedPipelines > 0) {
+    if (SDL_GetTicks() - start >= static_cast<Uint64>(limitS) * 1000) {
+      how = "stopped at its time limit";
+      break;
+    }
     portAuroraBeginFrame(); // exits the program if the window is closed
+    portWatchdogFrame();    // a frame drawn ($TTYD_WATCHDOG: the wait is no hang)
     bool skip = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
     for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END && !skip; k++) {
       skip = ImGui::IsKeyPressed(static_cast<ImGuiKey>(k), false);
     }
     if (skip) {
+      how = "skipped by the player";
       break;
     }
     total = std::max(total, stats->queuedPipelines);
@@ -86,7 +115,14 @@ extern "C" void portPipelineWarmupWait(void) {
                          IM_COL32(60, 20, 30, 255), 2.f * scale);
     launcherStyleEnd();
     aurora_end_frame();
+    portGpuStartFrame(); // the first frame drawn: the graphics API started (port/include/port/gpu_start.h)
   }
   gPortLauncherShown = false;
   portUiReleaseInput(); // the game gets the keyboard and controller
+  // (a line the tests and a player's log both read: how long the first start's wait was, and what it built)
+  std::printf("[warmup] Preparing graphics %s: %u pipelines built in %llu ms (%u queued at the start, %u left, "
+              "%u on demand so far)\n",
+              how, stats->createdPipelines - createdBefore, static_cast<unsigned long long>(SDL_GetTicks() - start),
+              total, stats->queuedPipelines, stats->onDemandPipelines);
+  std::fflush(stdout);
 }

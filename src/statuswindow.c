@@ -19,6 +19,7 @@
 #include "port/hooks/src_statuswindow.h"
 #endif
 #ifdef TARGET_PC
+#include "port/brothers.h"
 #include "port/platform.h"
 #include "port/hud.h"
 #include "port/qol.h"
@@ -702,6 +703,10 @@ static void statusGetValue(SVal* values) {
     } else {
         bw = _battleWorkPointer;
         mario = BattleGetMarioPtr(bw);
+#ifdef TARGET_PC
+        /* Brothers mode: Mario's numbers by his face while Luigi acts too (Luigi's have their own HUD) */
+        mario = (BattleUnit*)portBrothersHudMario(bw, mario);
+#endif
         party = BattleGetPartyPtr(bw);
         values->hp = mario->currentHp;
         values->maxHp = mario->maxHp;

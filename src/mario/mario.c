@@ -51,6 +51,7 @@ static void marioDisp(CameraId camId, void* param);
 #include "port/luigi.h"
 #define animPoseDrawMtx portLuigiDrawMtx
 #include "port/toggles.h"
+#include "port/pm64_spin.h"
 #endif
 
 static void marioCtrlOff2Main(void);
@@ -1296,6 +1297,11 @@ void PORT_HOOKABLE(marioMain)(void) {
             wp->dispFlags &= ~MARIO_DISP_FLAG_CAM_ZOOMED;
         }
     }
+#ifdef TARGET_PC
+    /* Paper Mario 64's Spin Dash: started, steered, ended (port/include/port/pm64_spin.h); before a pipe's motion
+       too, which a spin over a pipe can turn into: there it ends, as anywhere */
+    portSpinDashFrame();
+#endif
     if (wp->currMotionId == MARIO_MOTION_DOKAN) {
         marioMotion();
         mp->hitobjStandOn = marioSearchGround(&a, &b, &c, 0.0f, 0.0f);
@@ -1656,7 +1662,13 @@ static void marioMoveMain(void) {
     if (getRollEvtFlag()) {
         return;
     }
+#ifdef TARGET_PC
+    /* Paper Mario 64's Spin Dash rides the forced run, but meets walls, slopes and exits (a road's push) as a run
+       does; a script's walk goes straight through them (port/include/port/pm64_spin.h) */
+    if ((wp->flags & MARIO_FLAG_FORCED_MOVEMENT) && !portSpinDashMoving()) {
+#else
     if (wp->flags & MARIO_FLAG_FORCED_MOVEMENT) {
+#endif
         if (wp->currMotionId == MARIO_MOTION_YOSHI) {
             party = partyGetPtr(marioGetPartyId());
             wp->moveDirection = wp->directionView;
@@ -1896,6 +1908,9 @@ void PORT_HOOKABLE(marioChgPose)(const char* name) {
     MarioWork* wp = mp;
     const char* dot;
 
+#ifdef TARGET_PC /* Paper Mario 64's Spin Dash holds his pose: what is asked meanwhile is his once it ends */
+    portSpinDashPoseAsked(name);
+#endif
     if (!(wp->dispFlags & MARIO_DISP_FLAG_POSE_LOCK)) {
         if (!wp->animName || strcmp(wp->animName, name)) {
             if (!(wp->flags & MARIO_FLAG_IS_8_BIT)) {
@@ -1921,6 +1936,9 @@ void PORT_HOOKABLE(marioChgPoseTime)(const char* name, s16 frames) {
     MarioWork* wp = mp;
     const char* animName;
 
+#ifdef TARGET_PC /* (the Spin Dash's held pose, as marioChgPose) */
+    portSpinDashPoseAsked(name);
+#endif
     if (!(mp->dispFlags & MARIO_DISP_FLAG_POSE_LOCK) && !(mp->flags & MARIO_FLAG_IS_8_BIT)) {
         animName = mp->animName;
         if (!animName || strcmp(animName, name)) {

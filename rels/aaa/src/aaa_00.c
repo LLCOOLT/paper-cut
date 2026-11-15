@@ -27,6 +27,7 @@
 #include "evt/evt_fade.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/special_places.h"
 #include "wide_x.h"
 #include "sdk/texPalette.h"
 #endif
@@ -847,10 +848,26 @@ static BeroEntry bero_entry_data[] = {
  * Also registers the tree and grass access data.
  */
 EVT_BEGIN(aaa_00_init_evt)
+#ifdef TARGET_PC
+    /* Special places (port/include/port/special_places.h): on a visit the yard's pipe leads back */
+    CALL(portEvtSpecialPipe, PTR(bero_entry_data))
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
     CALL_CHILD(evt_bero_info_run)
     CALL(evt_npc_setup, PTR(npcEnt))
+#ifdef TARGET_PC
+    /* a visit: the house as it is between the story's scenes, the brothers' music, Parakarry and Luigi off */
+    CALL(portEvtSpecialVisit, LW(1))
+    IF_INT_EQUAL(LW(1), 1)
+        CALL(evt_npc_set_position, STRING("パレッタ"), 0, -1000, 0)
+        CALL(evt_npc_set_position, STRING("ルイージ"), 0, -1000, 0)
+        CALL(evt_npc_flag_onoff, 1, STRING("パレッタ"), NPC_FLAG_INTANGIBLE)
+        CALL(evt_npc_flag_onoff, 1, STRING("ルイージ"), NPC_FLAG_INTANGIBLE)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_MARIO_HOUSE1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_OPN_AAA1"))
+    END_IF
+#endif
     SET_VALUE(LW(0), PTR(&door_1))
     CALL_CHILD(evt_door_entry)
     CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("sai_ki1"), MAPOBJ_FLAG_BBOX_CULL)

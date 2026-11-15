@@ -1,0 +1,56 @@
+{
+ "desc": "host loss past the wait: the host's connection is down longer than the guest waits for it (the wait cut to 20 s here by TTYD_SYNC_HOST_GRACE; 2 minutes for players): 'Waiting for <host> to come back...' all along, then '<host> left the room. Your copy of the adventure is kept.' and where to go (headless: the title)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "coins 150",
+     "wait 14800"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_EXIT_FRAMES": 15000,
+     "TTYD_NET_FAULTS": "offline_ms:1500-45000"
+    },
+    "log_must": [
+     "\\[netfaults\\] offline at frame"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 14900"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 15000,
+     "TTYD_SYNC_HOST_GRACE": 20,
+     "TTYD_SYNC_END_PICK": "title"
+    },
+    "log_must": [
+     "co-op: the host's game is gone: waiting 20 seconds for it",
+     "wait: Waiting for Test Host to come back\\.\\.\\.",
+     "end: Test Host left the room\\. Your copy of the adventure is kept\\.",
+     "end: chose \"Title screen\""
+    ]
+   }
+  ],
+  "check": {
+   "progress": false,
+   "drift": false
+  }
+ },
+ "timeout": 400
+}

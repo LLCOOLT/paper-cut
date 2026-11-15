@@ -23,3 +23,9 @@ Jugando juntos: el anfitrión viaja y todos van con él.
 
 This is the host's adventure: load your own file to save.
 Es la aventura del anfitrión: carga tu propia partida para guardar.
+
+Joining %s's game...
+Uniéndote a la partida de %s...
+
+%s went to another room: close the menu to follow.
+%s se fue a otra sala: cierra el menú para seguirle.

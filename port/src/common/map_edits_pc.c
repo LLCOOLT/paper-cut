@@ -23,6 +23,7 @@
 #include "port/mod_host.h"
 #include "port/open_world.h"
 #include "port/remake_maps.h"
+#include "port/statesync.h"
 #include "system.h"
 #include "data/npc_data.h"
 #include "driver/animdrv.h"
@@ -245,7 +246,7 @@ typedef struct Slot {
     EvtWord code[CODE];  /* the script that makes it */
     EvtWord act[CODE];   /* its action (a switch's, a sign's, a talk) */
     NpcSetupInfo setup[2];
-    s32 caseId;          /* a pipe's case event (0 none) */
+    s32 caseId;          /* a pipe's case event, one up (0 none) */
     s32 evtId;           /* a zone's watching event (0 none) */
     s32 placeId;         /* the script making it, while it may still run (its code is the slot's) */
 } Slot;
@@ -256,6 +257,16 @@ static s32 sPlacedFor;    /* the room load (its init script's event id) things w
 static char sPlacedRoom[16];
 static int sRespawnAsked;
 static int sShopSlot = -1; /* the NPC whose shop is open */
+static unsigned sPlacedRemake; /* the remake's settings (a bit each, PORT_RM_*) the room's things were placed by */
+
+static unsigned remakeMask(void) {
+    unsigned m = 0;
+    int i;
+    for (i = 0; i < PORT_RM_COUNT; i++) {
+        m |= portRemakeMap(i) ? 1u << i : 0u;
+    }
+    return m;
+}
 
 /* a free slot, -1 if none */
 static int slotFree(void) {
@@ -406,7 +417,8 @@ static USER_FUNC(evt_me_case_id) {
     const int i = slotOfEvent(event);
     (void)isFirstCall;
     if (i >= 0) {
-        sSlots[i].caseId = (s32)evtGetValue(event, event->args[1]);
+        /* (kept one up: case 0 is a case, often a pipe's, placed from the room's init before its exits' cases) */
+        sSlots[i].caseId = (s32)evtGetValue(event, event->args[1]) + 1;
     }
     return EVT_RETURN_DONE;
 }
@@ -415,6 +427,8 @@ static s32 pipeMain(MapObjectEntry* mobj) {
     (void)mobj;
     return 0;
 }
+
+#define PIPE_TOP 30.0f /* a pipe's top above the floor, as the rooms' own */
 
 /* (name, x, y, z): the pipe, once its model is in */
 static USER_FUNC(evt_me_pipe_entry) {
@@ -433,7 +447,10 @@ static USER_FUNC(evt_me_pipe_entry) {
     mobj = mobjNameToPtr(name);
     mobj->flags |= MOBJ_FLAG_CALC_MTX;
     mobj->position.x = evtGetFloat(event, args[1]);
-    mobj->position.y = evtGetFloat(event, args[2]);
+    /* (y: the floor under it. The model (the Bowser stages' pipe) stands 50 tall from its base; the rooms' own
+     * pipes stand 30 above their floor (nok_01's, usu_00's, win_06's ...): sunk into the floor to theirs) */
+    mobj->position.y = evtGetFloat(event, args[2]) -
+                       (10.0f * animPoseGetAnimBaseDataPtr(mobj->poseId)->bboxMax.y - PIPE_TOP);
     mobj->position.z = evtGetFloat(event, args[3]);
     mobj->mainFunc = pipeMain;
     mobjCalcMtx(mobj);
@@ -887,7 +904,7 @@ static void unplace(int slot) {
     }
     if (portMapThingPlaced(s->t.type) && s->name[0] != '\0') {
         if (s->caseId != 0) {
-            caseDelete(s->caseId);
+            caseDelete(s->caseId - 1);
         }
         if (s->placeId != 0 && evtCheckID(s->placeId)) {
             evtDeleteID(s->placeId); /* (still waiting for its model: its code goes with the slot) */
@@ -1054,6 +1071,11 @@ void portMapEditsRoom(struct BeroEntry* table) {
     if (gp->mapEventId != 0 && gp->mapEventId == sPlacedFor) {
         return;
     }
+    /* (nor again when a script asks after the room's init is over: the things placed stay the slots', so a
+     * setting changed later still takes them away) */
+    if (gp->mapEventId == 0 && sPlacedRoom[0] != '\0' && strcmp(sPlacedRoom, gp->currentMapName) == 0) {
+        return;
+    }
     sPlacedFor = gp->mapEventId;
     snprintf(sPlacedRoom, sizeof(sPlacedRoom), "%s", gp->currentMapName);
     /* the last room's slots: its things went with it */
@@ -1063,8 +1085,55 @@ void portMapEditsRoom(struct BeroEntry* table) {
     sShopSlot = -1;
     sGen++;
     sError[0] = '\0';
+    sPlacedRemake = remakeMask();
     placeRoom();
     takePending();
+}
+
+/* A remake setting changed in this room: its things placed now, or taken away
+ * now (the room's other things, the mods' and Lua's, stay as they are). */
+static int remakeFn(const Entry* en, void* user) {
+    const unsigned changed = *(const unsigned*)user;
+    if (en->t.type != PORT_MT_EXIT && en->t.setting >= 0 && (changed >> en->t.setting & 1u) && unlocked(&en->t)) {
+        take(en->source, &en->t);
+    }
+    return 0;
+}
+
+static void remakeChanged(unsigned now) {
+    unsigned changed = now ^ sPlacedRemake;
+    int i, gone = 0;
+    sPlacedRemake = now;
+    for (i = 0; i < SLOTS; i++) {
+        if (sSlots[i].used && sSlots[i].t.setting >= 0 && (changed >> sSlots[i].t.setting & 1u)) {
+            unplace(i);
+            gone++;
+        }
+    }
+    if (gone > 0) {
+        printf("[map edits] %s: the remake's changes: %d taken away\n", gp->currentMapName, gone);
+        fflush(stdout);
+    }
+    changed &= now; /* (placed: only the ones now on) */
+    if (changed != 0) {
+        sGen++;
+        eachEntry(NULL, gp->currentMapName, remakeFn, &changed);
+    }
+}
+
+void portMapEditsLiveFrame(void) {
+    unsigned now;
+    /* (the room's things placed already: a room loading places them with the settings it has; not while online
+     * swaps the host's settings in for a shared battle and back, ssBattleBusy) */
+    if (gp == NULL || gp->inBattle || ssBattleBusy() || sPlacedRoom[0] == '\0' ||
+        strcmp(sPlacedRoom, gp->currentMapName) != 0) {
+        return;
+    }
+    now = remakeMask();
+    if (now != sPlacedRemake && marioChkCtrl()) { /* (not under Mario in the middle of a pipe or a scene) */
+        remakeChanged(now);
+    }
+    portRemakeMapsLive(sTable);
 }
 
 int portMapEditsPlaceNow(const PortMapThing* thing) {
@@ -1250,6 +1319,7 @@ static int framePre(void) {
     }
     sGen++;
     sError[0] = '\0';
+    sPlacedRemake = remakeMask();
     placeRoom();
     return 0;
 }

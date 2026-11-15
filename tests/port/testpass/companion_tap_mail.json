@@ -1,0 +1,51 @@
+{
+ "desc": "Mail from the second screen's Start menu (TTYD_COMPANION_WINDOW, the Items tab): its opening asks for the Mailbox SP and the game adds it, as its own Start menu's opening does; a letter received (mail 1) and read there: the game marks it read and sets the first-letter flag (pouchOpenMail, GSWF 38) at the point its own menu could open",
+ "groups": [
+  "menus",
+  "companion"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_COMPANION_WINDOW": 1,
+  "TTYD_COMPANION_DUMP": 1,
+  "TTYD_COMPANION_TAB": 2,
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "input": [
+  "wait 100",
+  "mail 1",
+  "wait 200",
+  "companion button a",
+  "wait 100",
+  "companion button down",
+  "wait 60",
+  "companion button a",
+  "wait 100",
+  "companion shot c00_important",
+  "wait 100",
+  "companion button a",
+  "wait 100",
+  "companion shot c01_letters",
+  "wait 100",
+  "companion button a",
+  "wait 150",
+  "companion shot c02_letter",
+  "wait 150",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "\\[companion\\] menu: the Mailbox SP asked for",
+  "\\[companion\\] the Mailbox SP: added to the pouch",
+  "\\[companion\\] tap 9 1 ",
+  "\\[companion\\] mail 1 read"
+ ],
+ "log_must_not": [
+  "\\[companion\\] tap refused"
+ ],
+ "new": true
+}

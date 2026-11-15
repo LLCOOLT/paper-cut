@@ -1,0 +1,44 @@
+{
+ "desc": "Windows with bottom-up or high-entropy ASLR off (Exploit Protection), as TTYD_LOW_ADDRESSES makes it: the program's memory under 4 GiB, most of it under 2 GiB. The game starts (it once stopped at its start-up check), boots to Rogueport's plaza, walks and plays its sounds (sound names in memory under 2 GiB are told from ids by their text)",
+ "groups": [
+  "platform",
+  "low_addresses"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "settings": {
+  "pg_talk_blips": 1
+ },
+ "env": {
+  "TTYD_LOW_ADDRESSES": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_AUTO_TEXT": 2,
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "input": [
+  "press_until_control b 600",
+  "wait 60",
+  "stick 127 0 45",
+  "stick -127 0 45",
+  "wait 30",
+  "shot plaza",
+  "end"
+ ],
+ "expect_shots": [
+  "plaza"
+ ],
+ "log_must": [
+  "^\\[memory\\] TTYD_LOW_ADDRESSES: started with bottom-up and high-entropy ASLR off",
+  "the C heap at \\S+ is under 2 GiB",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "(?i)fatal:",
+  "below 2 GiB"
+ ],
+ "timeout": 240
+}

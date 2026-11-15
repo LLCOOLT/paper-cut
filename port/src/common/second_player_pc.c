@@ -62,6 +62,7 @@
 #include "manager/fontmgr.h"
 #include "port/tr.h"
 #include "port/statesync.h"
+#include "port/online_status.h"
 #include "port/replay.h"
 #include "port/platform.h"
 #include "port/view.h"
@@ -399,6 +400,7 @@ int portSecondPlayerPlayerFor(void* unit, int guard) {
 #define REACH 60.0f       /* units: what the partner can talk to or hit */
 #define TUG_EXCESS 12.0f  /* outside the picture by this much (portCoopEdgeExcess): walked back toward Mario */
 #define TUG_STUCK 150     /* frames walked back without getting nearer: stuck, back at Mario's side */
+#define TUG_FOLLOW_NEAR 80.0f /* a following character this near Mario is with him (TUG_STUCK past it: stuck) */
 #define HOP_REACH 40.0f   /* units a hop carries it: no hop out of the picture */
 
 /* Players 2 to 4 each walk a character of Mario's party (a helper): player 2
@@ -425,6 +427,8 @@ typedef struct {
     int idle;             /* frames its player has left the stick and buttons alone (ownStayPose's sleep) */
     int sniff;            /* Ms. Mowz's sniff where she stands: frames into its 60-frame cycle (0 none) */
     int act;              /* an online guest's own: frames its action's pose holds it still (a talk, the move) */
+    float followX, followZ; /* following Mario: where it stood when ... */
+    int followFrames;       /* ... these frames began, far from him and no farther from there (TUG_STUCK: stuck) */
 } Helper;
 static Helper sHelp[HELPERS];
 static struct {
@@ -890,10 +894,15 @@ static void talkFrame(void) {
     if (sCoop.talkEvt < 0) {
         return;
     }
-    /* any player reads the text on */
+    /* any player reads the text on, and moves a choice's cursor (the player whose character talks answers it: its
+       directions never reached the choice, online a guest's talk's choice was the host's alone) */
     for (p = 1; p < 4; p++) {
-        gp->buttonNew[0] |= gp->buttonNew[p] & (PAD_BUTTON_A | PAD_BUTTON_B);
-        gp->button[0] |= gp->button[p] & (PAD_BUTTON_A | PAD_BUTTON_B);
+        gp->buttonNew[0] |= gp->buttonNew[p] & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_UP | PAD_BUTTON_DOWN);
+        gp->button[0] |= gp->button[p] & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_UP | PAD_BUTTON_DOWN);
+        gp->buttonRepeat[0] |= gp->buttonRepeat[p] & (PAD_BUTTON_UP | PAD_BUTTON_DOWN);
+        gp->dirs[0] |= gp->dirs[p];
+        gp->dirsNew[0] |= gp->dirsNew[p];
+        gp->dirsRepeat[0] |= gp->dirsRepeat[p];
     }
     if (evtCheckID(sCoop.talkEvt)) {
         return;
@@ -1053,12 +1062,35 @@ static void spawnExtra(void) {
     }
 }
 
+/* A companion out in Mario's follower slot, standing at his feet. marioPartyEntry puts a follower out with
+ * partyEntry2 (at Mario's feet, standing: run mode 0) and then partyHello, which plays the appear's first step on
+ * it: motionStep 0, the pop-out hop begun (at Mario's middle, its upward speed, "jumping"). A partner gets step
+ * 10 from partyEntry (placed at once); a follower stays in run mode 0, which never plays the appear, so the hop
+ * was undone only when its stand found no floor under it and fell. Over a floor above Mario's feet (tik_01 by
+ * the pipe, where the floor is 25 up) it stood there "jumping" for good: no player's game walked it (its guest
+ * hadn't taken it), the host's where said mid-jump and the room never settled (mp l51-008, l51-032). As
+ * partyEntry2 has it: at Mario's feet, the hop's state undone. */
+static s32 companionEntry(int member) {
+    const s32 slot = marioPartyEntry((PartyId)member);
+    PartyEntry* party = slot >= 0 ? partyGetPtr(slot) : NULL;
+    const MarioWork* mario = marioGetPtr();
+    if (party != NULL && mario != NULL && party->runMode == 0 && party->motionStep == 1 &&
+        (party->flags & PARTY_FLAG_IS_JUMPING)) {
+        partyClearJumpPara(party);
+        party->position = mario->position;
+        party->trailPos = party->position;
+        party->moveSpeed = 0.0f;
+        party->motionStep = 0;
+    }
+    return slot;
+}
+
 /* player 3's companion out in the follower's slot (empty: no story follower now or away) */
 static void spawnFollower(void) {
     if (!companionOk(1, sCompanion[0])) {
         sCompanion[0] = nextCompanion(1, sCompanion[0]);
     }
-    if (marioPartyEntry((PartyId)sCompanion[0]) >= 0) {
+    if (companionEntry(sCompanion[0]) >= 0) {
         sOwnFollower = 1;
         printf("[coop] player 3's companion comes (%d%s)\n", sCompanion[0],
                partyChkJoin((PartyId)PARTNER_OF(sCompanion[0])) ? "" : ", lent");
@@ -1089,7 +1121,7 @@ void portCoopGuestHelperAs(int h, int member) {
             partyKill2(1);
         }
         sCompanion[0] = member;
-        if (marioPartyEntry((PartyId)member) >= 0) {
+        if (companionEntry(member) >= 0) {
             sOwnFollower = 1;
         }
     } else {
@@ -1126,6 +1158,28 @@ int portCoopFollowerYield(void) {
 /* cardmgr.c: the follower a save keeps: never player 3's companion */
 int portCoopFollowerSaveId(int memberId) {
     return sOwnFollower && memberId == sCompanion[0] ? 0 : memberId;
+}
+
+/* port/players.h: the partner's slot only (marioPartyEntry empties it itself for a partner), the follower kept */
+void portPartySwapPartner(int member) {
+    MarioWork* mario = marioGetPtr();
+    if (mario == NULL) {
+        return;
+    }
+    if (member >= PARTY_MEMBER_GOOMBELLA && member <= PARTY_MEMBER_MS_MOWZ && marioPartyEntry((PartyId)member) >= 0) {
+        return;
+    }
+    {
+        /* (none: the partner's slot emptied, whichever of Mario's two holds it; never the follower's) */
+        const s32 id = marioGetPartyId();
+        int k;
+        for (k = 0; id >= 0 && k < 2; k++) {
+            if (mario->currPartySlotId[k] == id) {
+                partyKill(id);
+                mario->currPartySlotId[k] = -1;
+            }
+        }
+    }
 }
 
 /* port/players.h: the story's follower's party id (an escort, a Trouble's client), -1 none: player 3's
@@ -1343,15 +1397,15 @@ static void companionsFrame(void) {
         killFollower(); /* player 3 gone: the companion goes with them */
         return;
     }
-    if (lendsToPlayer2() && partyGetPtr(PORT_PARTY_SLOT_LENT) == NULL && sFieldFrames == 20) {
+    if (lendsToPlayer2() && partyGetPtr(PORT_PARTY_SLOT_LENT) == NULL && sFieldFrames >= 20) {
         spawnLent2();
     }
-    if (coopOn() && padHere(2) && follower == NULL && mario->prevPartyMemberId[1] == 0 && sFieldFrames == 30) {
+    if (coopOn() && padHere(2) && follower == NULL && mario->prevPartyMemberId[1] == 0 && sFieldFrames >= 30) {
         spawnFollower();
     } else if (coopOn() && padHere(2) && sOwnFollower && follower == NULL && sFieldFrames > 30) {
         spawnFollower(); /* (its own put away with the partner, as a test's party change does: back) */
     }
-    if (coopOn() && padHere(3) && partyGetPtr(PORT_PARTY_SLOT_COMPANION) == NULL && sFieldFrames == 40) {
+    if (coopOn() && padHere(3) && partyGetPtr(PORT_PARTY_SLOT_COMPANION) == NULL && sFieldFrames >= 40) {
         spawnExtra();
     }
     if (sFieldFrames > 40) {
@@ -1632,7 +1686,8 @@ void portCoopGuestAbility(int down) {
         sGuestX.press = sGuestX.held = 1;
         sGuestX.up = 0;
     } else if (sGuestX.held || sGuestX.press) {
-        sGuestX.held = sGuestX.press = 0;
+        /* (a press not yet played stays: guestXFrame plays it, then this letting go, a frame later) */
+        sGuestX.held = 0;
         sGuestX.up = 1;
     }
 }
@@ -1645,6 +1700,10 @@ static void guestXFrame(void) {
         sAbilityX = (unsigned)gp->retraceCount + 1u; /* (its text box, if it opens one: player 2's to read on) */
         printf("[coop] player 2's X (an online guest's action) goes to the partner's field move\n");
         fflush(stdout);
+        /* (a tap's letting go come with its press, in one frame's messages: still a press, held this frame, let
+           go the next. Let go before its press was ever played, the move never started: online_act_ability
+           under load, the guest's X pressed and let go two frames apart and both read in one host frame) */
+        return;
     } else if (sGuestX.held) {
         gp->button[0] |= PAD_BUTTON_X;
     }
@@ -1764,8 +1823,7 @@ static const char* abilityPose(const PartyEntry* party) {
 
 /* the guest's game: its own partner swapped here at once (the host's game does it for real: its word follows) */
 static void guestPartnerTo(int member) {
-    marioPartyKill();
-    marioPartyEntry((PartyId)member);
+    portPartySwapPartner(member);
     printf("[coop] this guest's partner is %d here at once (its swap, sent)\n", member);
     fflush(stdout);
 }
@@ -2125,6 +2183,15 @@ static void hopPose(PartyEntry* party) {
         walkPose(party, party->moveSpeed);
     } else {
         ownStayPose(party);
+        if (party->animName != NULL && party->currentMemberId < 20 && partyPoseTbl[party->currentMemberId][4] != NULL &&
+            partyPoseTbl[party->currentMemberId][1] != NULL &&
+            strcmp(party->animName, partyPoseTbl[party->currentMemberId][4]) == 0) {
+            /* (still the jump's pose: a companion, players 3 and 4's, runs no follow motions (runMode 0), and
+               ownStayPose, as the game's partyChgStayPose, leaves such a one's pose alone, so its hop's jump pose
+               stayed for good and the room never settled (mp_coop_meadows_reload, mp_coop_pm64_sewers3, since
+               player 3 joins late too). Its stand */
+            partyChgPoseId(party, 1);
+        }
     }
 }
 
@@ -2227,7 +2294,27 @@ int portCoopPartnerWalk(PartyEntry* party) {
         }
     }
     if (!help->free) {
+        /* following Mario as always (its player's stick idle): one left far from him on the same spot for a while,
+           held off by something it can't get round (player 3's Koops hopping in place at tik_01's railing for good,
+           the room never settled: mp_online_goons_leave3), is back at his side, as one stuck outside the picture
+           is. (One trailing him while he dashes moves all along: never this.) Online only: on one screen its player
+           sees it and walks it, and one left standing apart stays there (coop_camera_fit3) */
+        const float d = hypotf(party->position.x - mario->position.x, party->position.z - mario->position.z);
         help->jump = help->interact = 0;
+        if (d <= TUG_FOLLOW_NEAR || !portStateSyncOn() || !fieldControl() || sCoop.talkEvt >= 0 ||
+            hypotf(party->position.x - help->followX, party->position.z - help->followZ) > 16.0f) {
+            help->followX = party->position.x;
+            help->followZ = party->position.z;
+            help->followFrames = 0;
+        } else if (++help->followFrames > TUG_STUCK) {
+            printf("[coop] player %d's character: following, stuck at (%.1f, %.1f, %.1f), Mario at (%.1f, %.1f, %.1f)\n",
+                   h + 2, party->position.x, party->position.y, party->position.z, mario->position.x,
+                   mario->position.y, mario->position.z);
+            fflush(stdout);
+            help->followFrames = 0;
+            recall(help, party);
+            return 1;
+        }
         return 0;
     }
     roams = portCoopRoams(h + 1); /* an online guest's: the whole room */
@@ -2334,6 +2421,9 @@ int portCoopPartnerWalk(PartyEntry* party) {
             } else if (now < -8.0f) {
                 help->held = 0;
             }
+        } else {
+            /* an online guest's: never off the map's edge (an exit's road: the host's Mario takes the exits) */
+            portCoopHoldOnMap(party, was.x, was.y, was.z);
         }
     }
     hopPose(party);
@@ -2488,6 +2578,10 @@ NpcEntry* portCoopFieldTouch(NpcEntry* found, void* kind) {
 
 int portCoopTouchedBy(const NpcEntry* npc) {
     return npc != NULL && npc == sTouched;
+}
+
+void portCoopTouchForget(void) {
+    sTouched = NULL;
 }
 
 /* --- What the players see: the partner's tag, the join and leave notices --- */
@@ -2934,6 +3028,78 @@ int portCoopPadLostWait(void) {
  * after HOP_STUCK frames never ends by itself (the jump motion left with nothing that lands it: a motion step
  * the motion doesn't have, a move mode changed under it): the character goes back to Mario's side */
 #define HOP_STUCK 240
+
+/* a hop ended where it is: down on the floor under it (the highest floor from where it is to below where it
+   left), its air flags off, grounded, out of the jump motion */
+/* (in the air: down on the floor under it, searched from above both where it is and fromY down to 40 below
+   fromY. One that fell below the floor (through it, or off where there is none) is searched from above fromY
+   too, never only from where it fell to, and with no floor under it at all it lands by Mario, on his floor:
+   put back at fromY over nothing, it only fell again (mp t51h online_companion_entry3: a partner on tik_01
+   landed over a gap again and again, the room never settled)) */
+#if VERSION > VERSION_DEMO_JP
+static int groundUnder(PartyEntry* party, float fromY, float* outY) {
+    const float y0 = party->position.y;
+    const float top = (y0 > fromY ? y0 : fromY) + 40.0f;
+    const float range = top - fromY + 40.0f;
+    party->position.y = top;
+    if (_partySearchGround(party, range, range) != NULL) {
+        *outY = party->groundY;
+        party->position.y = y0;
+        return 1;
+    }
+    party->position.y = y0;
+    return 0;
+}
+#endif
+
+static int landFrom(PartyEntry* party, float fromY) {
+    float y = fromY;
+    if (!(party->flags & (PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING))) {
+        return 0;
+    }
+#if VERSION > VERSION_DEMO_JP
+    party->velY = 0.0f;
+    if (!groundUnder(party, fromY, &y)) {
+        const MarioWork* mario = marioGetPtr();
+        y = fromY;
+        if (mario != NULL) {
+            /* (no floor under it: by Mario, on the floor under him, else where he stands) */
+            const Vec at = party->position;
+            party->position.x = mario->position.x;
+            party->position.z = mario->position.z;
+            if (!groundUnder(party, mario->position.y, &y)) {
+                y = mario->position.y;
+            }
+            printf("[coop] a character in the air over no floor at (%.0f, %.0f, %.0f): landed by Mario\n", at.x, at.y,
+                   at.z);
+            fflush(stdout);
+        }
+    }
+#endif
+    party->position.y = y;
+    party->groundY = y;
+    party->flags &= ~(PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING | PARTY_FLAG_IS_STEPPING);
+    party->flags |= PARTY_FLAG_IS_GROUNDED;
+    party->velY = 0.0f;
+    party->accelY = 0.0f;
+    if (party->motionId == 2 || party->motionId == 3) {
+        partyChgMot(party, 0);
+    }
+    return 1;
+}
+
+static void hopLand(const Helper* help, PartyEntry* party) {
+    (void)landFrom(party, help->hopY);
+}
+
+int portCoopHelperLand(PartyEntry* party) {
+    const MarioWork* mario = marioGetPtr();
+    if (party == NULL || mario == NULL) {
+        return 0;
+    }
+    return landFrom(party, mario->position.y);
+}
+
 static void hopFrame(void) {
     int h;
     for (h = 0; h < HELPERS; h++) {
@@ -2944,6 +3110,12 @@ static void hopFrame(void) {
         }
         party = helperParty(h);
         if (party == NULL || !help->free) {
+            /* (not this game's to walk now: a battle took it, its guest's game walks it, the host holds it. A hop
+               given up here in the air stayed "jumping" for good where nothing else lands it: a seat's character
+               mid-jump over the floor after a shared battle, the room never settled (mp l51-008, l51-032)) */
+            if (party != NULL) {
+                hopLand(help, party);
+            }
             help->hopping = 0;
             continue;
         }
@@ -2951,25 +3123,7 @@ static void hopFrame(void) {
             /* the partner's field ability began mid-hop (X from either player: Koops' shell, Yoshi's ride,
                Vivian's shadow...): the hop ends here, on the ground. Its "jumping" left on would be the
                ability's: Yoshi ridden in the air flutters on the spot for good, and B never gets Mario off */
-            if (party->flags & (PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING)) {
-                /* (down on the floor under it: the highest floor from where it is to below where it left) */
-                float y = help->hopY;
-#if VERSION > VERSION_DEMO_JP
-                const float drop = party->position.y - help->hopY + 40.0f;
-                party->velY = 0.0f;
-                if (_partySearchGround(party, drop, drop) != NULL) {
-                    y = party->groundY;
-                }
-#endif
-                party->position.y = y;
-                party->flags &= ~(PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING | PARTY_FLAG_IS_STEPPING);
-                party->flags |= PARTY_FLAG_IS_GROUNDED;
-                party->velY = 0.0f;
-                party->accelY = 0.0f;
-                if (party->motionId == 2 || party->motionId == 3) {
-                    partyChgMot(party, 0);
-                }
-            }
+            hopLand(help, party);
             printf("[coop] player %d's character: hop ends, the partner's ability begins (motion %d)\n", h + 2,
                    party->motionId);
             fflush(stdout);
@@ -3261,10 +3415,19 @@ int portCoopWhere(int print) {
                  portCoopPlayers(), guest, watcher, partner != NULL ? (int)partner->currentMemberId : 0,
                  m != NULL ? m->position.x : 0.0f, m != NULL ? m->position.y : 0.0f, m != NULL ? m->position.z : 0.0f,
                  m != NULL ? (int)m->currMotionId : -1);
-    if (seq != SEQ_GAME) {
+    if (portOnlineJoinStepNow() > PORT_JOIN_NONE && portOnlineJoinStepNow() < PORT_JOIN_DONE) {
+        /* (a join's steps still running: a guest joined at the title is in the field of the idle demo, dmo_00, for
+           a frame before the host's room; "settled" there was taken for the end of the join: nm51f l51-051) */
+        MP_UNSETTLED("joining the room (step %d)", portOnlineJoinStepNow());
+    } else if (seq != SEQ_GAME) {
         MP_UNSETTLED("not in the field (sequence %d)", seq);
     } else if (inBattle) {
         MP_UNSETTLED("in a battle");
+    } else if (guest && ssBattleBusy()) {
+        /* (a co-op guest or a watcher out of the host's battle but not yet back in the host's field: running from it,
+           its Mario still where the battle left him, (0, 25, 0), until the field takes him to the host's place, or
+           held in the host's scene: nm51f l51-062's "442 units from where the host's game has him") */
+        MP_UNSETTLED("held in the host's battle or scene");
     } else if (menu) {
         MP_UNSETTLED("a player's menu is up");
     } else if (level != 0) {

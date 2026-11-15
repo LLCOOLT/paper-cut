@@ -1,0 +1,73 @@
+{
+ "desc": "the host's game crashes in a relay room (TTYD_SYNC_BACKGROUND_AT ...:crash: it ends at once, no word, no Leave) and is opened again (the harness's relaunch, TTYD_SYNC_RESUME=1 taking the Multiplayer page's Open your room again): it hosts the same room again, with the same code, session id and the relay's ticket for its place; the guest, waiting for it all along ('Waiting for <host> to come back...', never the old 10-second end), comes back to the same seat, takes the host's world again and plays on; the same progress at the end",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01"
+ },
+ "online": {
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "coins 150",
+     "wait 1500"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1,
+     "TTYD_SYNC_BACKGROUND_AT": "1500:0:crash"
+    },
+    "relaunch": {
+     "env": {
+      "TTYD_SYNC_HOST_ROOM": null,
+      "TTYD_SYNC_RESUME": 1,
+      "TTYD_EXIT_FRAMES": 4000
+     },
+     "input": [
+      "wait 600",
+      "give 149",
+      "coins 20",
+      "wait 3300"
+     ]
+    },
+    "log_must": [
+     "test: the game ends at once \\(a crash: no word, no Leave\\)",
+     "\\[testpass\\] host: the program ended",
+     "test: the Multiplayer page's Open your room again",
+     "net: resuming the session this game had when it closed \\(its session id and the relay's ticket\\)",
+     "resume: hosting again the room this game was in \\(player 1, seat 1\\): on",
+     "co-op: player 2 is back: seat 2 again"
+    ],
+    "log_must_not": [
+     "That room already has a host"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 7900"
+    ],
+    "env": {
+     "TTYD_EXIT_FRAMES": 8000
+    },
+    "log_must": [
+     "co-op: the host's game is gone: waiting 120 seconds for it",
+     "wait: Waiting for Test Host to come back\\.\\.\\.",
+     "co-op: the host's game is back after [0-9]+ ms: the wait is over",
+     "co-op: welcome back: seat 2"
+    ],
+    "log_must_not": [
+     "end: "
+    ]
+   }
+  ]
+ },
+ "timeout": 400
+}

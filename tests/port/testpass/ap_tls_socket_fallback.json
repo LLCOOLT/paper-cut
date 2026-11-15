@@ -1,0 +1,54 @@
+{
+ "desc": "Archipelago's connection as Linux and macOS make it (0.5.0 report: a Linux player got no connection to archipelago.gg at all, its rooms being wss://, which only Windows had): Mbed TLS's socket (TTYD_AP_SOCKET=mbedtls; the one every platform but Windows uses) and an address without ws:// or wss:// (as archipelago.gg:PORT is typed), to a local stand-in server (tools/port/ap_standin_server.py, plain ws://): wss:// is tried first and fails, ws:// connects, and the slot is joined. No TTYD AP mod (TTYD_NO_MODS, no TTYD_AP_NO_MOD): the log says plainly that nothing is sent or received without it, instead of a connection that looks fine",
+ "groups": [
+  "moderun"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "offscreen",
+ "new": true,
+ "user_gen": [
+  {
+   "script": "tests/port/ap_test_seed.py",
+   "args": [],
+   "dest": "test.apttyd"
+  },
+  {
+   "script": "tools/port/ap_standin_server.py",
+   "args": ["--spawn", "--port", "38297", "--slot", "Mario", "--seconds", "300", "--items", "77772162"],
+   "dest": "ap_server.jsonl"
+  }
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_PARTY": "1",
+  "TTYD_NO_MODS": "1",
+  "TTYD_AP_SEED": "{out}/user/test.apttyd",
+  "TTYD_AP_SERVER": "127.0.0.1:38297",
+  "TTYD_AP_SOCKET": "mbedtls",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": [
+  "wait 120",
+  "press_until_control a 3000",
+  "wait 1800",
+  "where",
+  "end"
+ ],
+ "log_must": [
+  "archipelago: connecting to 127.0.0.1:38297",
+  "archipelago: connected as Mario",
+  "archipelago: no enabled code mod looks like the TTYD AP mod \\(Mods tab\\): it gives the items and runs the checks, so nothing is sent or received without it",
+  "\\[input\\] end"
+ ],
+ "log_must_not": [
+  "archipelago: can't connect",
+  "archipelago: the server refused"
+ ],
+ "file_must": {
+  "user/ap_server.jsonl": ["\"cmd\": \"Connect\""]
+ },
+ "timeout": 400
+}

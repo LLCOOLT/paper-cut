@@ -1,0 +1,58 @@
+{
+ "desc": "Widescreen 21:9 (no scene limits), nothing still drawn at 4:3 (wide_check): the dark overlay (fadeTecOn), the light one (fadeSoftFocusOn, memories) and the 3D's white-out, Rogueport's plaza",
+ "groups": [
+  "widescreen",
+  "widefx"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "widescreen": 1,
+  "aspect_ratio": 4,
+  "aspect_scene_limits": 0
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 20000
+ },
+ "input": [
+  "wait 120",
+  "fade tec on",
+  "wait 10",
+  "shot tec_in",
+  "wait 60",
+  "shot tec_on",
+  "fade tec off",
+  "wait 90",
+  "shot tec_off",
+  "fade soft on",
+  "wait 10",
+  "shot soft_in",
+  "wait 60",
+  "shot soft_on",
+  "fade soft off",
+  "wait 90",
+  "shot soft_off",
+  "fade white on",
+  "wait 10",
+  "shot white_in",
+  "wait 60",
+  "shot white_on",
+  "fade white off",
+  "wait 90",
+  "shot white_off",
+  "end"
+ ],
+ "wide_check": {},
+ "timeout": 300,
+ "log_must": [
+  "^\\[input\\] end$"
+ ],
+ "expect_shots": [
+  "tec_on",
+  "soft_on",
+  "white_on"
+ ]
+}

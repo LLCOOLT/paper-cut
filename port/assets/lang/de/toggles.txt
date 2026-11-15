@@ -1,10 +1,10 @@
 # Level sync, fun toggles, chaos mode, room transitions and battery saver (port/settings/features/toggles.cpp), in Deutsch: an English line, then its translation, then a blank line.
 
-Level sync
-Level-Angleichung
+Enemies match your level
+Gegner auf deinem Level
 
-Enemies below Mario's level are brought up to it: more HP, harder hits, and Star Points as for an even fight. Post-game and New Game+: after the credits, or while Mario is well above the chapter's usual level.
-Gegner unter Marios Level werden auf sein Level gebracht: mehr KP, härtere Treffer und Sternenpunkte wie bei einem ebenbürtigen Kampf. Nach dem Spiel und New Game+: nach dem Abspann oder solange Mario weit über dem üblichen Level des Kapitels ist.
+Enemies weaker than Mario are raised to his level, so fights stay a challenge and pay full Star Points. Post-game and New Game+: only after the credits or when Mario is far ahead of the chapter.
+Gegner, die schwächer als Mario sind, werden auf sein Level gehoben: Kämpfe bleiben fordernd und bringen volle Sternenpunkte. Nach dem Spiel und New Game+: nur nach dem Abspann oder wenn Mario dem Kapitel weit voraus ist.
 
 Post-game and New Game+
 Nach dem Spiel und New Game+
@@ -45,8 +45,8 @@ Alle drehen sich im Kreis.
 Chaos mode
 Chaos-Modus
 
-Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online the same for everyone (the host's setting); not in replays.
-Alle 30 Sekunden passiert etwas: riesiger oder winziger Mario, vertauschte Steuerung, die Kamera auf dem Kopf, Münzregen, ein Bob-omb und im Kampf die Streiche des Publikums. Online für alle dasselbe (die Einstellung des Hosts); nicht in Aufzeichnungen.
+Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Online, the same for everyone (the host's setting).
+Alle 30 Sekunden passiert etwas: riesiger oder winziger Mario, vertauschte Steuerung, die Kamera auf dem Kopf, Münzregen, ein Bob-omb und im Kampf die Streiche des Publikums. Online für alle dasselbe (die Einstellung des Hosts).
 
 Chaos:
 Chaos:
@@ -111,14 +111,14 @@ Gefaltetes Papier
 Battery saver
 Akku sparen
 
-Draws 30 frames a second (the game still runs at 60), at half the internal resolution and without in-between frames. Online and in replays every frame is still drawn.
-Zeichnet 30 Bilder pro Sekunde (das Spiel läuft weiter mit 60), mit halber interner Auflösung und ohne Zwischenbilder. Online und in Aufzeichnungen wird weiter jedes Bild gezeichnet.
+Saves battery: 30 frames a second at half resolution, while the game keeps its full speed. Not while playing online.
+Spart Akku: 30 Bilder pro Sekunde in halber Auflösung, während das Spiel sein volles Tempo behält. Nicht beim Online-Spiel.
 
 On battery
 Im Akkubetrieb
 
-Keep game speed when the GPU falls behind
-Spieltempo halten, wenn die GPU nicht mitkommt
+Keep game speed when graphics lag
+Spieltempo halten, wenn die Grafik hängt
 
-When the graphics card can't draw every frame in time (ray-traced lighting at a high frame rate, say), the game still runs at its real speed and only the picture is less smooth. Off, the whole game slows down instead. Replays, ghost races and console-accurate mode always draw every frame.
-Wenn die Grafikkarte nicht jedes Bild rechtzeitig zeichnen kann (etwa mit Raytracing-Beleuchtung bei hoher Bildrate), läuft das Spiel trotzdem in seinem echten Tempo, nur das Bild ist weniger flüssig. Aus wird stattdessen das ganze Spiel langsamer. Aufzeichnungen, Geisterrennen und der konsolengetreue Modus zeichnen immer jedes Bild.
+When the graphics card can't keep up, the game keeps its real speed and only the picture gets less smooth. Off: the whole game slows down instead. Console-accurate mode always slows down.
+Kommt die Grafikkarte nicht mit, behält das Spiel sein echtes Tempo und nur das Bild wird weniger flüssig. Aus: Stattdessen wird das ganze Spiel langsamer. Der konsolengetreue Modus wird immer langsamer.

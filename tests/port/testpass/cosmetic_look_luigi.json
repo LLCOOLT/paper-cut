@@ -1,0 +1,62 @@
+{
+ "desc": "A Wardrobe look while playing as Luigi (TTYD_WARDROBE_ROW Looks, one press right: Original to Mario's colours) writes Luigi's own cap and overalls, not Mario's, and his textures are recoloured (TTYD_COSMETIC_DUMP: nothing else is coloured, so any dump is the look's); before, the settings page's looks wrote Mario's slots and nothing changed",
+ "groups": [
+  "cosmetics",
+  "play_as"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "settings": {
+  "playable_luigi": 1
+ },
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": "405",
+  "TTYD_WARDROBE_ROW": "Looks",
+  "TTYD_COSMETIC_DUMP": "{out}",
+  "TTYD_EXIT_FRAMES": 1500
+ },
+ "input": [
+  "press_until_control b 900",
+  "wait 60",
+  "press start",
+  "wait 60",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press right",
+  "wait 20",
+  "press a",
+  "wait 50",
+  "press right",
+  "wait 60",
+  "shot wardrobe",
+  "press b",
+  "wait 10",
+  "press b",
+  "wait 10",
+  "press b",
+  "wait 60",
+  "shot field",
+  "end"
+ ],
+ "expect_shots": [
+  "wardrobe",
+  "field"
+ ],
+ "log_must": [
+  "\\[cosmetics\\] look Mario: Luigi's cap and shirt Red, Luigi's overalls Blue",
+  "\\[cosmetics\\] dump "
+ ],
+ "log_must_not": [
+  "\\[cosmetics\\] look [^:]*: Mario's"
+ ],
+ "timeout": 240
+}

@@ -1,0 +1,55 @@
+{
+ "desc": "a slow link (every message 300-400 ms late, through the relay): each game measures the other as poor within a few seconds (the slowest tenth of the last 10 seconds' round trips), says so once after 10 seconds poor (the guest: The connection to the host is unstable.; the host: the player by name), and never flickers back",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 2400
+ },
+ "online": {
+  "pace": 60,
+  "faults": "delay:300-400",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 2300"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "quality: player 2 \\w+ -> poor \\(p90 [3-9]\\d\\d ms",
+     "quality: notice: player 2's connection is unstable"
+    ],
+    "log_must_not": [
+     "quality: player 2 poor -> (good|fair)"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 2300"
+    ],
+    "log_must": [
+     "quality: player 1 \\w+ -> poor \\(p90 [3-9]\\d\\d ms",
+     "quality: notice: player 1's connection is unstable",
+     "\\[coop\\] The connection to the host is unstable\\."
+    ],
+    "log_must_not": [
+     "quality: player 1 poor -> (good|fair)"
+    ]
+   }
+  ],
+  "link": "relay",
+  "check": {
+   "progress": false
+  }
+ },
+ "timeout": 300
+}

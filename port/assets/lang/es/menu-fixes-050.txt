@@ -24,8 +24,8 @@ El archivo ya no se puede leer: se movió o se borró, o Android le quitó el ac
 The file isn't there any more.
 El archivo ya no está ahí.
 
-The game's text.
-El texto del juego.
+The language of the game's own text.
+El idioma del texto del juego.
 
 This is %s, and its build (ttyd-%s) isn't beside this one.
 Es %s, y su versión (ttyd-%s) no está junto a esta.
@@ -243,8 +243,8 @@ No en un archivo hardcore
 On screen and a tap
 En pantalla y un toque
 
-On-screen stick: past a small tilt, always a full one.
-Stick en pantalla: pasada una pequeña inclinación, siempre a tope.
+A small push of the on-screen stick is enough to run.
+Un pequeño empujón del stick en pantalla basta para correr.
 
 One hit
 Un golpe
@@ -357,8 +357,8 @@ Prueba: un espectador llamado test envía cada comando por turnos.
 That slot is empty
 Esa ranura está vacía
 
-The on-screen stick stays in its place.
-El stick en pantalla se queda en su sitio.
+The on-screen stick stays in one place instead of appearing under your thumb.
+El stick en pantalla se queda en un sitio en lugar de aparecer bajo tu pulgar.
 
 This is %s. This app plays %s; the app for that version plays this disc.
 Es %s. Esta app ejecuta %s; la app de esa versión ejecuta este disco.

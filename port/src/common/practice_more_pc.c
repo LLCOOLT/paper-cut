@@ -20,6 +20,7 @@
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "version.h"
+#include "port/special_places.h"
 
 /* --- #13: a badge given and worn --- */
 
@@ -273,6 +274,7 @@ void portRoomWarpFrame(void) {
     }
     sWarping = 0;
     portPracticeTaint();
+    portSpecialLeaving(); /* (from a special place: this warp, not the way back) */
     printf("[practice] warp: %s %s\n", sWarpMap, sWarpEntrance[0] != '\0' ? sWarpEntrance : "(safe spawn)");
     fflush(stdout);
     seqSetSeq(SEQ_MAP_CHANGE, sWarpMap, sWarpEntrance[0] != '\0' ? sWarpEntrance : NULL);

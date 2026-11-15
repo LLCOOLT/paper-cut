@@ -1,0 +1,53 @@
+{
+ "desc": "The relay's diet, two players in different rooms at real speed: neither draws the other, so each game's places go twice a second; a change of state (the guest into a battle of its own) still reaches the host at once. At most 300 messages a minute of play each (0.5.0: 1,200). The host plays in Rogueport (gor_01): in hei_01 its story-11 scene pulled the guest in, and the guest's battle was shared",
+ "groups": [
+  "online",
+  "relaydiet"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_GOD": 1,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_MAP": "hei_03",
+  "TTYD_STORY": 11,
+  "TTYD_EXIT_FRAMES": 7200
+ },
+ "online": {
+  "pace": 60,
+  "link": "relay",
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here 6000",
+     "wait_peer battle 4000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1,
+     "TTYD_MAP": "gor_01"
+    }
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 1500",
+     "give 148",
+     "battle 4",
+     "wait 4500"
+    ]
+   }
+  ],
+  "check": {
+   "relay_per_min": 300
+  }
+ },
+ "log_must_not": [
+  "\\| sent \\d+ got \\d+ resent [1-9]"
+ ],
+ "timeout": 360
+}

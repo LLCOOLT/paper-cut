@@ -23,3 +23,9 @@ Jeu à plusieurs : l'hôte voyage, et tout le monde le suit.
 
 This is the host's adventure: load your own file to save.
 C'est l'aventure de l'hôte : charge ta propre partie pour sauvegarder.
+
+Joining %s's game...
+Connexion à la partie de %s...
+
+%s went to another room: close the menu to follow.
+%s est allé dans une autre pièce : ferme le menu pour suivre.

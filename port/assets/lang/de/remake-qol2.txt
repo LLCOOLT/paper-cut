@@ -51,8 +51,8 @@ Neue Post ist ein Hinweis in der Ecke und ein Klang: Mario geht weiter. Die erst
 In shops, how many of the item you hold and your shop points under its name; selling, storing and taking out go straight back to the list; selling from storage too; a storage box at the Howz of Badges; a notice when the Rogueport shop has new stock.
 In Läden stehen unter dem Namen, wie viele du davon hast, und deine Ladenpunkte; Verkaufen, Einlagern und Herausnehmen führen direkt zur Liste zurück; auch aus dem Lager verkaufen; eine Lagerkiste im Orden-Haus; ein Hinweis, wenn der Laden in Rogueport Neues hat.
 
-The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks, and near someone Goombella has not Tattled yet.
-Das »!« über Mario erscheint an jeder Stelle, an der der A-Knopf etwas tut, nicht nur an den markierten, und bei jemandem, den Gumbrina noch nicht analysiert hat.
+The "!" over Mario shows at every spot the A button acts on, not only the ones the game marks.
+Das »!« über Mario erscheint an jeder Stelle, an der der A-Knopf etwas tut, nicht nur an den markierten.
 
 The file screen shows each file's partner and the date it was saved, a colour per file, and a gold star on a finished story.
 Der Spielstand-Bildschirm zeigt bei jedem Spielstand den Partner und das Speicherdatum, eine Farbe pro Spielstand und einen goldenen Stern bei beendeter Geschichte.
@@ -60,8 +60,8 @@ Der Spielstand-Bildschirm zeigt bei jedem Spielstand den Partner und das Speiche
 In the Start menu's items and badges, Left and Right turn the page (past the edge of the items' two columns).
 Bei Items und Orden im Startmenü blättern Links und Rechts die Seite um (über den Rand der zwei Item-Spalten hinaus).
 
-In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins).
-In Bowsers Seitenscroll-Abschnitten spielt Y im Pausenbildschirm den Abschnitt von vorn (ein Speicherzustand von seinem Beginn).
+In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its start (a save state taken as it begins). From the next stage.
+In Bowsers Seitenscroll-Abschnitten spielt Y im Pausenbildschirm den Abschnitt von vorn (ein Speicherzustand von seinem Beginn). Ab dem nächsten Abschnitt.
 
 Which tracks the Jukebox lists: those heard on this file; also a share of the list for each Shine Sprite found (all with the last); or every track.
 Welche Stücke die Jukebox zeigt: die in diesem Spielstand gehörten; zusätzlich ein Teil der Liste pro gefundenem Glanzstern (alle mit dem letzten); oder alle Stücke.
@@ -69,8 +69,8 @@ Welche Stücke die Jukebox zeigt: die in diesem Spielstand gehörten; zusätzlic
 The Journal sells a hint for 10 coins: where a Star Piece or Shine Sprite is still hidden, in this area first.
 Das Tagebuch verkauft einen Tipp für 10 Münzen: wo noch ein Sternenstück oder Glanzstern versteckt ist, zuerst in diesem Gebiet.
 
-Glitz Pit and chapter 6 pace trims
-Kürzere Wege in der Glitz-Arena und in Kapitel 6
+Shorter Glitz Pit and train trips
+Kürzere Wege: Glitz-Arena und Zug
 
 After your first Glitz Pit match, no guard walks you to the ring: straight there. Every Excess Express trip after chapter 6 goes straight to the other station. Not online.
 Nach deinem ersten Kampf in der Glitz-Arena führt dich kein Wächter mehr zum Ring: direkt dorthin. Jede Fahrt mit dem Luxus-Express nach Kapitel 6 geht direkt zum anderen Bahnhof. Nicht online.

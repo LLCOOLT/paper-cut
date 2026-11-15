@@ -1,0 +1,53 @@
+{
+ "desc": "The memory guard as an iPhone 17 Pro (11722 MB, $TTYD_MEM_GUARD_RAM) with Supersampling 4x chosen: the top tier holds 3x, and the note says exactly that, \"Supersampling 3x on this device (4x chosen)\" (it once said only \"Graphics lightened for this device's memory, this session only\", every start). Settings > Graphics: Supersampling shows 3x, its list has 4x greyed out as not on this device, with a short note under it; settings.txt keeps 4x",
+ "groups": [
+  "bugs",
+  "gfx",
+  "memory",
+  "menus"
+ ],
+ "versions": [
+  "us"
+ ],
+ "new": true,
+ "ui_shots": true,
+ "env": {
+  "TTYD_MEM_GUARD": 1,
+  "TTYD_MEM_GUARD_RAM": 11722,
+  "TTYD_MEM_GUARD_ROOM": 2000,
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_SETTINGS_OPEN": 1,
+  "TTYD_SETTINGS_SEARCH": "Supersampling",
+  "TTYD_SETTINGS_COMBO_OPEN": "Supersampling",
+  "TTYD_SETTINGS_SAVE_AT_END": 1,
+  "TTYD_EXIT_FRAMES": 3000
+ },
+ "settings": {
+  "supersample": 3
+ },
+ "input": [
+  "wait 400",
+  "shot greyed_choice",
+  "end"
+ ],
+ "expect_shots": [
+  "greyed_choice"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[memory\\] a device with 11722 MB: for this run supersampling 3x \\(from 4x\\)$",
+  "^\\[memory\\] note shown: Supersampling 3x on this device \\(4x chosen\\)$",
+  "^\\[settings\\] Supersampling: 4x greyed, not on this device$"
+ ],
+ "log_must_not": [
+  "Graphics lightened",
+  "^\\[settings\\] Supersampling: (Off|2x|3x) greyed"
+ ],
+ "file_must": {
+  "user/settings.txt": [
+   "(?m)^supersample=3$"
+  ]
+ }
+}

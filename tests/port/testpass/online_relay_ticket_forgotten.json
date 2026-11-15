@@ -1,0 +1,79 @@
+{
+ "desc": "three players in a relay room; the relay no longer knows the guest's ticket (--forget) just as the guest's connection goes quiet and lingers there (--quiet guest:12:16; player 3 keeps the host's connection busy, so the host stays): the guest's try with its ticket is turned away as a new game's (the room is full), so it drops the ticket and joins afresh, as the guest it was (never as player 3 or 4), asking again until the old connection is gone, and all three play on (0.5.0 asked for player 3 or 4's place instead)",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 7200
+ },
+ "online": {
+  "pace": 100,
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait_peer here2 3000",
+     "give 148",
+     "coins 150",
+     "flag 1000",
+     "wait 2400",
+     "wait_peer here2 4000",
+     "give 149",
+     "flag 1001",
+     "wait 600"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: session resumed with player 2"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait_peer here2 3000",
+     "wait 2400",
+     "wait_peer here2 4000",
+     "wait 700"
+    ],
+    "log_must": [
+     "net: connection lost \\(quiet\\)",
+     "net: the relay didn't take this game's ticket \\(.*\\): joining afresh",
+     "net: session resumed with player 1"
+    ],
+    "log_must_not": [
+     "asks for player 3 or 4's place"
+    ]
+   },
+   {
+    "role": "guest2",
+    "input": [
+     "wait_peer here2 3000",
+     "wait 2400",
+     "wait_peer here2 4000",
+     "wait 700"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 300
+    }
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--quiet",
+   "guest:12:16",
+   "--forget",
+   "guest:12:20"
+  ]
+ },
+ "log_must_not": [
+  "Can't reach the online service"
+ ],
+ "timeout": 300
+}

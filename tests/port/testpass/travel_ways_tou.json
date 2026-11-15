@@ -1,0 +1,34 @@
+{
+ "desc": "GitHub #61's class: every way into every Glitzville room by fast travel after chapter 3 (the Glitz Pit's lobby tou_02 and Grubba's office way tou_05 n_bero were missing from the area tables, and the arena tou_03, built in rel tou2, wasn't on the map at all); every trip must land with Mario in control",
+ "groups": [
+  "travel",
+  "travel_sweep"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MAP": "tou_01",
+  "TTYD_STORY": "175",
+  "TTYD_AUTO_TEXT": "1",
+  "TTYD_TRAVEL_SWEEP": "ways",
+  "TTYD_TRAVEL_SWEEP_AREA": "tou",
+  "TTYD_EXIT_FRAMES": 200000,
+  "TTYD_AUTO_BATTLE": "1"
+ },
+ "settings": {
+  "fast_travel": 1
+ },
+ "log_must": [
+  "\\[travel\\] sweep from tou_01",
+  "\\[travel\\] sweep tou_02 s_bero: ok",
+  "\\[travel\\] sweep done"
+ ],
+ "log_must_not": [
+  "STUCK",
+  "STRANDED",
+  "FAILED",
+  "NO WAY IN"
+ ],
+ "timeout": 900
+}

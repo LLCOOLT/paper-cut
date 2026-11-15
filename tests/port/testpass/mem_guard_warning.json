@@ -1,0 +1,41 @@
+{
+ "desc": "The memory guard as an 8 GB phone: a memory warning (as iOS's or Android's, $TTYD_MEM_GUARD_WARN_AT) with 3x supersampling and 4x texture upscaling steps the run down once: supersampling off, texture upscaling 2x, the textures let go, a short notice; the harbour plays on",
+ "groups": [
+  "bugs",
+  "gfx",
+  "memory"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_MEM_GUARD": 1,
+  "TTYD_MEM_GUARD_ROOM": 4000,
+  "TTYD_MAP": "gor_00",
+  "TTYD_STORY": 2,
+  "TTYD_PARTY": 0,
+  "TTYD_MEM_GUARD_RAM": 8192,
+  "TTYD_MEM_GUARD_WARN_AT": 200
+ },
+ "settings": {
+  "texture_upscale": 2,
+  "supersample": 2
+ },
+ "input": [
+  "press_until_control a 3000",
+  "where",
+  "end"
+ ],
+ "timeout": 300,
+ "log_must": [
+  "^\\[memory\\] a device with 8192 MB: the graphics as chosen",
+  "^\\[memory\\] test: a memory warning at frame 200",
+  "^\\[memory\\] the system's memory warning \\(\\d+ MB in use, 4000 MB left\\): step 1, for this run: supersampling off, texture upscaling 2x, the textures let go",
+  "^\\[memory\\] note shown: Memory running low: lighter graphics for this session",
+  "where: map 'gor_00'"
+ ],
+ "log_must_not": [
+  "^\\[memory\\] .*step 2"
+ ],
+ "new": true
+}

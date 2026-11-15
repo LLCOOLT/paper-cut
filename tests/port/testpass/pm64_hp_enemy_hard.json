@@ -1,0 +1,49 @@
+{
+ "desc": "A Paper Mario 64 enemy's HP under the difficulty, Hard (150%): the Enemy maker's PM64 Goomba at 250% HP (enemies_pm64_hp: 2 x 2.5 = 5) in Petal Meadows gets those 5 HP in place of the TTYD Goomba's scaled 2, then the difficulty on top: 8",
+ "groups": [
+  "pm64",
+  "pm64_hp"
+ ],
+ "versions": [
+  "us"
+ ],
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "hei_01,w_bero",
+  "TTYD_STORY": "25",
+  "TTYD_EXIT_FRAMES": 900,
+  "TTYD_GOD": 1
+ },
+ "settings": {
+  "enemy_variants": 1,
+  "pm64_enemies": 0,
+  "pm64_story_enemies": 0,
+  "difficulty": 2
+ },
+ "input": [
+  "wait 160",
+  "battle",
+  "wait 300",
+  "shot battle",
+  "end"
+ ],
+ "expect_shots": [
+  "battle"
+ ],
+ "log_must": [
+  "\\[pm64\\] TTYD_PM64_ROM: linked US",
+  "\\[enemy_variant\\] PM64 enemy for kind 1: PM64's HP 5 \\(host's 2\\)",
+  "\\[gameplus\\] difficulty: enemy HP 5 -> 8(?![0-9])",
+  "\\[enemy_variant\\] PM64 enemy unit [0-9]+ \\(kind 1\\): HP 8 of 8(?![0-9])"
+ ],
+ "log_must_not": [
+  "OSPanic",
+  "\\bassert"
+ ],
+ "timeout": 180,
+ "user_files": [
+  "tests/port/testpass/modes/enemies_pm64_hp/enemies.txt"
+ ],
+ "new": true
+}

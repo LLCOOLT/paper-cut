@@ -1,5 +1,5 @@
 {
- "desc": "playing together, the host's game closes without a word: after 10 seconds the guest is told '<host> left the room. Your copy of the adventure is kept.' (never a silent time-out); TTYD_SYNC_END_PICK=own: back to the guest's own file when it has one, else the title",
+ "desc": "playing together, the host's game closes without a word: the guest waits for it ('Waiting for <host> to come back...' after 3 s, the wait cut to 10 s here by TTYD_SYNC_HOST_GRACE; 2 minutes for players), then is told '<host> left the room. Your copy of the adventure is kept.' (never a silent time-out); TTYD_SYNC_END_PICK=own: back to the guest's own file when it has one, else the title",
  "groups": [
   "online"
  ],
@@ -29,10 +29,12 @@
     ],
     "env": {
      "TTYD_EXIT_FRAMES": 6500,
-     "TTYD_SYNC_END_PICK": "own"
+     "TTYD_SYNC_END_PICK": "own",
+     "TTYD_SYNC_HOST_GRACE": 10
     },
     "log_must": [
      "co-op: the host's game is gone: waiting 10 seconds for it",
+     "wait: Waiting for Test Host to come back\\.\\.\\.",
      "end: Test Host left the room\\. Your copy of the adventure is kept\\.",
      "end: chose "
     ]

@@ -1,0 +1,69 @@
+{
+ "desc": "Paper Mario 64 bosses in the story are optional fights, so Run Away works in them as in any ordinary battle (it was greyed out: the stage's entry, Lord Crump's, carried NPC_BATTLE_NO_ESCAPE). Mario with 50 coins walks into Jr. Troopa in the plaza, the auto battler runs away (the game's own gauge), he drops coins, he is back in the plaza with Jr. Troopa still standing there, not beaten; walking away and into him again is a second meeting and a second fight",
+ "env": {
+  "TTYD_PM64_ROM": "{pm64rom}",
+  "TTYD_PM64_LOG": 1,
+  "TTYD_MAP": "gor_01",
+  "TTYD_STORY": 405,
+  "TTYD_PARTY": "1",
+  "TTYD_AUTO_BATTLE": 1,
+  "TTYD_AUTO_BATTLE_RUN": 1,
+  "TTYD_AUTO_BATTLE_TURNS": 200,
+  "TTYD_AUTO_TEXT": 1,
+  "TTYD_AUTO_TEXT_DELAY": 120,
+  "TTYD_EXIT_FRAMES": 30000
+ },
+ "settings": {
+  "pm64_partners": 1,
+  "pm64_join": 1,
+  "pm64_bosses": 1
+ },
+ "input": [
+  "wait 240",
+  "coins 50",
+  "goto -300 0 450",
+  "wait 30",
+  "hold down 4",
+  "wait 30",
+  "where",
+  "goto -480 0 352",
+  "wait_seq 4 1200",
+  "wait_seq 2 20000",
+  "wait 75",
+  "where",
+  "where items",
+  "wait 600",
+  "where npcs",
+  "goto -300 0 450",
+  "wait 30",
+  "hold down 4",
+  "wait 120",
+  "goto -480 0 352",
+  "wait_seq 4 1200",
+  "wait_seq 2 20000",
+  "wait 600",
+  "where npcs",
+  "end"
+ ],
+ "log_must": [
+  "\\[pm64\\] story boss: Jr\\. Troopa met \\(bump\\) in gor_01: an ordinary battle on its NPC",
+  "\\[story\\] battle \\(story 405, map 'gor_01'\\): running away \\(TTYD_AUTO_BATTLE_RUN\\)",
+  "\\[pm64\\] story boss: Jr\\. Troopa left \\(battle result 4\\)",
+  "where: map 'gor_01'.* coins 50,[\\s\\S]*Jr\\. Troopa left \\(battle result 4\\)[\\s\\S]*where: map 'gor_01'.* coins ([0-9]|[1-4][0-9]),",
+  "Jr\\. Troopa left \\(battle result 4\\)[\\s\\S]*story boss: Jr\\. Troopa met \\(bump\\)"
+ ],
+ "log_must_not": [
+  "\\[pm64\\] story boss: Jr\\. Troopa won",
+  "\\[pm64\\] boss 0 beaten",
+  "\\[modes\\] refight",
+  "\\[story\\] STUCK"
+ ],
+ "timeout": 2400,
+ "groups": [
+  "pm64",
+  "pm64_story"
+ ],
+ "versions": [
+  "us"
+ ]
+}

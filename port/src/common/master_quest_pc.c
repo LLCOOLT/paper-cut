@@ -793,7 +793,7 @@ static const PortMqSet* curated(void) {
         char err[200];
         sCuratedState = portMasterQuestParse(kCurated, &sCurated, err, sizeof(err)) ? 1 : -1;
         if (sCuratedState < 0) {
-            fprintf(stderr, "[master quest] the curated set: %s\n", err);
+            fprintf(stdout, "[master quest] the curated set: %s\n", err);
         }
     }
     return sCuratedState > 0 ? &sCurated : NULL;
@@ -862,7 +862,7 @@ const PortMqSet* portMasterQuestActive(void) {
         sCustomSeen = version;
         sCustomGood = f.found;
         if (!f.found) {
-            fprintf(stderr, "[master quest] set %06X isn't in master_quest_sets.txt: the curated set\n", f.hash);
+            fprintf(stdout, "[master quest] set %06X isn't in master_quest_sets.txt: the curated set\n", f.hash);
         }
     }
     return sCustomGood ? &sCustom : curated();

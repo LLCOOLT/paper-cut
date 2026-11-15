@@ -71,6 +71,9 @@ void portBrothersFbatHitPost(struct NpcEntry** r, uint32_t flags, void* result);
 /* seq_load.c, a file started or loaded (after its party is cleared): Luigi
  * comes in again with the next field frame, his HP and FP full. */
 void portBrothersReset(void);
+/* warp_pc.c, Continue of a quick resume save: Luigi's HP and FP as the snapshot had them (its sidecar's
+ * "luigi=" line), taken by the next portBrothersReset of that file slot instead of full */
+void portBrothersResumeStats(int slot, int hp, int fp);
 
 /* --- battle --- */
 
@@ -83,6 +86,18 @@ int portBrothersLuigiActs(void);
 /* Luigi's HP and FP between battles (max: Mario's) */
 void portBrothersGetStats(int* hp, int* fp);
 void portBrothersSetStats(int hp, int fp);
+/* The field's heals are his too (docs/BROTHERS.md). A rest or a heal that fills Mario (a Heart Block, an
+ * inn's or a bed's rest, Chet Rippo's, evt_pouch_mario_recovery): Luigi full too, whether or not Mario was
+ * (why: for the log). */
+void portBrothersHealFull(const char* why);
+/* pouchSetHP / pouchSetFP between battles: what Mario was given (the number asked for over what he had, before
+ * his maximum cut it: an item on a Mario who is full still heals Luigi), Luigi gets too. */
+void portBrothersHealMario(int hp, int fp);
+/* battle_seq_end.c, a level-up's: Luigi's unit's maximums the new ones and full, as Mario's */
+void portBrothersLevelUp(void);
+/* statuswindow.c, the battle HUD's "Mario": Mario's own unit, also while Luigi acts (the game's Mario is his
+ * then; his numbers have their own HUD, brothers_aurora.c); wp a BattleWork*, mario what the game named */
+void* portBrothersHudMario(void* wp, void* mario);
 
 /* second_player_pc.c's makeKey hook, while the mode is on: the second
  * controller read as the first for Luigi's turn in battle. 1 while Luigi

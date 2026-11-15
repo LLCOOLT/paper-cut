@@ -177,8 +177,8 @@ struct Register {
   Register() {
     portPracticeDeclare();
     portSettingsAddToggle(kTab, "Achievements",
-                          "Earned from what each save file has done (its flags), kept beside the memory cards "
-                          "(not in the save), with a small notice when one is earned.",
+                          "Earn achievements for what each save file has done, with a small notice for each. Kept "
+                          "beside your saves, not in them.",
                           0, "achievements", "achievements trophies progress completion");
     portSettingsAddSection(kTab, "This file", nullptr, PORT_SETTING_IN_GAME, list,
                            "achievements list progress star pieces recipes badges tattle pit battle multiplayer "

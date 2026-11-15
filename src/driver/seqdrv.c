@@ -13,6 +13,7 @@
 #endif
 #ifdef TARGET_PC
 #include "port/open_world.h"
+#include "port/special_places.h"
 #endif
 extern SequenceCallback seq_data[8][3];
 
@@ -69,6 +70,9 @@ void PORT_HOOKABLE(seqSetSeq)(SequenceType seq, const char* map, const char* ber
     if (seq == SEQ_MAP_CHANGE) {
         portOpenGate(&map, &bero); /* the open world's chapter gates (port/include/port/open_world.h) */
         portInterludeMapChange(&map, &bero); /* Skip the interludes on a replay (port/include/port/qol.h) */
+        portSpecialMapChange(&map, &bero); /* a special place's visit: its way out back (port/special_places.h) */
+    } else {
+        portSpecialSeq((int)seq);
     }
 #endif
     next_seq = seq;

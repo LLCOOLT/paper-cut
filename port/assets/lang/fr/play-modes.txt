@@ -48,8 +48,8 @@ Pas pendant qu'un autre mode est en cours.
 Remix: enemies
 Remix : ennemis
 
-The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
-Le combat de chaque ennemi sur le terrain est tiré parmi tous les combats de sa zone (sauf les boss), le même pour une salle et une graine. À partir de la salle suivante.
+Each field enemy leads to a random fight from its area (never a boss), the same every time for a room and seed. From the next room.
+Chaque ennemi sur le terrain mène à un combat au hasard de sa zone (jamais un boss), toujours le même pour une salle et une graine. À partir de la salle suivante.
 
 Remix: badge draft
 Remix : choix de badge
@@ -60,8 +60,8 @@ Each chapter's title card offers three badges: pick one.
 Remix seed
 Graine du remix
 
-Same seed, same remix: share it with a challenge code.
-Même graine, même remix : partagez-la (code de défi).
+Same seed, same remix: share it with a challenge code. From the next room.
+Même graine, même remix : partagez-la (code de défi). À partir de la salle suivante.
 
 Hardcore
 Hardcore

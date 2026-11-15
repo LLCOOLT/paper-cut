@@ -16,6 +16,7 @@
 #include "port/pm64_enemy.h"
 #include "port/pm64_foes.h"
 #include "port/pm64_media.h"
+#include "port/pm64_spin.h"
 #include "port/costume.h"
 #include "port/enemy_variant.h"
 #include "port/statesync.h"
@@ -189,6 +190,68 @@ int portPm64EnemySeen(int i) {
     return i >= 0 && i < ENEMIES && sSeen[i];
 }
 
+/* --- the PM64 bosses tattled (each its own Tattle Log entry: pm64_bosses_aurora.c), by key, in
+   <user>/pm64_boss_tattles.txt (a line each) --- */
+#define BOSS_KEYS 96
+static char sBossKey[BOSS_KEYS][48];
+static int sBossKeys = -1;
+
+static void bossKeysPath(char* out, size_t size) {
+    snprintf(out, size, "%s/pm64_boss_tattles.txt", portSettingsUserPath());
+}
+
+static void bossKeysRead(void) {
+    char path[1024], line[64];
+    FILE* f;
+    if (sBossKeys >= 0) {
+        return;
+    }
+    sBossKeys = 0;
+    bossKeysPath(path, sizeof(path));
+    if ((f = portFopen(path, "r")) == NULL) {
+        return;
+    }
+    while (sBossKeys < BOSS_KEYS && fgets(line, sizeof(line), f) != NULL) {
+        size_t n = strcspn(line, "\r\n");
+        line[n] = '\0';
+        if (n > 0 && line[0] != '#') {
+            snprintf(sBossKey[sBossKeys++], sizeof(sBossKey[0]), "%s", line);
+        }
+    }
+    fclose(f);
+}
+
+int portPm64BossTattledKey(const char* key) {
+    int i;
+    bossKeysRead();
+    for (i = 0; key != NULL && i < sBossKeys; i++) {
+        if (strcmp(sBossKey[i], key) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int portPm64BossTattleMarkKey(const char* key) {
+    char path[1024];
+    FILE* f;
+    int i;
+    if (key == NULL || key[0] == '\0' || portPm64BossTattledKey(key) || sBossKeys >= BOSS_KEYS) {
+        return 0;
+    }
+    snprintf(sBossKey[sBossKeys++], sizeof(sBossKey[0]), "%s", key);
+    bossKeysPath(path, sizeof(path));
+    if ((f = portFileWriteOpen(path, "w")) == NULL) {
+        return 1;
+    }
+    fprintf(f, "# Paper Mario 64 bosses tattled (each one's own Tattle Log entry)\n");
+    for (i = 0; i < sBossKeys; i++) {
+        fprintf(f, "%s\n", sBossKey[i]);
+    }
+    portFileWriteClose(f, path);
+    return 1;
+}
+
 int portPm64EnemyHp(int pm64) {
     if (pm64 < 1 || pm64 > ENEMIES || portPm64Linked() == PM64_NONE) {
         return -1;
@@ -335,119 +398,388 @@ static int enemyOfPose(int poseId, int* main, const BattleUnit** unitOut) {
     return -1;
 }
 
-/* More of each sprite's animations, by the NPC sprite archive index (-1: none, the nearest kept): run,
- * jump, hit while burning, burnt, dizzy, asleep, attacking, in its shell, flipped over. By the animations'
- * names in the PM64 decomp's sprite list (tools/splat_ext/npc_sprite_names.yaml: Run, Midair, BurnHurt,
- * BurnStill, Dizzy, Sleep, the attack's own (Dive, ShellSpin, Leech, Tackle, ThrowBone, CastSpell, Throw ...),
- * ShellStill, ToppleStruggle). */
-enum { ROW_RUN, ROW_JUMP, ROW_BURN_HIT, ROW_BURNT, ROW_DIZZY, ROW_SLEEP, ROW_ATTACK, ROW_SHELL, ROW_FLIPPED, ROWS };
+/* Every battle state of a PM64 enemy and the animation it plays in each, by the NPC sprite archive index; idle,
+ * walk and hurt are kEnemies' own. Animation numbers as the PM64 decomp's sprite list names them
+ * (tools/splat_ext/npc_sprite_names.yaml), each state's pick as PM64's own actors play it
+ * (src/battle/common/actor/<name>.inc.c: the status anims tables, STATUS_KEY_STOP and PARALYZE on Still, SLEEP,
+ * DIZZY, the BurnHurt and BurnStill pair, the FlippedAnims or ToppledAnims tables). A sprite with no frames lying
+ * on its back has UP in the flipped states: deliberately its upright row (one whose host never flips, or flips
+ * only once grounded as another enemy: kGrounded). tools/port/pm64_enemy_anims.py check fails on a state with no
+ * row (CI), and on a host that flips with only UP there. */
+enum {
+    ST_IDLE, /* (kEnemies) */
+    ST_WALK, /* (kEnemies) */
+    ST_HURT, /* (kEnemies) */
+    ST_RUN,
+    ST_JUMP,
+    ST_ATTACK,
+    ST_TALK,
+    ST_SLEEP,
+    ST_STILL, /* Stop, frozen */
+    ST_DIZZY, /* dizzy, confused */
+    ST_BURNT,
+    ST_BURN_HURT, /* a fire or explosion hit, or any hit while burning */
+    ST_DEAD,
+    ST_FLIP, /* on its back */
+    ST_FLIP_HURT,
+    ST_FLIP_SLEEP,
+    ST_FLIP_STILL,
+    ST_FLIP_DIZZY,
+    ST_FLIP_STRUGGLE, /* on its back, trying to get up (the turns it lies there) */
+    ST_COUNT
+};
+#define ROW_FIRST ST_RUN
+#define ROWS (ST_COUNT - ROW_FIRST)
+#define UP (-2) /* (the upright state's row: no frames on its back) */
 static const struct {
     short sprite;
+    /* run, jump, attack, talk, sleep, still, dizzy, burnt, burn hurt, dead,
+       flipped: idle, hurt, sleep, still, dizzy, struggle */
     signed char row[ROWS];
 } kRows[] = {
-    {37, {3, 4, 9, 10, 7, 8, 4, -1, -1}},       /* Goomba (and Hyper Goomba, Gloomba) */
-    {38, {3, 4, -1, -1, 9, 10, 4, -1, -1}},     /* Spiked Goomba */
-    {39, {4, -1, 13, 14, 12, 11, 5, -1, -1}},   /* Paragoomba: Dive */
-    {40, {4, -1, 12, 13, -1, 17, 6, 5, 15}},    /* Koopa Troopa, Dark Koopa: ShellSpin */
-    {41, {3, -1, 8, 9, -1, 18, 12, 10, -1}},    /* Paratroopa: ShellDive */
-    {42, {3, 5, 16, 18, -1, 14, 4, -1, -1}},    /* Fuzzy (Forest, Jungle): Leech */
-    {43, {6, -1, 16, 17, 28, 24, 3, -1, -1}},   /* Bob-omb: lit as it attacks */
-    {46, {3, -1, 10, 11, -1, 20, 4, -1, -1}},   /* Monty Mole: ThrowAttack */
-    {49, {7, -1, 10, 11, 17, 16, 13, -1, -1}},  /* Bandit: Tackle */
-    {50, {4, -1, 11, -1, 10, 9, 5, 6, 28}},     /* Buzzy Beetle */
-    {51, {-1, -1, 23, 24, 20, 19, 6, -1, -1}},  /* Swooper: Fly */
-    {52, {-1, -1, 7, 8, 11, 10, 4, -1, -1}},    /* Stone Chomp: Bite */
-    {53, {3, -1, 16, 17, 15, -1, 6, -1, -1}},   /* Putrid and Frost Piranha: Bite */
-    {71, {3, -1, 9, 10, 11, 12, 7, -1, -1}},    /* Dayzees: SingFast */
-    {72, {-1, -1, 5, 6, 9, 8, 11, -1, -1}},     /* Lakitu: a Spiny held up */
-    {73, {4, -1, 11, 12, 18, 16, 8, 5, 2}},     /* Spiny */
-    {76, {8, -1, 22, 23, 30, 27, 10, 15, 5}},   /* Spike Top */
-    {82, {4, -1, 11, 12, 13, 14, 6, -1, -1}},   /* Dry Bones: ThrowBone */
-    {84, {14, -1, 30, 31, 38, 42, 22, 20, 6}},  /* Bony Beetle */
-    {85, {-1, -1, 5, 6, 7, 8, 3, -1, -1}},      /* Magikoopa: CastSpell */
-    {88, {4, -1, 12, 13, 19, 17, 6, 5, 15}},    /* Koopatrol */
-    {89, {7, -1, 15, 16, 18, 17, 12, 22, -1}},  /* Hammer Bro: Throw */
-    {124, {4, -1, 7, 8, 11, 9, 2, -1, -1}},     /* Ruff Puff: Angry */
+    {37, {3, 4, 4, 1, 8, 0, 7, 10, 9, 6, UP, UP, UP, UP, UP, UP}},             /* Goomba: Midair, Dead */
+    {38, {3, 4, 4, 1, 10, 0, 9, 8, 7, 6, UP, UP, UP, UP, UP, UP}},             /* Spiked Goomba: BurnEyesClosed/Open */
+    {39, {4, 1, 5, 1, 11, 0, 12, 14, 13, 6, UP, UP, UP, UP, UP, UP}},          /* Paragoomba: Dive */
+    {40, {4, 1, 6, 1, 17, 0, 19, 13, 12, 11, 15, 15, 18, 16, 20, 15}},         /* Koopa Troopa: ShellSpin, Stunned, Topple* */
+    {41, {3, 1, 12, 1, 18, 0, 19, 9, 8, 7, UP, UP, UP, UP, UP, UP}},           /* Paratroopa: ShellDive */
+    {42, {3, 5, 4, 11, 14, 0, 15, 18, 16, 8, UP, UP, UP, UP, UP, UP}},         /* Fuzzy: Leech, Stunned */
+    {43, {6, 2, 3, 2, 24, 0, 28, 17, 16, 14, UP, UP, UP, UP, UP, UP}},         /* Bob-omb: lit as it attacks */
+    {44, {1, 1, 1, 1, 1, 0, 1, 7, 7, 5, UP, UP, UP, UP, UP, UP}},              /* Bullet Bill: no sleep or dizzy */
+    {45, {1, 1, 2, 1, 1, 0, 1, 5, 5, 4, UP, UP, UP, UP, UP, UP}},              /* Bill Blaster: Fire, Collapse */
+    {46, {3, 1, 4, 1, 20, 0, 20, 11, 10, 5, UP, UP, UP, UP, UP, UP}},          /* Monty Mole: dizzy on Sleep, as PM64 */
+    {47, {7, 2, 17, 2, 12, 0, 14, 2, 8, 8, 5, 9, 13, 1, 15, 3}},               /* Cleft: Charge, Topple*, ToppleKick */
+    {48, {8, 4, 17, 4, 37, 0, 33, 25, 24, 12, UP, UP, UP, UP, UP, UP}},        /* Pokey (four high): Throw */
+    {49, {7, 1, 13, 1, 16, 0, 17, 11, 10, 9, UP, UP, UP, UP, UP, UP}},         /* Bandit: Tackle */
+    {50, {4, 1, 5, 1, 9, 0, 10, 11, 11, 7, 2, 25, 27, 26, 28, 28}},            /* Buzzy Beetle: ShellSpin, Topple* */
+    {51, {6, 6, 6, 2, 19, 1, 20, 24, 23, 21, UP, UP, UP, UP, UP, UP}},         /* Swooper: Fly */
+    {52, {1, 1, 4, 1, 10, 0, 11, 8, 7, 6, UP, UP, UP, UP, UP, UP}},            /* Stone Chomp: Bite */
+    {53, {3, 1, 6, 4, 0, 0, 15, 17, 16, 14, UP, UP, UP, UP, UP, UP}},          /* Piranhas: Bite; asleep Still, as PM64 */
+    {58, {3, 9, 5, 1, 18, 0, 19, 14, 13, 12, UP, UP, UP, UP, UP, UP}},         /* Shy Guy: Tackle; asleep Slouch, as PM64 */
+    {69, {3, 1, 3, 1, 11, 0, 10, 9, 8, 7, UP, UP, UP, UP, UP, UP}},            /* Lava Bubble, Ember: FlyFast */
+    {71, {3, 1, 7, 1, 12, 0, 11, 10, 9, 8, UP, UP, UP, UP, UP, UP}},           /* Dayzees: SingFast */
+    {72, {3, 1, 19, 22, 8, 0, 9, 6, 5, 7, UP, UP, UP, UP, UP, UP}},            /* Lakitu: LiftSpiny, Talk */
+    {73, {4, 15, 8, 1, 16, 0, 18, 12, 11, 9, 2, 10, 17, 21, 19, 20}},          /* Spiny: ShellSpin, *Topple, Struggle */
+    {76, {8, 3, 10, 3, 27, 0, 30, 23, 22, 19, 5, 21, 29, 2, 32, 21}},          /* Spike Top: ShellSpin, *Topple */
+    {82, {4, 2, 6, 2, 14, 0, 13, 12, 11, 8, UP, UP, UP, UP, UP, UP}},          /* Dry Bones: ThrowBone, Collapse */
+    {84, {14, 4, 22, 4, 42, 0, 38, 31, 30, 24, 6, 26, 44, 2, 40, 28}},         /* Bony Beetle: ShellSpin, *Toppled */
+    {85, {1, 1, 3, 2, 8, 0, 7, 6, 5, 4, UP, UP, UP, UP, UP, UP}},              /* Magikoopa: CastSpell, Shout */
+    {88, {4, 1, 6, 1, 17, 0, 19, 13, 12, 11, 16, 15, 18, 16, 20, 15}},         /* Koopatrol: ShellSpin, Topple* */
+    {89, {7, 2, 12, 10, 17, 0, 18, 16, 15, 14, UP, UP, UP, UP, UP, UP}},       /* Hammer Bro: Throw, Talk */
+    {124, {4, 1, 2, 12, 9, 0, 11, 8, 7, 6, UP, UP, UP, UP, UP, UP}},           /* Ruff Puff: Angry, Talk */
 };
 
-static int rowOf(const Pm64EnemyInfo* e, int which, int otherwise) {
-    size_t k;
-    for (k = 0; k < sizeof(kRows) / sizeof(kRows[0]); k++) {
-        if (kRows[k].sprite == e->sprite) {
-            return kRows[k].row[which] >= 0 ? kRows[k].row[which] : otherwise;
+/* a winged enemy brought down (its host becomes another kind: btlevtcmd_ChangeKind) plays on as its grounded
+ * cousin, as PM64's Paratroopa becomes a Koopa Troopa (paratroopa.inc.c SetActorType) */
+static const struct {
+    const char *winged, *grounded;
+} kGrounded[] = {
+    {"Paragoomba", "Goomba"},
+    {"Hyper Paragoomba", "Hyper Goomba"},
+    {"Paragloomba", "Gloomba"},
+    {"Paratroopa", "Koopa Troopa"},
+    {"Dark Paratroopa", "Dark Koopa"},
+};
+
+static int enemyNamed(const char* english) {
+    int i;
+    for (i = 0; i < ENEMIES; i++) {
+        if (strcmp(kEnemies[i].english, english) == 0) {
+            return i;
         }
     }
-    return otherwise;
+    return -1;
 }
 
-/* the host's pose name ("S_1", "W_1", "D_1", "NKT_K_2" ...: TTYD's letters: S stay, W walk, R run, J jump,
- * F fall, D hurt, A attack, K in the shell, Y flipped, Q dizzy, N asleep, X down) and the unit's statuses (NULL
- * in the field) to an animation */
-static int animOf(const Pm64EnemyInfo* e, const char* pose, const BattleUnit* unit) {
+/* enemy idx as its unit is now: its grounded cousin once its host became that kind */
+static int enemyAsNow(int idx, const BattleUnit* unit) {
+    size_t k;
+    if (unit == NULL || (int)unit->currentKind == (int)kEnemies[idx].host) {
+        return idx;
+    }
+    for (k = 0; k < sizeof(kGrounded) / sizeof(kGrounded[0]); k++) {
+        if (strcmp(kEnemies[idx].english, kGrounded[k].winged) == 0) {
+            const int g = enemyNamed(kGrounded[k].grounded);
+            return g >= 0 && (int)kEnemies[g].host == (int)unit->currentKind ? g : idx;
+        }
+    }
+    return idx;
+}
+
+static int rowOf(const Pm64EnemyInfo* e, int st) {
+    size_t k;
+    int r;
+    if (st == ST_WALK) {
+        return e->walk;
+    }
+    if (st == ST_HURT) {
+        return e->hurt;
+    }
+    if (st < ROW_FIRST || st >= ST_COUNT) {
+        return e->idle;
+    }
+    for (k = 0; k < sizeof(kRows) / sizeof(kRows[0]); k++) {
+        if (kRows[k].sprite == e->sprite) {
+            r = kRows[k].row[st - ROW_FIRST];
+            if (r == UP) {
+                /* (no frames on its back: as it stands) */
+                return rowOf(e, st == ST_FLIP_HURT || st == ST_FLIP_STRUGGLE ? ST_HURT
+                                : st == ST_FLIP_SLEEP                          ? ST_SLEEP
+                                : st == ST_FLIP_STILL                          ? ST_STILL
+                                : st == ST_FLIP_DIZZY                          ? ST_DIZZY
+                                                                               : ST_IDLE);
+            }
+            return r >= 0 ? r : e->idle;
+        }
+    }
+    return e->idle; /* (a sprite with no row: the check fails on it) */
+}
+
+/* Script-set poses (by name, not in the part's pose table): what TTYD's letter before the number means there
+ * ("NKT_S_3", "KRN_C_1", "A_1A"). A letter not here is neutral: the unit's statuses decide. The check reads this
+ * table: every letter a host's scripts use is here or listed neutral. */
+static const struct {
+    char letter;
+    signed char st; /* -1: neutral */
+} kPoseLetter[] = {
+    {'W', ST_WALK}, {'R', ST_RUN},       {'J', ST_JUMP},   {'F', ST_JUMP},  {'D', ST_HURT},
+    {'Q', ST_BURN_HURT}, {'A', ST_ATTACK}, {'T', ST_TALK}, {'N', ST_SLEEP}, {'Y', ST_STILL},
+    {'K', ST_DIZZY}, {'C', ST_DEAD},    {'Z', ST_DEAD},   {'S', -1},       {'X', -1},
+    {'I', -1},       {'B', -1},         {'E', -1},        {'H', -1},       {'O', -1},
+    {'P', -1},       {'G', -1},
+};
+
+/* a pose name's state by its letter (kPoseLetter); -1 neutral */
+static int letterState(const char* pose) {
     const char* u = pose != NULL ? strrchr(pose, '_') : NULL; /* (the letter before the number) */
     const char c = u != NULL && u > pose ? u[-1] : pose != NULL ? pose[0] : 'S';
-    const int burnt = unit != NULL && unit->burnTurns > 0;
-    switch (c) {
-    case 'W':
-        return e->walk;
-    case 'R':
-        return rowOf(e, ROW_RUN, e->walk);
-    case 'J':
-    case 'F':
-        return rowOf(e, ROW_JUMP, e->idle);
-    case 'D':
-    case 'X':
-        return burnt ? rowOf(e, ROW_BURN_HIT, e->hurt) : e->hurt;
-    case 'A':
-    case 'I':
-        return rowOf(e, ROW_ATTACK, e->idle);
-    case 'K':
-        return rowOf(e, ROW_SHELL, rowOf(e, ROW_ATTACK, e->idle));
-    case 'Y':
-        return rowOf(e, ROW_FLIPPED, e->hurt);
-    case 'Q':
-        return rowOf(e, ROW_DIZZY, e->idle);
-    case 'N':
-        return rowOf(e, ROW_SLEEP, e->idle);
-    default:
-        if (unit != NULL && unit->sleepTurns > 0) {
-            return rowOf(e, ROW_SLEEP, e->idle);
+    size_t k;
+    for (k = 0; k < sizeof(kPoseLetter) / sizeof(kPoseLetter[0]); k++) {
+        if (kPoseLetter[k].letter == c) {
+            return kPoseLetter[k].st;
         }
-        if (unit != NULL && unit->dizzyTurns > 0) {
-            return rowOf(e, ROW_DIZZY, e->idle);
-        }
-        return burnt ? rowOf(e, ROW_BURNT, e->idle) : e->idle;
     }
+    return -1;
+}
+
+/* which pose types' entries in the part's pose table name pose (has[t]: BattlePoseType t); 0 if none do.
+ * A pose table has no end marker: the game's own lookup (BtlUnit_GetPoseNameFromType) stops at the first entry of
+ * the asked type's fallback (BTL_POSE_NORMAL, BTL_POSE_DAMAGE, BTL_POSE_STAY_DEFAULT), so the table is only as long
+ * as the furthest of those three; what lies past it is the next data in the unit's file (a Goomba's event table,
+ * then its defence: a garbage name read there crashed the first battle). The scan stops where the game's would. */
+static int poseTypesOf(const BattleUnitPart* part, const char* pose, unsigned char has[BTL_POSE_MAX]) {
+    const PoseTableEntry* t = part != NULL ? part->poseTable : NULL;
+    int n, any = 0, fallbacks = 0;
+    memset(has, 0, BTL_POSE_MAX);
+    for (n = 0; t != NULL && pose != NULL && n < 128 && fallbacks != 7 && t->poseType < BTL_POSE_MAX; n++, t++) {
+        fallbacks |= t->poseType == BTL_POSE_NORMAL ? 1 : t->poseType == BTL_POSE_DAMAGE ? 2
+                   : t->poseType == BTL_POSE_STAY_DEFAULT ? 4 : 0;
+        if (t->poseName != NULL && t->poseType >= 0 && strcmp(t->poseName, pose) == 0) {
+            has[t->poseType] = 1;
+            any = 1;
+        }
+    }
+    return any;
+}
+
+/* The state a PM64 enemy's battle unit (NULL: in the field) is in as its host plays pose: what the pose stands
+ * for in the host's pose table (the type the game asked for: damage, attack, walk ...; one entry's name may stand
+ * for several, and a standing one's for none of these), else its letter (kPoseLetter); a standing pose takes the
+ * unit's statuses (stopped, frozen, asleep, dizzy, confused, burnt), as the game picks its status pose
+ * (_GetStatusPoseType); and all of it on its back while the unit is flipped (STATUS_FLAG_FLIPPED: the host's
+ * flipped pose table plays then, "NKT_S_2"). */
+static int stateOf(const BattleUnit* unit, const BattleUnitPart* part, const char* pose) {
+    unsigned char m[BTL_POSE_MAX];
+    const int any = poseTypesOf(part, pose, m);
+    const int flipped = unit != NULL && (unit->statusFlags & STATUS_FLAG_FLIPPED) != 0;
+    const int burnt = unit != NULL && unit->burnTurns > 0;
+    int st = -1, neutral = 0;
+    if (any) {
+        int t, hurt = m[BTL_POSE_DAMAGE];
+        neutral = m[BTL_POSE_NORMAL] || m[BTL_POSE_STAY_DEFAULT];
+        for (t = 32; t < BTL_POSE_DAMAGE; t++) {
+            hurt |= m[t];
+        }
+        if (m[STATUS_INSTANT_KILL]) {
+            st = ST_DEAD;
+        } else if (unit != NULL && ((m[STATUS_SLEEP] && unit->sleepTurns > 0) ||
+                                    ((m[STATUS_STOP] || m[STATUS_FREEZE]) && (unit->stopTurns > 0 || unit->freezeTurns > 0)) ||
+                                    ((m[STATUS_DIZZY] || m[STATUS_CONFUSE]) && (unit->dizzyTurns > 0 || unit->confusionTurns > 0)))) {
+            st = -1; /* (the status pose the game picked for the status it has: a Bullet Bill frozen in "KIL_D_1") */
+        } else if (neutral) {
+            /* (a name standing for the plain stance too, or for a whole table's worth: a flipped Cleft's
+               "SIN_D_2", a charging Koopatrol's shell "A_1"; its letter says which) */
+            st = letterState(pose);
+        } else if (m[29] || m[30]) {
+            st = ST_BURN_HURT; /* (fire and explosion hits: the part drawn black) */
+        } else if (hurt) {
+            st = ST_HURT;
+        } else if (m[50] || m[51]) {
+            st = ST_ATTACK;
+        } else if (m[BTL_POSE_RUN] || m[41]) {
+            st = ST_RUN;
+        } else if (m[BTL_POSE_WALK] || m[47]) {
+            st = ST_WALK;
+        } else if (m[BTL_POSE_TALK]) {
+            st = ST_TALK;
+        }
+    } else {
+        st = letterState(pose);
+        if (st < 0 && flipped && part != NULL) {
+            st = ST_FLIP_STRUGGLE; /* (a script's own pose while it lies there: the wake-up struggle, "NKT_S_3") */
+        }
+    }
+    if (st < 0) {
+        /* standing: as its statuses have it (_GetStatusPoseType's order) */
+        if (unit != NULL && (unit->stopTurns > 0 || unit->freezeTurns > 0)) {
+            st = ST_STILL;
+        } else if (unit != NULL && unit->sleepTurns > 0) {
+            st = ST_SLEEP;
+        } else if (unit != NULL && (unit->dizzyTurns > 0 || unit->confusionTurns > 0)) {
+            st = ST_DIZZY;
+        } else if (any && !neutral && m[STATUS_SLEEP]) {
+            st = ST_SLEEP; /* (a status pose the unit's turns don't show: as the table has it) */
+        } else if (any && !neutral && (m[STATUS_STOP] || m[STATUS_FREEZE])) {
+            st = ST_STILL;
+        } else if (any && !neutral && (m[STATUS_DIZZY] || m[STATUS_CONFUSE])) {
+            st = ST_DIZZY;
+        } else {
+            st = burnt ? ST_BURNT : ST_IDLE;
+        }
+    }
+    if (burnt && st == ST_HURT) {
+        st = ST_BURN_HURT;
+    }
+    if (flipped) {
+        switch (st) {
+        case ST_IDLE:
+        case ST_BURNT:
+        case ST_TALK:
+            st = ST_FLIP;
+            break;
+        case ST_HURT:
+        case ST_BURN_HURT:
+            st = ST_FLIP_HURT;
+            break;
+        case ST_SLEEP:
+            st = ST_FLIP_SLEEP;
+            break;
+        case ST_STILL:
+            st = ST_FLIP_STILL;
+            break;
+        case ST_DIZZY:
+            st = ST_FLIP_DIZZY;
+            break;
+        default:
+            break;
+        }
+    }
+    return st;
+}
+
+/* the animation enemy e plays for its host's pose (see stateOf); a battle's changes logged with $TTYD_PM64_LOG
+ * (tests: "[pm64] anim: Koopa Troopa flipped (NKT_S_2): row 15") */
+static int animOf(const Pm64EnemyInfo* e, const char* pose, const BattleUnit* unit, const BattleUnitPart* part) {
+    static const char* const kStateName[ST_COUNT] = {
+        "idle",       "walk",    "hurt",          "run",          "jump",           "attack",     "talk",
+        "asleep",     "still",   "dizzy",         "burnt",        "burn hurt",      "knocked out", "flipped",
+        "flipped hurt", "flipped asleep", "flipped still", "flipped dizzy", "flipped struggle"};
+    static struct {
+        const BattleUnit* unit;
+        int st;
+    } sLast[8];
+    static int sLog = -1;
+    const int st = stateOf(unit, part, pose);
+    const int row = rowOf(e, st);
+    if (sLog < 0) {
+        const char* v = getenv("TTYD_PM64_LOG");
+        sLog = v != NULL && v[0] != '\0' && v[0] != '0';
+    }
+    if (sLog && unit != NULL) {
+        int i, slot = -1;
+        for (i = 0; i < 8 && slot < 0; i++) {
+            slot = sLast[i].unit == unit ? i : slot;
+        }
+        for (i = 0; i < 8 && slot < 0; i++) {
+            slot = sLast[i].unit == NULL ? i : slot;
+        }
+        slot = slot < 0 ? (int)(gp->retraceCount % 8u) : slot;
+        if (sLast[slot].unit != unit || sLast[slot].st != st) {
+            sLast[slot].unit = unit;
+            sLast[slot].st = st;
+            printf("[pm64] anim: %s %s (%s): row %d\n", e->english, kStateName[st], pose != NULL ? pose : "-", row);
+            fflush(stdout);
+        }
+    }
+    return row;
 }
 
 /* a draw in another colour (sTintOn: the swarm's dark hearts), or added on top (sGlowOn: a charged glow) */
 static int sTintOn, sGlowOn, sGlowNext;
 static GXColor sTint;
 
-/* Cool Mode: the glasses on the eyes the frame's rasters show (the surest part's; none if no part shows
- * any), over that part's box as drawParts draws it */
-static void coolParts(const Pm64Anim* a, Mtx m, GXColor tint) {
-    float best = 0.0f, at[3] = {0.0f, 0.0f, 0.0f}, bx0 = 0.0f, bx1 = 0.0f, by0 = 0.0f, by1 = 0.0f;
-    int i;
-    for (i = 0; i < a->count; i++) {
-        const Pm64Part* p = &a->part[i];
-        float ex, ey, ew, score;
-        int w, h;
-        if (p->raster < 0 || !portPm64SpriteRaster(a->sprite, p->raster, &w, &h, NULL) || w <= 0 || h <= 0 ||
-            !portPm64SpriteEyes(a->sprite, p->raster, &ex, &ey, &ew, &score) || score <= best) {
-            continue;
-        }
-        best = score;
-        bx0 = (p->x - (float)(w / 2) * p->sx) * 0.5f;
-        bx1 = (p->x + (float)(w - w / 2) * p->sx) * 0.5f;
-        by0 = p->y * 0.5f;
-        by1 = (p->y + (float)h * p->sy) * 0.5f;
-        at[0] = ex;
-        at[1] = 1.0f - ey;
-        at[2] = ew;
+/* the pose's own colour and fade, as its sprite is drawn */
+static GXColor poseTint(const AnimationPose* pose) {
+    GXColor tint = {0xFF, 0xFF, 0xFF, 0xFF};
+    if (pose->materialFlag & ANIM_MATERIAL_FLAG_EVT_COLOR) {
+        tint = pose->materialColor;
     }
-    if (best > 0.0f) {
-        portFunCoolSprite(m, bx0, bx1, by0, by1, at, &tint);
+    if (pose->materialColor2.r != 0xFF) {
+        tint.a = (u8)(tint.a * pose->materialColor2.r / 255);
+    }
+    return tint;
+}
+
+/* Cool Mode: the rows a pose draws as one sprite this frame (a boss's body and the face and arms over it), each
+ * with its matrix; the glasses go on once, on the face (coolFlush). The vine's segments, the glow drawn again on
+ * top and the swarm's hearts aren't in it. */
+#define COOL_ROWS 3
+typedef struct CoolSet {
+    int n;
+    const Pm64Anim* a[COOL_ROWS];
+    Mtx m[COOL_ROWS];
+    GXColor tint;
+} CoolSet;
+
+/* each pose's face, kept frame to frame (port/include/port/pm64.h portPm64AnimFace) */
+static struct {
+    int pose1;
+    unsigned frame;
+    Pm64Face f;
+} sFace[PLAYS];
+
+static Pm64Face* faceOf(int poseId) {
+    int i, oldest = 0;
+    for (i = 0; i < PLAYS; i++) {
+        if (sFace[i].pose1 == poseId + 1) {
+            break;
+        }
+        if (sFace[i].pose1 == 0 || (sFace[oldest].pose1 != 0 && sFace[i].frame < sFace[oldest].frame)) {
+            oldest = i;
+        }
+    }
+    if (i == PLAYS || sFace[i].frame + 30u < gp->retraceCount) {
+        /* (a pose met again after a while, or one seen first: a new face) */
+        i = i == PLAYS ? oldest : i;
+        memset(&sFace[i], 0, sizeof(sFace[i]));
+        sFace[i].pose1 = poseId + 1;
+        sFace[i].f.part = -1;
+    }
+    sFace[i].frame = gp->retraceCount;
+    return &sFace[i].f;
+}
+
+/* where the glasses go on an enemy whose eyes no frame has shown yet (asleep from the start, eyes shut, an
+ * eyeless shell): high on the middle of its frame */
+static const float kCoolSeed[3] = {0.42f, 0.72f, 0.45f};
+
+static void coolFlush(int poseId, CoolSet* s) {
+    float box[4], at[3];
+    int k = 0;
+    if (s->n <= 0 || !portFunOn(PORT_FUN_COOL)) {
+        return;
+    }
+    if (portPm64AnimFace(s->a, s->n, faceOf(poseId), 1, kCoolSeed, box, at, &k) && k >= 0 && k < s->n) {
+        portFunCoolSprite((MtxPtr)s->m[k], box[0], box[1], box[2], box[3], at, &s->tint);
     }
 }
 
@@ -455,17 +787,12 @@ static void drawParts(const Pm64Anim* a, Mtx m, const AnimationPose* pose, int p
     CameraEntry* cam = camGetCurPtr();
     Mtx mv, nrm;
     Vec at = {0.0f, 0.0f, 0.0f};
-    GXColor tint = {0xFF, 0xFF, 0xFF, 0xFF};
+    GXColor tint;
     int i;
     if (cam == NULL || a->sprite == NULL) {
         return;
     }
-    if (pose->materialFlag & ANIM_MATERIAL_FLAG_EVT_COLOR) {
-        tint = pose->materialColor;
-    }
-    if (pose->materialColor2.r != 0xFF) {
-        tint.a = (u8)(tint.a * pose->materialColor2.r / 255);
-    }
+    tint = poseTint(pose);
     if (sTintOn || sGlowOn) {
         tint = sTint;
     }
@@ -473,7 +800,10 @@ static void drawParts(const Pm64Anim* a, Mtx m, const AnimationPose* pose, int p
     mapSetMaterialLight(pose->materialLightFlag | ANIM_MATERIAL_LIGHT_NO_VTX_COLOR, at);
     PSMTXConcat(cam->view, m, mv);
     GXLoadPosMtxImm(mv, GX_PNMTX0);
-    PSMTXInvXpose(mv, nrm);
+    /* lit as a sprite facing the camera, however it is turned: PM64 doesn't light its sprites by their facing (an
+       edge-on frame of a paper turn or of the Spin Dash went near black, the light at right angles to it; the
+       spin's own shading, spinParts, is PM64's) */
+    PSMTXIdentity(nrm);
     GXLoadNrmMtxImm(nrm, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
     GXClearVtxDesc();
@@ -520,37 +850,80 @@ static void drawParts(const Pm64Anim* a, Mtx m, const AnimationPose* pose, int p
         GXInitTexObj(&tex, (void*)data, (u16)tw, (u16)th, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
         GXInitTexObjLOD(&tex, GX_NEAR, GX_NEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
         GXLoadTexObj(&tex, GX_TEXMAP0);
-        x0 = (p->x - (float)(w / 2) * p->sx) * 0.5f;
-        x1 = (p->x + (float)(w - w / 2) * p->sx) * 0.5f;
-        y0 = p->y * 0.5f;
-        y1 = (p->y + (float)h * p->sy) * 0.5f;
+        x0 = -(float)(w / 2) * p->sx;
+        x1 = (float)(w - w / 2) * p->sx;
+        y0 = 0.0f;
+        y1 = (float)h * p->sy;
         z = p->z * 0.05f + (float)i * 0.02f;
         u = (float)w / (float)tw;
         v = (float)h / (float)th;
-        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-        GXPosition3f32(x0, y1, z);
-        GXNormal3f32(0.0f, 0.0f, 1.0f);
-        GXTexCoord2f32(0.0f, 0.0f);
-        GXPosition3f32(x1, y1, z);
-        GXNormal3f32(0.0f, 0.0f, 1.0f);
-        GXTexCoord2f32(u, 0.0f);
-        GXPosition3f32(x1, y0, z);
-        GXNormal3f32(0.0f, 0.0f, 1.0f);
-        GXTexCoord2f32(u, v);
-        GXPosition3f32(x0, y0, z);
-        GXNormal3f32(0.0f, 0.0f, 1.0f);
-        GXTexCoord2f32(0.0f, v);
-        GXEnd();
-    }
-    if (portFunOn(PORT_FUN_COOL)) {
-        coolParts(a, m, tint);
+        {
+            /* the quad about the part's point, turned by the part's own rotation as PM64's spr_appendGfx_component
+               turns it (its matrix T * Ry * Rz * Rx * S: x first, then z, then y): Mario's hammer swung down
+               (MarioB1's Swing, the hammer at 140 degrees), an enemy's turned arm or shell; half units */
+            const float cx[4] = {x0, x1, x1, x0}, cy[4] = {y1, y1, y0, y0};
+            const float su[4] = {0.0f, u, u, 0.0f}, sv[4] = {0.0f, 0.0f, v, v};
+            const float ax = 0.017453292f * p->rx, ay = 0.017453292f * p->ry, az = 0.017453292f * p->rz;
+            const float sa = sinf(ax), ca = cosf(ax), sb = sinf(ay), cb = cosf(ay), sc = sinf(az), cc = cosf(az);
+            int k;
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            for (k = 0; k < 4; k++) {
+                float px = cx[k], py = cy[k], pz = 0.0f, t;
+                t = py * ca - pz * sa; /* about x */
+                pz = py * sa + pz * ca;
+                py = t;
+                t = px * cc - py * sc; /* about z */
+                py = px * sc + py * cc;
+                px = t;
+                t = px * cb + pz * sb; /* about y */
+                pz = -px * sb + pz * cb;
+                px = t;
+                GXPosition3f32((p->x + px) * 0.5f, (p->y + py) * 0.5f, pz * 0.5f + z);
+                GXNormal3f32(0.0f, 0.0f, 1.0f);
+                GXTexCoord2f32(su[k], sv[k]);
+            }
+            GXEnd();
+        }
     }
 }
 
+/* Mario's PM64 look spinning (the Spin Dash, pm64_spin.h): his paper's facing now and a frame of PM64's before */
+static struct {
+    int on;
+    float now, before;
+} sSpinLook;
+
+/* src/77480.c appendGfx_player_spin: the spinning sprite shaded as it turns edge on (255, less 60 for each whole
+ * 25 degrees it is turned from facing left or right, at least 100), then its afterimage, a quarter seen (alpha
+ * 64), turned on by his facing a frame before (phys_get_spin_history 1) */
+static void spinParts(const Pm64Anim* a, Mtx m, const AnimationPose* pose, int palette) {
+    const GXColor base = poseTint(pose);
+    const float f = fmodf(fmodf(sSpinLook.now, 360.0f) + 360.0f, 360.0f);
+    const float off = f > 90.0f && f <= 180.0f ? 180.0f - f : f > 180.0f && f <= 270.0f ? f - 180.0f
+                      : f > 270.0f                ? 360.0f - f
+                                                  : f;
+    int tint = 255 - (int)(off / 25.0f) * 60;
+    Mtx g, t;
+    if (tint < 100) {
+        tint = 100;
+    }
+    sTintOn = 1;
+    sTint = base;
+    sTint.r = (u8)(base.r * tint / 255);
+    sTint.g = (u8)(base.g * tint / 255);
+    sTint.b = (u8)(base.b * tint / 255);
+    drawParts(a, m, pose, palette);
+    PSMTXRotRad(t, 'y', 0.017453292f * sSpinLook.before);
+    PSMTXConcat(m, t, g);
+    sTint.a = (u8)(base.a * 64 / 255);
+    drawParts(a, g, pose, palette);
+    sTintOn = 0;
+}
+
 /* pose poseId drawn as PM64 sprite sprite playing anim (main: this pose draws it; the others of its
- * unit draw nothing); 1 if it was */
+ * unit draw nothing); 1 if it was. cool: the row noted for Cool Mode's glasses (NULL: not a face's row) */
 static int drawOnPose(int poseId, float (*mtx)[4], int xluMode, float rotY, float scale, int main, int sprite,
-                      int palette, int anim) {
+                      int palette, int anim, CoolSet* cool) {
     AnimationPose* pose = animPoseGetAnimPosePtr(poseId);
     Mtx m, t;
     float turn, flip;
@@ -580,7 +953,19 @@ static int drawOnPose(int poseId, float (*mtx)[4], int xluMode, float rotY, floa
         PSMTXConcat(m, t, m);
     }
     /* PM64's enemies face left, as TTYD's enemies on the right do: as they are */
-    drawParts(playOf(poseId, sprite, anim), m, pose, palette);
+    if (sSpinLook.on) {
+        spinParts(playOf(poseId, sprite, anim), m, pose, palette);
+    } else {
+        drawParts(playOf(poseId, sprite, anim), m, pose, palette);
+    }
+    if (cool != NULL && cool->n < COOL_ROWS) {
+        cool->a[cool->n] = playOf(poseId, sprite, anim);
+        PSMTXCopy(m, cool->m[cool->n]);
+        if (cool->n == 0) {
+            cool->tint = poseTint(pose);
+        }
+        cool->n++;
+    }
     if (sGlowNext) {
         /* a charged boss glows (PM64's EnableActorGlow): its sprite again, added on top, pulsing */
         const float s = 0.5f + 0.5f * sinf((float)(gp->retraceCount % 60) * (6.2831853f / 60.0f));
@@ -665,9 +1050,10 @@ const char* portPm64PoseAnimName(int poseId, const char* fallback) {
 }
 
 /* PM64's size beside Mario, as the partners have it (portPm64Size: each stands beside TTYD Mario as beside PM64's);
- * with Mario's own PM64 look on, he is PM64's size and they stay at theirs */
+ * Mario's own PM64 look is drawn at it too (TTYD Mario's height), so everything keeps PM64's proportions to him
+ * and to the TTYD characters around them alike */
 static float pm64Factor(void) {
-    return portPm64MarioLookOn() ? 1.0f : portPm64Size();
+    return portPm64Size();
 }
 
 /* dst: src moved v up its own y axis (before drawOnPose's turn and scale) */
@@ -715,9 +1101,13 @@ int portPm64EnemyDrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, 
         if (!portPm64FoeFieldPose(poseId, &idx, &poseName) || idx < 0 || idx >= ENEMIES) {
             return 0;
         }
+        CoolSet cool = {0};
+        int r;
         e = &kEnemies[idx];
-        return drawOnPose(poseId, mtx, xluMode, rotY, scale * pm64Factor(), 1, e->sprite, e->palette,
-                          animOf(e, poseName, NULL));
+        r = drawOnPose(poseId, mtx, xluMode, rotY, scale * pm64Factor(), 1, e->sprite, e->palette,
+                       animOf(e, poseName, NULL, NULL), &cool);
+        coolFlush(poseId, &cool);
+        return r;
     }
     if ((idx = enemyOfPose(poseId, &main, &unit)) < 0) {
         /* a Paper Mario 64 boss (its own unit: port/include/port/pm64_foes.h) */
@@ -749,13 +1139,14 @@ int portPm64EnemyDrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, 
                     }
                     liftMtx(mtx, m, (at - bottom) * 0.5f * scale * size);
                     m[2][3] -= 0.2f; /* (behind the head) */
-                    drawOnPose(poseId, m, xluMode, rotY, scale * size, 1, sprite, palette, row);
+                    drawOnPose(poseId, m, xluMode, rotY, scale * size, 1, sprite, palette, row, NULL);
                     at += h;
                 }
                 liftMtx(mtx, head, vine * 0.5f * scale * size);
             }
             sGlowNext = glow;
-            r = drawOnPose(poseId, head, xluMode, rotY, scale * size, 1, sprite, palette, anim);
+            CoolSet cool = {0};
+            r = drawOnPose(poseId, head, xluMode, rotY, scale * size, 1, sprite, palette, anim, &cool);
             {
                 /* a sprite in parts (Huff N. Puff's face and arms over his body), each a hair nearer */
                 int n, layer;
@@ -764,11 +1155,12 @@ int portPm64EnemyDrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, 
                         float m[3][4];
                         PSMTXCopy(head, m);
                         m[2][3] += 0.5f * (float)(n + 1);
-                        drawOnPose(poseId, m, xluMode, rotY, scale * size, 1, sprite, palette, layer);
+                        drawOnPose(poseId, m, xluMode, rotY, scale * size, 1, sprite, palette, layer, &cool);
                     }
                 }
             }
             sGlowNext = 0;
+            coolFlush(poseId, &cool); /* (once, on the face: on top of the parts drawn over it) */
             if (swarm && xluMode == 1 && !portPaperShadowPass()) {
                 drawSwarm(poseId, sprite, palette, anim, from, to, age);
             }
@@ -788,8 +1180,19 @@ int portPm64EnemyDrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, 
     if (unit->baseScale.y > 0.05f) {
         scale /= unit->baseScale.y;
     }
-    return drawOnPose(poseId, mtx, xluMode, rotY, scale * pm64Factor(), main, e->sprite, e->palette,
-                      animOf(e, poseName, unit));
+    {
+        CoolSet cool = {0};
+        const BattleUnitPart* own = NULL;
+        int r;
+        for (part = unit->parts; part != NULL; part = part->nextPart) {
+            own = part->poseId == poseId ? part : own;
+        }
+        e = &kEnemies[enemyAsNow(idx, unit)]; /* (a winged one brought down: its grounded cousin) */
+        r = drawOnPose(poseId, mtx, xluMode, rotY, scale * pm64Factor(), main, e->sprite, e->palette,
+                       animOf(e, poseName, unit, own), &cool);
+        coolFlush(poseId, &cool);
+        return r;
+    }
 }
 
 /* --- the Tattle card's picture (src/window/win_log.c's capture; port/include/port/pm64_enemy.h) --- */
@@ -961,9 +1364,28 @@ int portPm64TattleCapture(int kind, int cardPose, unsigned tw, unsigned th) {
     C_MTXLookAt(view, &(Vec){cx, cy, dist}, &(Vec){0.0f, 1.0f, 0.0f}, &(Vec){cx, cy, 0.0f});
     PSMTXCopy(cam->view, keep);
     PSMTXCopy(view, cam->view);
-    for (i = 0; i < n; i++) {
-        PSMTXTrans(m, 0.0f, draw[i].lift, draw[i].z);
-        drawParts(&sCard[i], m, pose, palette);
+    {
+        CoolSet cool = {0};
+        for (i = 0; i < n; i++) {
+            PSMTXTrans(m, 0.0f, draw[i].lift, draw[i].z);
+            drawParts(&sCard[i], m, pose, palette);
+            if (draw[i].z >= 0.0f && cool.n < COOL_ROWS) {
+                /* (the head and its parts, not the vine) */
+                cool.a[cool.n] = &sCard[i];
+                PSMTXCopy(m, cool.m[cool.n]);
+                cool.n++;
+            }
+        }
+        if (cool.n > 0 && portFunOn(PORT_FUN_COOL)) {
+            Pm64Face face = {0};
+            float fb[4], at[3];
+            int k = 0;
+            face.part = -1;
+            cool.tint = poseTint(pose);
+            if (portPm64AnimFace(cool.a, cool.n, &face, 1, kCoolSeed, fb, at, &k) && k >= 0 && k < cool.n) {
+                portFunCoolSprite((MtxPtr)cool.m[k], fb[0], fb[1], fb[2], fb[3], at, &cool.tint);
+            }
+        }
     }
     PSMTXCopy(keep, cam->view);
     {
@@ -1157,6 +1579,7 @@ static int drawFieldBoss(const Pm64FieldLook* l, int poseId, float (*mtx)[4], in
     int n, r;
     const float size = scale * l->scale * pm64Factor();
     float base[3][4];
+    CoolSet cool = {0};
     {
         /* off the floor: its own float (Huff N. Puff's cloud, as high as in its battle), and no visible pixel
            under its feet */
@@ -1181,12 +1604,12 @@ static int drawFieldBoss(const Pm64FieldLook* l, int poseId, float (*mtx)[4], in
             }
             liftMtx(mtx, m, (at - bottom) * 0.5f * size);
             m[2][3] -= 0.2f;
-            drawOnPose(poseId, m, xluMode, rotY, size, 1, l->sprite, l->palette, row);
+            drawOnPose(poseId, m, xluMode, rotY, size, 1, l->sprite, l->palette, row, NULL);
             at += h;
         }
         liftMtx(mtx, head, l->vine * 0.5f * size);
     }
-    r = drawOnPose(poseId, head, xluMode, rotY, size, 1, l->sprite, l->palette, l->anim);
+    r = drawOnPose(poseId, head, xluMode, rotY, size, 1, l->sprite, l->palette, l->anim, &cool);
     if (xluMode == 1 && !portPaperShadowPass() && l >= gPortPm64FieldLooks &&
         l < gPortPm64FieldLooks + PM64_FIELD_LOOKS) {
         fieldHeadNote((int)(l - gPortPm64FieldLooks), poseId, head, size, l);
@@ -1196,17 +1619,136 @@ static int drawFieldBoss(const Pm64FieldLook* l, int poseId, float (*mtx)[4], in
             float m[3][4];
             PSMTXCopy(head, m);
             m[2][3] += 0.5f * (float)(n + 1);
-            drawOnPose(poseId, m, xluMode, rotY, size, 1, l->sprite, l->palette, l->layer[n]);
+            drawOnPose(poseId, m, xluMode, rotY, size, 1, l->sprite, l->palette, l->layer[n], &cool);
         }
     }
+    coolFlush(poseId, &cool);
     return r;
+}
+
+/* tests (TTYD_PM64_LOG): each animation of TTYD Mario's the PM64 look plays, as the player sprite and its
+ * animation it is drawn with (or TTYD's model, a paper form: sprite -1), his height as drawn and the frame it
+ * started: "[pm64] mario look: M_H_1 (field) as player sprite 5 anim 16, 21.8 units tall (TTYD Mario 21.8, draw
+ * scale 1.00) at frame 431" (pm64_mario_look_*; the review GIFs line PM64's own frames up by it). Each of his
+ * poses apart (in battle the thrown hammer is a part of its own, drawn beside him). */
+static void marioLookLog(int poseId, const char* name, int battle, int player, int anim, float scale) {
+    static int sLog = -1, sLogs;
+    static struct {
+        int pose1, player, anim, battle;
+        const char* name;
+    } sLast[4];
+    const unsigned frame = gp != NULL ? (unsigned)gp->retraceCount : 0u;
+    float px;
+    int i;
+    if (sLog < 0) {
+        const char* v = getenv("TTYD_PM64_LOG");
+        sLog = v != NULL && v[0] != '\0' && v[0] != '0';
+    }
+    if (!sLog || sLogs >= 400) {
+        return;
+    }
+    for (i = 0; i < 3 && sLast[i].pose1 != 0 && sLast[i].pose1 != poseId + 1; i++) {
+    }
+    if (sLast[i].pose1 == poseId + 1 && name == sLast[i].name && player == sLast[i].player &&
+        anim == sLast[i].anim && battle == sLast[i].battle) {
+        return;
+    }
+    sLogs++;
+    sLast[i].pose1 = poseId + 1;
+    sLast[i].name = name;
+    sLast[i].player = player;
+    sLast[i].anim = anim;
+    sLast[i].battle = battle;
+    if (player < 0) {
+        printf("[pm64] mario look: %s (%s) as TTYD's model (a paper form) at frame %u\n", name != NULL ? name : "-",
+               battle ? "battle" : "field", frame);
+    } else {
+        /* (his height: Mario1's idle in pixels, half a unit each, at PM64's size beside Mario; the pose's own
+           draw scale over it, the menus' and the battle's, as for TTYD's model) */
+        px = portPm64MarioHeightPx();
+        printf("[pm64] mario look: %s (%s) as player sprite %d anim %d, %.1f units tall (TTYD Mario 21.8, draw scale "
+               "%.2f) at frame %u\n",
+               name != NULL ? name : "-", battle ? "battle" : "field", player, anim, 0.5f * px * pm64Factor(), scale,
+               frame);
+    }
+    fflush(stdout);
+}
+
+/* how many frames pose poseId has played TTYD's animation name (from 0, its first frame drawn): where PM64's own
+ * steps of a hammer move are (portPm64MarioLookAnim) */
+#define LOOK_TIMES 8
+static int lookFrames(int poseId, const char* name) {
+    static struct {
+        int pose1;
+        char name[16];
+        unsigned start, last;
+    } sTimes[LOOK_TIMES];
+    int i, use = 0;
+    unsigned oldest = ~0u;
+    if (name == NULL || gp == NULL) {
+        return 0;
+    }
+    for (i = 0; i < LOOK_TIMES; i++) {
+        if (sTimes[i].pose1 == poseId + 1) {
+            use = i;
+            break;
+        }
+        if (sTimes[i].last < oldest) {
+            oldest = sTimes[i].last;
+            use = i;
+        }
+    }
+    if (sTimes[use].pose1 != poseId + 1 || strncmp(sTimes[use].name, name, sizeof(sTimes[use].name)) != 0 ||
+        gp->retraceCount - sTimes[use].last > 2) {
+        /* (another animation, or the pose not drawn for a while: started over) */
+        sTimes[use].pose1 = poseId + 1;
+        snprintf(sTimes[use].name, sizeof(sTimes[use].name), "%s", name);
+        sTimes[use].start = gp->retraceCount;
+    }
+    sTimes[use].last = gp->retraceCount;
+    return (int)(gp->retraceCount - sTimes[use].start);
+}
+
+/* Hammer Throw's hammer with Mario's PM64 look (battle_mario.c HammerNageru_object): a part of Mario's own of its
+ * own (3), TTYD's hammer by itself (M_H_4 / 8 / 12 by the hammer's level) thrown and turned about its middle, 12
+ * units up (HammerRotate): drawn as PM64's thrown hammer, MarioB2's Hammer<L> (its middle at its point), there. 1
+ * if it was. */
+static int drawThrownHammer(int poseId, float (*mtx)[4], int xluMode, float rotY, float scale) {
+    BattleWork* wp = _battleWorkPointer;
+    const BattleUnit* unit;
+    const BattleUnitPart* part;
+    const AnimationPose* pose;
+    const AnimationPoseData* data;
+    const char* name;
+    int level, anim, player;
+    Mtx m, t;
+    if (wp == NULL || gp == NULL || !gp->inBattle || (unit = BattleGetMarioPtr(wp)) == NULL ||
+        unit->parts == NULL || portPm64PlayerSprite(PM64_PLAYER_MARIOB2) == NULL) {
+        return 0;
+    }
+    for (part = unit->parts->nextPart; part != NULL && part->poseId != poseId; part = part->nextPart) {
+    }
+    if (part == NULL || (pose = animPoseGetAnimPosePtr(poseId)) == NULL ||
+        (data = animPoseGetAnimBaseDataPtr(poseId)) == NULL || pose->animId < 0 || pose->animId >= data->animCount) {
+        return 0;
+    }
+    name = data->anims[pose->animId].name;
+    level = strcmp(name, "M_H_4") == 0 ? 1 : strcmp(name, "M_H_8") == 0 ? 2 : strcmp(name, "M_H_12") == 0 ? 3 : 0;
+    if (level == 0) {
+        return 0;
+    }
+    anim = portPm64MarioLookAnim(name, 1, 0, &player);
+    marioLookLog(poseId, name, 1, player, anim, scale);
+    PSMTXTrans(t, 0.0f, 12.0f, 0.0f);
+    PSMTXConcat(mtx, t, m);
+    return drawOnPose(poseId, m, xluMode, rotY, scale * pm64Factor(), 1, -1 - player, -1, anim, NULL);
 }
 
 int portPm64MediaDrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, float scale) {
     AnimationPose* pose;
     AnimationPoseData* data;
     const char* name = NULL;
-    int anim, mario, i;
+    int anim, mario, i, sprite;
     if (poseId < 0) {
         return 0;
     }
@@ -1228,7 +1770,7 @@ int portPm64MediaDrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, 
     }
     mario = poseId != gPortPm64RowfPose && portPm64MarioLookOn() && portCostumeMarioPose(poseId);
     if (poseId != gPortPm64RowfPose && !mario) {
-        return 0;
+        return portPm64MarioLookOn() ? drawThrownHammer(poseId, mtx, xluMode, rotY, scale) : 0;
     }
     pose = animPoseGetAnimPosePtr(poseId);
     if (pose == NULL || (data = animPoseGetAnimBaseDataPtr(poseId)) == NULL) {
@@ -1238,17 +1780,45 @@ int portPm64MediaDrawPose(int poseId, float (*mtx)[4], int xluMode, float rotY, 
         name = data->anims[pose->animId].name;
     }
     if (mario) {
-        /* Mario's Paper Mario 64 look: the player's sprite Mario1 (front), at the NPCs' scale: Paper Mario's own
-           sizes beside its partners and enemies, and about TTYD Mario's height (half again as big, he stood a
-           head taller than the TTYD Mario he stands for) */
-        if (portPm64PlayerSprite(0) == NULL) {
+        /* Mario's Paper Mario 64 look: the player's sprites (Mario1 front; the hammer's swings MarioW1's, MarioB1's,
+           MarioB2's: portPm64MarioLookAnim), at PM64's size beside Mario (pm64Factor) as its partners, enemies and
+           bosses are drawn: TTYD Mario's own height, and PM64's proportions to all of them. A paper form (the plane,
+           boat, tube, paper-thin side, the Spring Jump's accordion, a pipe, a paper fold in battle: marioPaperOn,
+           pose->paperId) is TTYD's model folded, which PM64 has no frames of: drawn as TTYD's (not his PM64 idle
+           standing where a plane or boat should be); the Spin Hammer's spin (p_kaiten_h) stays his PM64 spin. */
+        const int battle = gp->inBattle != 0;
+        int player;
+        if (portPm64PlayerSprite(PM64_PLAYER_MARIO1) == NULL) {
             return 0;
         }
-        return drawOnPose(poseId, mtx, xluMode, rotY, scale, 1, -1, -1, portPm64MarioAnim(name));
+        anim = portPm64MarioLookAnim(name, battle, lookFrames(poseId, name), &player);
+        if (!battle && name != NULL && portSpinDashLookAnim() >= 0 && strcmp(name, portSpinDashPoseName()) == 0) {
+            /* the Spin Dash: PM64's own spin from its start (src/world/action/spin.c), shaded, with its afterimage */
+            anim = portSpinDashLookAnim();
+            player = PM64_PLAYER_MARIO1;
+            sSpinLook.on = portSpinDashLookFacing(&sSpinLook.now, &sSpinLook.before);
+        }
+        if (pose->paperId != -1 && player == PM64_PLAYER_MARIO1) {
+            sSpinLook.on = 0;
+            marioLookLog(poseId, name, battle, -1, -1, scale);
+            return 0;
+        }
+        marioLookLog(poseId, name, battle, player, anim, scale);
+        sprite = -1 - player;
+        scale *= pm64Factor();
+    } else {
+        /* Rowf (the NPC sprite archive's 166): Idle 1, Walk 2, Talk 4; PM64's size beside Mario, as the rest */
+        anim = name != NULL && name[0] == 'T' ? 4 : name != NULL && (name[0] == 'W' || name[0] == 'R') ? 2 : 1;
+        sprite = PM64_SPR_ROWF;
+        scale *= pm64Factor();
     }
-    /* Rowf (the NPC sprite archive's 166): Idle 1, Walk 2, Talk 4 */
-    anim = name != NULL && name[0] == 'T' ? 4 : name != NULL && (name[0] == 'W' || name[0] == 'R') ? 2 : 1;
-    return drawOnPose(poseId, mtx, xluMode, rotY, scale, 1, PM64_SPR_ROWF, -1, anim);
+    {
+        CoolSet cool = {0};
+        const int r = drawOnPose(poseId, mtx, xluMode, rotY, scale, 1, sprite, -1, anim, &cool);
+        sSpinLook.on = 0;
+        coolFlush(poseId, &cool);
+        return r;
+    }
 }
 
 /* --- the check: a Paper Mario 64 look never shows the host model underneath (pm64_media.h) ---
@@ -1314,6 +1884,10 @@ void portPm64HostDrawCheck(int poseId, int xluMode) {
         return;
     }
     hostStretch();
+    if (portPm64MarioLookOn() && portCostumeMarioPose(poseId) && animPoseGetAnimPosePtr(poseId) != NULL &&
+        animPoseGetAnimPosePtr(poseId)->paperId != -1) {
+        return; /* (Mario's look in a paper form: TTYD's model on purpose, portPm64MediaDrawPose) */
+    }
     npc = fieldNpcOfPose(poseId);
     n = poseId < HOST_POSES ? &sHostNote[poseId] : NULL;
     if (npc != NULL && strncmp(npc->description, "pc_pm64_", 8) == 0) {

@@ -10,7 +10,9 @@
 #include "port/achievements.h"
 #include "port/art_recipe.h"
 #include "port/aurora_pc.h"
+#include "port/pad_keyboard.h"
 #include "port/online.h"
+#include "port/online_ice.h"
 #include "port/online_menu.h"
 #include "port/pm64.h"
 #include "port/settings.h"
@@ -28,6 +30,8 @@
 #include "port/resume.h"
 #include "port/restart.h"
 #include "port/launcher_back.h"
+#include "port/mem_guard.h"
+#include "port/flight.h"
 #include "launcher_style.h"
 #include "launcher_brand.h"
 #include "launcher_look.h"
@@ -41,6 +45,7 @@
 #include <imgui.h>
 #include <imgui_internal.h> // FocusItem
 #include "port/menu_buttons.h"
+#include "port/offscreen.h" // portOpenUrl (the About page's Discord)
 extern "C" void portBindingsLauncherFrame(void); // features/bindings.cpp
 extern "C" int portBindingsAsking(void);        // (the same: a key or button asked for)
 
@@ -65,6 +70,7 @@ extern "C" int portBindingsAsking(void);        // (the same: a key or button as
 #define LAUNCHER_ONE_VERSION 1 // each version is an app of its own (port/android/app/build.gradle)
 #include "port/android_pc.h"
 #endif
+#include "port/gpu_start.h"
 
 extern "C" int portOnlinePeekInvite(char* out, size_t size); // invite.cpp
 extern "C" int portOnlineTakeInvite(char* out, size_t size);
@@ -612,11 +618,12 @@ std::string resumeFile(const Disc& d, SDL_Time* when = nullptr) {
 // Plays disc i from quick resume's save, as the save file it came from: the
 // save warp at start ($TTYD_LOAD_SAVE, warp_pc.c), here or in the version's
 // executable started (which takes this one's environment)
-void continueGame(Launcher& l, int i) {
-  const std::string path = resumeFile(l.discs[i]);
+// (from, fromSlot: another save to start from instead, a crash-safe snapshot: port/include/port/soft_crash.h)
+void continueGame(Launcher& l, int i, const std::string& from = {}, int fromSlot = 3) {
+  const std::string path = from.empty() ? resumeFile(l.discs[i]) : from;
   char sidecar[1024];
   portResumePath(sidecar, sizeof(sidecar), l.discs[i].version->id, 1);
-  std::string slot = readFile(sidecar);
+  std::string slot = from.empty() ? readFile(sidecar) : std::to_string(fromSlot);
   slot = slot.empty() || slot[0] < '0' || slot[0] > '3' ? "3" : slot.substr(0, 1);
   // (a disc that can't be played asks for nothing: no warp waits for a later Play)
   const std::string problem = playProblem(l.discs[i]);
@@ -1291,6 +1298,22 @@ void drawAbout(Launcher& l, float scale) {
   if (launcherButton(portTrLabel("How multiplayer works##about_help"), ImVec2(0, 0), scale)) {
     launcherHelpOpen();
   }
+  {
+    // the Paper Cut Discord, in the browser (a link it couldn't open: shown, to go there by hand)
+    static const char kDiscord[] = "https://discord.gg/qkSQuRPzcQ";
+    static std::string sDiscordSaid;
+    ImGui::Spacing();
+    if (launcherButton(portTrLabel("The Paper Cut Discord##about_discord"), ImVec2(0, 0), scale)) {
+      char why[600];
+      sDiscordSaid = portOpenUrl(kDiscord) ? std::string() : std::string(portOpenError(why, sizeof(why), kDiscord, false));
+    }
+    note(sDiscordSaid.empty() ? portTr("Help, players for online games and ideas: discord.gg/qkSQuRPzcQ. Bugs still "
+                                       "go to GitHub issues.")
+                              : sDiscordSaid.c_str());
+  }
+  // a bug report's zip, its contents shown first, then GitHub's page (port/settings/features/report_problem.cpp)
+  ImGui::Spacing();
+  portReportProblemSection("about");
 #if !(defined(__APPLE__) && TARGET_OS_IPHONE)
   // Quit: the app closed, as its window's close does (a controller alone, Steam Deck's game mode, has no other)
   ImGui::Spacing();
@@ -1315,6 +1338,10 @@ void drawAbout(Launcher& l, float scale) {
                      "License 1.1)."));
   ImGui::TextWrapped("%s", portTr("Your music is read with stb_vorbis (public domain), dr_mp3 and dr_flac (public "
                                   "domain or MIT No Attribution)."));
+  if (portIceAvailable()) {
+    ImGui::TextWrapped("%s", portTr("Online play's direct connection uses libjuice (Mozilla Public License 2.0, "
+                                    "unchanged; its source: github.com/paullouisageneau/libjuice)."));
+  }
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
   ImGui::TextWrapped("%s", portTr("The licence texts are in THIRD_PARTY.txt of Paper Cut's desktop packages and in its "
                      "source (docs/THIRD_PARTY.md)."));
@@ -2070,9 +2097,14 @@ void drawRecovery(Launcher& l) {
     for (size_t i = 0; i < l.discs.size(); i++) {
       const Disc& d = l.discs[i];
       const bool same = d.version != nullptr && (crashed.empty() ? int(i) == l.selected : crashed == d.version->id);
-      if (same && playProblem(d).empty() && !resumeFile(d).empty()) {
+      if (!same || !playProblem(d).empty()) {
+        continue;
+      }
+      // quick resume's save, or a crash-safe snapshot (port/include/port/soft_crash.h)
+      PortRecoveryResume r = portRecoveryResume(d.version->id);
+      if (r.have || !r.snaps.empty()) {
         sDisc = int(i);
-        sResume = portRecoveryResume(d.version->id);
+        sResume = r;
         break;
       }
     }
@@ -2087,7 +2119,37 @@ void drawRecovery(Launcher& l) {
   if (pick == 1 && sDisc >= 0 && sDisc < int(l.discs.size())) {
     l.selected = sDisc;
     continueGame(l, sDisc);
+  } else if (pick >= 3 && pick - 3 < int(sResume.snaps.size()) && sDisc >= 0 && sDisc < int(l.discs.size())) {
+    const PortRecoverySnap& snap = sResume.snaps[size_t(pick - 3)];
+    l.selected = sDisc;
+    continueGame(l, sDisc, snap.path, snap.slot);
   }
+}
+
+// After a run that stopped on screen (no crash report): the undo question and the crash-safe snapshots, in the
+// Safe graphics offer where it shows, else in a window of their own (soft_crash.cpp); a snapshot picked there
+// plays its version's disc from it
+void drawSoftCrash(Launcher& l, float scale) {
+  if (!portFlightOfferShows()) {
+    ImGui::PushFont(gLauncherFonts.body);
+    portSoftCrashWindowDraw(scale, nullptr, true);
+    ImGui::PopFont();
+  }
+  std::string gameId, path;
+  int slot = 3;
+  if (!portSoftCrashTakeContinue(&gameId, &path, &slot)) {
+    return;
+  }
+  for (size_t i = 0; i < l.discs.size(); i++) {
+    const Disc& d = l.discs[i];
+    if (d.version != nullptr && gameId == d.version->id && playProblem(d).empty()) {
+      l.selected = int(i);
+      continueGame(l, int(i), path, slot);
+      return;
+    }
+  }
+  std::printf("[crashsafe] no disc of %s to continue on\n", gameId.c_str());
+  std::fflush(stdout);
 }
 
 } // namespace
@@ -2136,10 +2198,21 @@ extern "C" int portLauncherRun(const char* userPath, const char* finder, char* p
     portAuroraBeginFrame(); // exits the program if the window is closed
     draw(l, time);
     drawRecovery(l); // after a crash: once, over it
+    if (!portCrashReportPending()) {
+      // after a run that stopped on screen (a phone's GPU reset): Safe graphics, the other API, the record
+      ImGui::PushFont(gLauncherFonts.body);
+      portFlightOfferDraw(launcherUiScale(touchScreen() ? 1.6f : 1.f));
+      ImGui::PopFont();
+      drawSoftCrash(l, launcherUiScale(touchScreen() ? 1.6f : 1.f)); // (the undo question, the snapshots)
+    }
+    portFlightFrame(-1.f, 0.f); // the flight record's seconds (port/include/port/flight.h)
+    portMemGuardFrame(); // phones: the memory watched, its notes (port/include/port/mem_guard.h)
     // (the next frame's way back isn't the page's while a pop-up or a text field has it: takeBack)
     sBackBusy = ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup) || ImGui::IsAnyItemActive();
+    portPadKeyboardDraw(); // a controller's on-screen keyboard over a text field being typed in (pad_keyboard.cpp)
     launcherStyleEnd();
     aurora_end_frame();
+    portGpuStartFrame(); // the first frame drawn: the graphics API started (port/include/port/gpu_start.h)
     launcherShotFrame(time); // tests: captures
     // $TTYD_LAUNCHER_PLAY_AT=<seconds> (tests): Play on the disc chosen then, as its button does
     static const char* sPlayAt = SDL_getenv("TTYD_LAUNCHER_PLAY_AT");

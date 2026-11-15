@@ -1190,9 +1190,15 @@ static void abortFrame(int seq) {
             seqSetSeq(SEQ_MAP_CHANGE, sReturnMap[0] != '\0' ? sReturnMap : "gor_01", NULL);
         }
     } else if (sState == STATE_FIGHT) {
-        if (gp != NULL && gp->inBattle && _battleWorkPointer != NULL &&
-            !(_battleWorkPointer->flags & BATTLE_FLAG_ESCAPED)) {
-            _battleWorkPointer->flags |= BATTLE_FLAG_ESCAPED;
+        /* (once in its main phase: the run away ended at once from wherever it is, as mode_leave_aurora.c's
+           battleFrame does: the flag alone is read only after an action, so a fight waiting in a side's command
+           menu, as one taken back from the title's Modes, played on for good) */
+        BattleWork* wp = _battleWorkPointer;
+        if (gp != NULL && gp->inBattle && wp != NULL && !(wp->flags & BATTLE_FLAG_ESCAPED) &&
+            BattleGetSeq(wp, SEQ_UNKNOWN) == 2) {
+            wp->flags |= BATTLE_FLAG_ESCAPED;
+            BattleSetSeq(wp, SEQ_UNKNOWN, 3);
+            BattleSetSeq(wp, SEQ_END, 0x7000000);
             printf("[versus] taken back: its battle ends as run away\n");
             fflush(stdout);
         }

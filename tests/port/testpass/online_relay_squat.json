@@ -1,0 +1,72 @@
+{
+ "desc": "a squatter (the test relay's --squat: a connection without the code takes the guest's place half a second after the host is in, sends garbage and never a key round, and comes back each second): after 20 s without the key the host has the relay take it out with its address kept out ('drop guest block'); its tries after are held back, and the real guest, joining later (frame 7200: 24 s at the tests' pace of 300 frames a second), gets the guest's place and plays with the same progress",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 11600
+ },
+ "online": {
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 8400",
+     "give 149",
+     "flag 1000",
+     "wait 3000"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": -1
+    },
+    "log_must": [
+     "net: the game in player 2's place hasn't agreed the key in 20 s",
+     "net: the relay asked to take player 2's place's game out \\(no key\\), its address kept out a while",
+     "net: session with player 2"
+    ],
+    "log_must_not": [
+     "(?s)asked to take player 2's place.*asked to take player 2's place"
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 9000",
+     "coins 10",
+     "wait 2500"
+    ],
+    "env": {
+     "TTYD_SYNC_AT": 7200
+    },
+    "log_must": [
+     "net: in the relay's room 2TST as the guest"
+    ],
+    "log_must_not": [
+     "this game asks for player 3 or 4's place",
+     "The host removed you"
+    ]
+   }
+  ],
+  "link": "relay",
+  "relay_args": [
+   "--squat",
+   "0.5"
+  ]
+ },
+ "file_must": {
+  "relay.txt": [
+   "squat: in the guest's place",
+   "2TST guest dropped by the host \\(block\\)",
+   "squat: out after [\\d.]+ s \\(refused: The relay is holding"
+  ]
+ },
+ "timeout": 300
+}

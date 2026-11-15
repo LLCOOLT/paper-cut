@@ -1,0 +1,31 @@
+{
+ "desc": "Frame interpolation by replay at 120 Hz on a walk in Rogueport (gor_01: walk, jump, hammer, the pause menu): the game draws each frame once (no draw-list entry twice in a game frame), every frame replayable, its in-between frames halfway between the game's",
+ "groups": [
+  "interp",
+  "bugs"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_FRAMERATE": 120,
+  "TTYD_INTERP_MODE": "replay",
+  "TTYD_DRAWONCE_STRICT": 1,
+  "TTYD_NAN_CHECK": 1
+ },
+ "input": "tests/port/input/gor_01_walk.txt",
+ "log_must": [
+  "^\\[interp\\] 2 frames per game frame",
+  "^\\[interp-replay\\] mode replay",
+  "^\\[input\\] end$"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash",
+  "^\\[drawonce\\] FAIL",
+  "^\\[interp-replay\\] a frame not replayed"
+ ],
+ "timeout": 180
+}

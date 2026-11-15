@@ -1,0 +1,35 @@
+{
+ "desc": "Art Attack really drawn, at 120 Hz: three loops steered round the enemies with the stick in a battle (hei_00, battle 4), the cut-outs, the damage and the end of the move. A frame drawn between the game's freed the loop's screen capture and the game's own frame then read it: a crash the moment the first loop closed (0.5.0, any frame rate above 60 or stereo 3D)",
+ "groups": [
+  "battle"
+ ],
+ "versions": [
+  "us",
+  "jp",
+  "eu"
+ ],
+ "env": {
+  "TTYD_MAP": "hei_00",
+  "TTYD_PARTY": "1",
+  "TTYD_GOD": "1",
+  "TTYD_SP": "800",
+  "TTYD_EXIT_FRAMES": 4000
+ },
+ "settings": {
+  "framerate": "120"
+ },
+ "input": "tests/port/input/star_art_attack_draw.txt",
+ "expect_shots": [
+  "ready",
+  "loop1",
+  "after"
+ ],
+ "timeout": 200,
+ "log_must": [
+  "^\\[input\\] end$",
+  "^\\[interp\\] 2 frames per game frame"
+ ],
+ "log_must_not": [
+  "\\*\\*\\* crash"
+ ]
+}

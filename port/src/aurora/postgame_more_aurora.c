@@ -34,6 +34,7 @@
 #include "evt/evt_story.h"
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
+#include "mario/mario.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 
@@ -362,9 +363,20 @@ static int spotWanted(int i) {
 
 static char sMap[16];
 static int sAsked;
+static unsigned sAskedOn; /* the settings the room's spots were set by (a bit each, spotBit) */
+
+/* the setting a spot comes with, as a bit: the quiz, the newsletter's, the token seller */
+static unsigned spotBit(int i) {
+    return i == 0 ? 1u : i <= 4 ? 2u : 4u;
+}
+
+static unsigned spotsOn(void) {
+    return (on("pg_boo_quiz") ? 1u : 0u) | (on("pg_newsletter") ? 2u : 0u) | (on("pg_buy_tokens") ? 4u : 0u);
+}
 
 static void spots(void) {
     int i;
+    unsigned now;
     if (gp->inBattle || seqCheckSeq() || marioStGetSystemLevel() != 0) {
         return;
     }
@@ -372,10 +384,29 @@ static void spots(void) {
         snprintf(sMap, sizeof(sMap), "%s", gp->currentMapName);
         sAsked = 0;
     }
+    now = spotsOn();
+    if (sAsked && now != sAskedOn) {
+        /* a setting changed in the room: its spots set now, or taken away now (while Mario is free: not in the
+         * middle of a talk with one) */
+        if (!marioChkCtrl()) {
+            return;
+        }
+        for (i = 0; i < SPOTS; i++) {
+            NpcEntry* npc;
+            if ((sAskedOn & ~now & spotBit(i)) != 0 && strcmp(kSpots[i].map, sMap) == 0 &&
+                (npc = npcNameToPtr_NoAssert(kSpots[i].name)) != NULL) {
+                npcDeleteGroup(npc);
+                printf("[postgame] %s taken away in %s\n", kSpots[i].name, sMap);
+                fflush(stdout);
+            }
+        }
+        sAsked = 0;
+    }
     if (sAsked) {
         return;
     }
     sAsked = 1;
+    sAskedOn = now;
     for (i = 0; i < SPOTS; i++) {
         EventEntry* e;
         if (strcmp(kSpots[i].map, sMap) != 0 || !spotWanted(i) || npcNameToPtr_NoAssert(kSpots[i].name) != NULL) {

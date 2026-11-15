@@ -20,6 +20,26 @@ void portMenuMouseEvent(const void* sdlEvent);
 void portMenuMark(unsigned ports);
 /* A message reading its buttons: the layer as for a menu, the button pictures left as the field's */
 void portMenuMarkText(unsigned ports);
+/* The game's X (or Y), read as an action while a menu is up, stays on the controller button the field has it
+ * on (ports a mask, buttons PAD_BUTTON_X/Y): the battle menus' X while an audience member winds up a throw.
+ * The menu layer then moves only what doesn't take it from there; as a mark, for this frame and two more. */
+void portMenuMarkKeep(unsigned ports, unsigned buttons);
+/* the game's face buttons kept so for a port now (portMenuLayerFrame's) */
+unsigned portMenuLayerKeep(int port);
+/* A help that shows the field's buttons is up over a menu (the battle's action command help, its buttons
+ * pressed after the menu closes): the button pictures stay the field's; the menu's B still backs out */
+void portMenuMarkFieldPictures(unsigned ports);
+/* The menu layer's places (port/include/port/menu_buttons.h), for a controller whose confirm and back give the
+ * game's face buttons confirm and back (0-3: A B X Y) out of the menus: to[i] the game's face button that the
+ * one giving i out of the menus gives in them. Only confirm and back move (onto A and B), and only what they
+ * displace moves with them: X and Y stay where the field has them whenever they can, keep's (PAD_BUTTON_*)
+ * never move. Nonzero when anything moves. */
+int portMenuLayerPlace(int confirm, int back, unsigned keep, int to[4]);
+/* tests ($TTYD_INPUT): a script read the game's buttons (evt_sub.c's evt_key_get_*): logged when it has a face
+ * button, with the menu layer's state then (a lesson's read: off, the field's buttons) */
+void portMenuScriptKeys(unsigned keys);
+/* the touch controls: a tap at (nx, ny), 0-1 across the picture, is on a zone (portMenuTapZone) */
+int portMenuTapInZone(float nx, float ny);
 /* A selection list is up (taps on the picture are its rows, not A). */
 int portMenuOpen(void);
 /* Where the mouse's and Esc's back is the game's B: a menu up (portMenuOpen), or a message or choice
@@ -59,6 +79,10 @@ int portMenuPoint(float* gx, float* gy);
  * one (the players' bars look whether it is theirs); portMenuTapTake takes it (no one else gets it). */
 int portMenuTapPeek(float* gx, float* gy);
 void portMenuTapTake(void);
+/* A place a tap is wanted on this frame though no list is up (the same units, x0..x1, y0..y1): a paper note's
+ * sheet, balloon and choices, the players' bars. The touch controls hand a tap there over (portMenuTap), as
+ * they do with a list up, instead of pressing A for it; a zone lasts 3 frames. */
+void portMenuTapZone(float x0, float y0, float x1, float y1);
 /* The battle command menu (battle_menu_disp.c): the ring icon (list 0) or
  * list row (list 1) under the pointer this frame, or -1; *click as
  * portMenuPoint's answer. */

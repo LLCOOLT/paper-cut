@@ -82,3 +82,35 @@ B+X+Start führt zum Titel, statt einzufrieren.
 
 German and French text that shows; menus that fit.
 Deutscher und französischer Text erscheint; Menüs passen.
+
+# 0.5.1
+
+Online holds together: drops heal, rooms come back.
+Online hält: Abbrüche heilen, Räume kehren zurück.
+
+Paper Mario 64's Spin Dash, with its spin badges.
+Paper-Mario-Spin-Dash, mit seinen Dreh-Orden.
+
+Run from Paper Mario 64's bosses.
+Vor den Bossen aus Paper Mario fliehen.
+
+Visit Mario's house again from the Journal's map.
+Wieder zu Marios Haus, über die Tagebuch-Karte.
+
+A quick wheel of eight common paper notes.
+Ein Schnellrad mit acht gängigen Papiernotizen.
+
+Wardrobe colours cover every part, edge to edge.
+Garderoben-Farben decken jeden Teil, bis zum Rand.
+
+Smoother at 120 Hz and above.
+Flüssiger ab 120 Hz.
+
+Low on video memory? Graphics step down instead.
+Wenig Grafikspeicher? Dann sinkt die Grafikstufe.
+
+Paper Mario 64 enemies act out every battle state.
+Gegner aus Paper Mario zeigen jeden Kampfzustand.
+
+Fixes and features for 15 reported issues.
+Korrekturen und Neues zu 15 gemeldeten Themen.

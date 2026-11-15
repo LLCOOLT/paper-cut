@@ -590,6 +590,8 @@ struct Pm64LinkSettings {
                           "ROM linked.",
                           PORT_SETTING_CHANGES_PLAY, "pm64_partners",
                           "paper mario 64 pm64 n64 partners goombario kooper bombette parakarry watt sushie lakilester bow");
+    /* (no "Partners' look" row in this release: the sprites only, pm64_models_pc.c's PM64_PAPER_LOOK; its choice
+       between the TTYD paper models and the ROM's sprites comes back with them) */
     portSettingsDeclare("pm64_met_all", 0, 0, 1);
     portSettingsAddToggle("Enhancements", "Paper Mario 64 partners from the start",
                           "They're on the Partner wheel as soon as their TTYD partners have joined, without the "
@@ -601,7 +603,7 @@ struct Pm64LinkSettings {
     portSettingsAddToggle("Enhancements", "Win Paper Mario partners from their bosses",
                           "Each Paper Mario partner waits with its chapter's boss, which comes to Rogueport as the "
                           "story reaches it (mostly once its TTYD partner has joined): beat the boss there or from the "
-                          "Paper Mario 64 boss list, and the partner joins you.",
+                          "Paper Mario 64 boss list, and the partner joins you. A partner who already joined stays.",
                           PORT_SETTING_CHANGES_PLAY, "pm64_join",
                           "paper mario 64 pm64 partners join boss beat win jr troopa goombario koopa bros kooper");
     // their own field abilities (pm64_field_pc.c): 0 full (as in Paper Mario), 1 only what the TTYD partner reaches
@@ -615,6 +617,14 @@ struct Pm64LinkSettings {
                           PORT_SETTING_CHANGES_PLAY, "pm64_field", kField, 2,
                           "paper mario 64 pm64 partners field abilities parakarry flutter lakilester spikes lava "
                           "sushie swim water skip");
+    // Paper Mario's Spin Dash in the field (port/include/port/pm64_spin.h; GitHub #51)
+    portSettingsDeclare("pm64_spin", 0, 0, 1);
+    portSettingsAddToggle("Enhancements", "Paper Mario Spin Dash",
+                          "With your Paper Mario ROM linked: Mario dashes forward spinning, as in Paper Mario, with "
+                          "Z on the keyboard or a tap of L (Spin Dash in Bindings). With Paper Mario 64 badges on, "
+                          "Rowf sells badges that improve it. Online, only when everyone has the ROM linked.",
+                          PORT_SETTING_CHANGES_PLAY, "pm64_spin",
+                          "paper mario 64 pm64 spin dash z speedy spin attack dizzy attack badges first strike move");
     portSettingsAddOverlay(joinNotice, nullptr);
     portSettingsAddOverlay(unlinkedNote, nullptr);
     portPauseAddForm(&kForm);

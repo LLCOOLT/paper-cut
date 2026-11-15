@@ -364,6 +364,7 @@ static void remakeData(int on) {
 static void fastTravelFrame(void);
 
 static void sceneSpeedFrame(void);
+static void retryFrame(void);
 
 void portGameplusFrame(void) {
     remakeData(portGameplus("remake_balance"));
@@ -372,6 +373,7 @@ void portGameplusFrame(void) {
     sceneSpeedFrame(); /* (Skip repeated scenes: a boss's intro after a Game Over) */
     portQolFrame(); /* the partner hint (port/include/port/qol.h) */
     portLoadoutFrame(); /* a loadout worn from the Start menu, once it is closed */
+    retryFrame();       /* Retry on Game Over turned on in a room: its retry point now */
 }
 
 /* --- Faster battle menus --- */
@@ -397,6 +399,26 @@ __attribute__((weak)) int portHardcoreActive(void) {
 }
 
 static int sRetryLoading; /* frames left for the requested load to happen */
+
+/* Retry on Game Over turned on in a room: the retry point taken there and then (the next free moment in the
+ * field), not only at the next room's entry; it also replaces one left from before it was turned off. */
+static void retryFrame(void) {
+    static int sWas = -1, sPending;
+    const int on = portGameplus("gameover_retry") && !portHardcoreActive();
+    if (sWas == 0 && on) {
+        sPending = 1;
+    }
+    sWas = on;
+    if (!on) {
+        sPending = 0;
+    }
+    if (sPending && gp != NULL && seqGetSeq() == SEQ_GAME && !seqCheckSeq() && !gp->inBattle && marioChkCtrl()) {
+        sPending = 0;
+        portSaveStateRequest(PORT_SAVE_STATE_RETRY, 0);
+        printf("[gameplus] Retry on Game Over: from here, in %s\n", gp->currentMapName);
+        fflush(stdout);
+    }
+}
 
 void portRetryPoint(void) {
     sRetryLoading = 0;

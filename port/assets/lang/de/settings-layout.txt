@@ -132,10 +132,8 @@ Vorspulen und Zurückspulen
 Collectibles
 Sammelobjekte
 
-
 Output
 Ausgabe
-
 
 In the background
 Im Hintergrund
@@ -143,8 +141,8 @@ Im Hintergrund
 After the story
 Nach der Geschichte
 
-Extra frames between the game's own 60: smoother motion.
-Zusätzliche Bilder zwischen den 60 des Spiels: flüssigere Bewegung.
+Smoother motion on high-refresh screens; uses more power.
+Flüssigere Bewegung auf schnellen Bildschirmen; braucht mehr Strom.
 
 Every key and controller button: the game's, and Paper Cut's own shortcuts.
 Jede Taste und jeder Controller-Knopf: die des Spiels und Paper Cuts eigene Kurzbefehle.

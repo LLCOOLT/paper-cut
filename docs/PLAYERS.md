@@ -30,7 +30,7 @@ play on the keyboard).
   (over the title, back to its buttons); Back goes back to the page's front.
 - **Team bonus:** with two players or more, when everyone who acts in a turn
   lands their action command (Nice or better), a "Team bonus!" pop-up and a
-  quarter of a Star Power bar. On by default (also Multiplayer > Team bonus);
+  quarter of a Star Power bar. Off by default (Multiplayer > Team bonus turns it on);
   online it's the host's setting and the host's world gives it.
 
 **From the launcher:** plain **Play** (or **New adventure** when you have no
@@ -100,7 +100,7 @@ leaves the stick alone, as player 2's partner does. Mario's player calls them
 all back with Y. "3P" (green) and "4P" (yellow) show over them, beside "1P"
 and "2P".
 
-**The camera and how far they go.** With Multiplayer → **Camera** on **Fit
+**The camera and how far they go.** With Multiplayer → **Co-op camera** on **Fit
 everyone** (the default), the field camera pans toward the group and pulls
 back a little (at most a quarter further) so everyone stays in the picture,
 easing in and out. It stays inside each room's own camera limits (the room's
@@ -154,7 +154,7 @@ audience (below).
 
 ## In the audience
 
-With Multiplayer → **Idle players join the audience** (on by default; it only
+With Multiplayer → **Idle players join the audience** (off by default; it only
 does anything in co-op), a player with no character in the battle (player 3
 or 4 whose companion isn't the partner fighting, player 2 while the partner
 is player 3's or 4's, anyone when no partner is out) gets a Toad of their own

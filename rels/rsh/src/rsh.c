@@ -1879,6 +1879,12 @@ static void rsh_window_tev(MapTevCallbackInfo* info) {
                 break;
             }
         }
+#ifdef TARGET_PC
+        /* as envSetWater (envdrv.c): no group above the window, no screen box read; nothing to copy */
+        if (p == NULL) {
+            return;
+        }
+#endif
     } else {
         if (!(flags & MAPOBJ_FLAG_BBOX)) {
 #ifdef TARGET_PC

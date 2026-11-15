@@ -23,6 +23,11 @@ OUT = os.path.join(ROOT, "port", "src", "common", "area_maps_gen.c")
 # the areas with rooms to walk (not the title, demos, tests, minigames, the Pit's floors)
 AREAS = ["gor", "tik", "hei", "nok", "gon", "win", "mri", "tou", "usu", "jin", "muj", "dou", "hom", "rsh", "eki",
          "pik", "bom", "moo", "aji", "las", "gra"]
+# include/version.h's order, for the tables' #if VERSION branches
+VERSIONS = {"VERSION_DEMO_US": 0, "VERSION_DEMO_JP": 1, "VERSION_JP": 2, "VERSION_US": 3, "VERSION_DEMO_US2": 4,
+            "VERSION_DEMO_EU": 5, "VERSION_EU": 6}
+# an area's other rels (rooms of that area built apart)
+SPLIT_RELS = {"tou": ["tou2"]}
 
 DIRS = {"n": (0, -1), "ne": (1, -1), "e": (1, 0), "se": (1, 1), "s": (0, 1), "sw": (-1, 1), "w": (-1, 0),
         "nw": (-1, -1)}
@@ -53,10 +58,24 @@ def split_entries(body):
 
 
 def fields(entry):
-    """An entry's fields in order, comments and preprocessor lines left out."""
+    """An entry's fields in order, comments left out and #if VERSION ... #else ... #endif read
+    as the US version (both branches kept, tou_05's and pik_02's entries had a field too many)."""
     lines = []
+    keep = []  # per open #if: whether its lines are the US version's
     for line in entry.split("\n"):
-        if line.strip().startswith("#"):
+        s = line.strip()
+        if s.startswith("#"):
+            m = re.match(r"#\s*if\s+VERSION\s*(<=|>=|==|!=|<|>)\s*(VERSION_\w+)", s)
+            if m:
+                keep.append(eval("%d %s %d" % (VERSIONS["VERSION_US"], m.group(1), VERSIONS.get(m.group(2), 3))))
+            elif re.match(r"#\s*if", s):
+                keep.append(True)
+            elif re.match(r"#\s*else", s) and keep:
+                keep[-1] = not keep[-1]
+            elif re.match(r"#\s*endif", s) and keep:
+                keep.pop()
+            continue
+        if not all(keep):
             continue
         line = re.sub(r"//.*", "", line)
         lines.append(line)
@@ -80,8 +99,22 @@ def fields(entry):
     return parts
 
 
+CAST = re.compile(r"\(\s*(?:const\s+)?char\s*\*\s*\)\s*")
+
+
 def string_of(field):
-    m = STRING.fullmatch(field.strip())
+    """A field's string literal, through the decomp's wrappings: ("w_bero") and (char*)"w_bero"
+    (hei_10, tou_02, bom_01, rsh_05, eki_00 and others write theirs so; read as plain strings
+    only, those rooms had no ways out, and so no ways in for fast travel: issue #61)."""
+    v = field.strip()
+    while True:
+        w = v[CAST.match(v).end():] if CAST.match(v) else v
+        if w.startswith("(") and w.endswith(")"):
+            w = w[1:-1].strip()
+        if w == v:
+            break
+        v = w
+    m = STRING.fullmatch(v)
     return m.group(1) if m else None
 
 
@@ -89,8 +122,8 @@ def read_exits():
     """(from room, hit name, to room or None) for every bero, by area."""
     exits = []
     rooms = set()
-    for area in AREAS:
-        src = os.path.join(RELS, area, "src")
+    # (an area's rooms may be in more than one rel: Glitzville's arena, tou_03, is in tou2's)
+    for src in [os.path.join(RELS, d, "src") for area in AREAS for d in [area] + SPLIT_RELS.get(area, [])]:
         if not os.path.isdir(src):
             continue
         for dirpath, dirnames, filenames in os.walk(src):
@@ -218,6 +251,12 @@ def main():
         seen.add(key)
         d = direction(hit)
         exit_rows.append((index[frm], hit, to if to else "", index.get(to, -1) if to else -1, DIR_CODE.get(d, 0)))
+    # every room another leads to must have ways of its own: fast travel arrives through them, and a
+    # room with none can't be travelled to (a table the reader missed; issue #61's hei_10)
+    own = {room_rows[r][0] for r, _, _, _, _ in exit_rows}
+    bare = sorted({to for _, _, to, toi, _ in exit_rows if toi >= 0 and to not in own})
+    if bare:
+        raise SystemExit("rooms led to with no ways of their own (a BeroEntry table not read?): " + " ".join(bare))
     out.append("const PortAreaExit portAreaExits[] = {")
     for frm, hit, to, toi, d in exit_rows:
         out.append('    {%d, "%s", "%s", %d, %d},' % (frm, hit, to, toi, d))

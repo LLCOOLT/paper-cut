@@ -47,6 +47,7 @@ void portCoopNotice(const char* english); /* second_player_pc.c: a notice over t
 #include "evt/evt_story.h"
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
+#include "mario/mario.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "system.h"
@@ -587,6 +588,14 @@ void portPitWhackaFrame(void) {
             evtEntry(whacka_spawn, 10, 0);
         }
         sState = 1;
+    }
+    /* turned off while he waits on the floor: gone at once (and back if it's on again) */
+    if (sState == 1 && !portPitWhackaOn() && marioChkCtrl()) {
+        NpcEntry* npc = npcNameToPtr_NoAssert(WHACKA);
+        if (npc != NULL) {
+            npcDeleteGroup(npc);
+        }
+        sState = 0;
     }
 }
 

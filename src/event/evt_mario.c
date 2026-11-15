@@ -887,6 +887,15 @@ USER_FUNC(evt_mario_normalize) {
     }
 #endif
 
+#ifdef TARGET_PC
+    /* Mario still seated on Yoshi with the ride gone from under him: the script stopped the party before
+       normalizing (hei_01's christine_hei_01, reached riding into the room in the open world), so Yoshi never
+       plays the dismount and nothing moves Mario again. Put him down (party_yoshi.c) */
+    if (mp->currMotionId == MARIO_MOTION_YOSHI && yoshiGetStatus() == 0) {
+        portYoshiRiderLost();
+    }
+#endif
+
     switch (event->userdata[0]) {
         case 0:
             ret = 0;

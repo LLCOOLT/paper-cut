@@ -1,0 +1,61 @@
+{
+ "desc": "the relay restarts mid-session (a deploy: the stand-in's --restart 10:1 closes every connection with 1012, forgets its rooms and tickets and is down a second): both games take it as 'come back now', not a loss: each back in a moment (half a second to one and a half, spread, then backing off while it's down; a guest before its host asked again as soon), the room made again by the host's same code, the session resumed (the same session ids), no 'Can't reach the online service', no end window, the same progress at the end",
+ "groups": [
+  "online"
+ ],
+ "versions": [
+  "us"
+ ],
+ "backend": "headless",
+ "env": {
+  "TTYD_MAP": "gor_01",
+  "TTYD_EXIT_FRAMES": 6000
+ },
+ "online": {
+  "link": "relay",
+  "relay_args": [
+   "--restart",
+   "10:1"
+  ],
+  "players": [
+   {
+    "role": "host",
+    "input": [
+     "wait 60",
+     "give 148",
+     "coins 150",
+     "wait 3600",
+     "give 149",
+     "coins 20",
+     "wait 2200"
+    ],
+    "env": {
+     "TTYD_SYNC_PICK": 1
+    },
+    "log_must": [
+     "net: the relay restarted the connection: back in [0-9]+ ms \\(nothing lost\\)",
+     "net: session resumed with player 2"
+    ],
+    "log_must_not": [
+     "Can't reach the online service",
+     "end: "
+    ]
+   },
+   {
+    "role": "guest",
+    "input": [
+     "wait 5900"
+    ],
+    "log_must": [
+     "net: the relay restarted the connection: back in [0-9]+ ms \\(nothing lost\\)",
+     "net: session resumed with player 1"
+    ],
+    "log_must_not": [
+     "Can't reach the online service",
+     "end: "
+    ]
+   }
+  ]
+ },
+ "timeout": 300
+}
