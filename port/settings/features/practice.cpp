@@ -658,8 +658,9 @@ struct Register {
     portSettingsAddSection(kTab, "Stats", "Changes count as practice: no achievements until a file is loaded.",
                            kInGame, statsSection, "coins hp fp bp level star points pieces shine edit cheat");
     portSettingsAddSection(kTab, "Items", nullptr, kInGame, itemsSection, "items badges key items give edit cheat");
-    portSettingsAddSection(kTab, "Story and flags", "GSW and GSWF: the story's progress and what has happened.",
-                           kInGame, flagsSection, "gsw gswf flags story progress edit sequence");
+    portSettingsAddSection(kTab, "Story and flags",
+                           "The story's progress and what has happened so far, to read or change.", kInGame,
+                           flagsSection, "gsw gswfflags story progress edit sequence");
     portSettingsAddSection(kTab, "Jump to chapter",
                            "The story, partners, level, gear, badges, Star Powers and key items a file has at that "
                            "point, and Mario in its first room. The game asks first; nothing is saved until you "

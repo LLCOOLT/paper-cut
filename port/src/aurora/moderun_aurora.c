@@ -8,6 +8,7 @@
 #include "driver/seqdrv.h"
 #include "driver/swdrv.h"
 #include "mario/mario.h"
+#include "mario/mario_party.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "system.h"
@@ -19,6 +20,7 @@
 typedef struct Snap {
     PouchData pouch;
     int story;
+    int partner; /* the partner out in the field */
 } Snap;
 
 static int sOn = -1, sExitAfter, sEnds = 1, sLeaveAt, sLeaveRun;
@@ -38,6 +40,7 @@ static int envInt(const char* name, int def) {
 static void take(Snap* s) {
     memcpy(&s->pouch, pouchGetPtr(), sizeof(PouchData));
     s->story = swStoryPeek();
+    s->partner = marioGetPartyId();
 }
 
 static int idleField(void) {
@@ -82,9 +85,12 @@ static void check(const char* mode) {
                  a->level, b->level, a->maximumHP, b->maximumHP, a->maximumFP, b->maximumFP, a->maximumBP,
                  b->maximumBP, a->starPowersObtained, b->starPowersObtained);
     }
-    printf("[moderun] check after %s: %s, coins %d -> %d, star points %d -> %d, story %s (%d%s%d)%s\n", mode, out,
-           a->coins, b->coins, a->starPoints, b->starPoints, sBefore.story == swStoryPeek() ? "same" : "changed",
-           sBefore.story, sBefore.story == swStoryPeek() ? ", now " : " -> ", swStoryPeek(), more);
+    printf("[moderun] check after %s: %s, coins %d -> %d, star points %d -> %d, story %s (%d%s%d)%s, partner out %s "
+           "(%d -> %d)\n",
+           mode, out, a->coins, b->coins, a->starPoints, b->starPoints,
+           sBefore.story == swStoryPeek() ? "same" : "changed", sBefore.story,
+           sBefore.story == swStoryPeek() ? ", now " : " -> ", swStoryPeek(), more,
+           sBefore.partner == marioGetPartyId() ? "same" : "changed", sBefore.partner, marioGetPartyId());
     fflush(stdout);
 }
 

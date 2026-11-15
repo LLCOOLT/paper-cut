@@ -26,9 +26,8 @@ const bool sAdded = [] {
   // the device's rate: the 32 kHz mix resampled to 48 kHz by the game (hw_pc.c resample48), not the system
   portSettingsDeclare("audio_48k", 1, 0, 1);
   portSettingsAddChoice("Audio", "Output rate",
-                        "48 kHz: the game's 32 kHz sound resampled by a high-quality filter before it reaches the "
-                        "system, which then plays it as it is (most devices run at 48 kHz). 32 kHz: as the "
-                        "GameCube, the system resamples it.",
+                        "48 kHz: Paper Cut converts the sound with a high-quality filter, best for most devices. 32 "
+                        "kHz: the GameCube's own rate, converted by the system.",
                         PORT_SETTING_NEXT_START, "audio_48k", kRates, 2,
                         "audio sample rate 48khz 48000 32khz resampler quality output hz");
   return true;

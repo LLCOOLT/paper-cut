@@ -274,6 +274,12 @@ Vittoria immediata sui deboli
 Touching a field enemy at least 10 levels below Mario wins at once, with the usual coins and drops (never bosses, scripted fights, the Pit, Master Quest, challenges or online).
 Toccare un nemico di almeno 10 livelli sotto Mario fa vincere subito, con le solite monete e i soliti oggetti (mai con boss, lotte di trama, nel Pozzo, in Master Quest, nelle sfide o online).
 
+Spring Jump from standing only
+Salto Molla solo da fermo
+
+With the Ultra Boots, the Spring Jump starts only while Mario stands still: holding A and turning the stick as he comes down from a jump no longer springs him up the moment he lands.
+Con gli Ultrastivali, il Salto Molla parte solo quando Mario sta fermo: tenere premuto A e ruotare la levetta mentre ricade da un salto non lo fa più scattare in alto appena atterra.
+
 <p>\nIt's the title match, son!\nNo special conditions this\ntime. Just beat the champ!\n<k>\n<p>\nNow go on out there an'\nbring the house down!\n<k>
 <p>\nÈ l'incontro per il titolo!\nStavolta niente condizioni.\nBatti il campione e basta!\n<k>\n<p>\nOra vai là fuori e fai\nvenire giù il tetto!\n<k>
 

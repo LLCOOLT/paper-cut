@@ -3,8 +3,8 @@
 Director's Cut
 Director's Cut
 
-Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
-Inhalte, die der Code des Spiels noch enthält, aber nie benutzt, zurückgebracht: gestrichene Orden, die Funkelbart verkauft, Gegner und Kämpfe, die nichts startet, die Familie der roten Käfer, eine Bestätigung beim Level-Up und drei verlorene Räume in den Katakomben. Jeder hat eine Seite im Director's-Cut-Tagebuch unten.
+Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below. Its enemies and battles from the next room.
+Inhalte, die der Code des Spiels noch enthält, aber nie benutzt, zurückgebracht: gestrichene Orden, die Funkelbart verkauft, Gegner und Kämpfe, die nichts startet, die Familie der roten Käfer, eine Bestätigung beim Level-Up und drei verlorene Räume in den Katakomben. Jeder hat eine Seite im Director's-Cut-Tagebuch unten. Seine Gegner und Kämpfe ab dem nächsten Raum.
 
 Director's Cut journal
 Director's-Cut-Tagebuch

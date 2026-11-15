@@ -132,15 +132,14 @@ Filter
 Output
 出力
 
-
 In the background
 バックグラウンド
 
 After the story
 クリア後
 
-Extra frames between the game's own 60: smoother motion.
-ゲームの　60フレームの　あいだに　フレームを　ふやします：うごきが　なめらかに　なります
+Smoother motion on high-refresh screens; uses more power.
+はやい　画面で　うごきが　なめらかに　でんりょくを　つかいます
 
 Every key and controller button: the game's, and Paper Cut's own shortcuts.
 すべての　キーと　コントローラーの　ボタン：ゲームの　ものと　Paper Cutの　ショートカット
@@ -181,8 +180,8 @@ Settings presets
 Short
 みじかい
 
-The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
-すべての　バトルで　アクションコマンド　ガード　アクロバットの　たびに　どうじょうの　ウィンドウを　出します：何フレーム　はやいか　おそいか
+After each action command, guard and Stylish move, in every battle, a note shows how many frames early or late you were.
+すべての　バトルで　アクションコマンド　ガード　アクロバットの　たびに　何フレーム　はやいか　おそいかを　出します
 
 Timing assist by command type
 コマンドの　しゅるいごとの　タイミング　ほじょ

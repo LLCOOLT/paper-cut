@@ -3,8 +3,8 @@
 Colour-blind filter
 Farbenblind-Filter
 
-Shifts the colours your eyes confuse into ones they can tell apart, over the whole picture (a daltonization correction, not a simulation).
-Verschiebt die Farben, die deine Augen verwechseln, in solche, die sie unterscheiden können, über das ganze Bild (eine Daltonisierungs-Korrektur, keine Simulation).
+Shifts the colours your eyes mix up into ones you can tell apart, over the whole picture.
+Verschiebt die Farben, die deine Augen verwechseln, in solche, die du unterscheiden kannst, über das ganze Bild.
 
 Protanopia (red-blind)
 Protanopie (rotblind)

@@ -105,13 +105,8 @@ bool fiftyHz() {
 // the relay's board: its kind, and "-50" for the EU release played at 50 Hz (its frames are longer)
 std::string boardKey(int board) { return std::string(portBoardKey(board)) + (fiftyHz() ? "-50" : ""); }
 
-std::string relayHttps() {
-  const char* relay = portOnlineRelayAt(0);
-  if (relay == nullptr || std::strncmp(relay, "wss://", 6) != 0) {
-    return {};
-  }
-  return std::string("https://") + (relay + 6);
-}
+// the boards' address (the services', or the relay's: relay_util.h)
+std::string relayHttps() { return portrelay::relayBase(); }
 
 std::string query(int board) { return "board=" + boardKey(board) + "&game=" + gameId() + "&v=" + PORT_VERSION; }
 
@@ -820,7 +815,7 @@ const char* boardAct(int id, int dir) {
     return "Leaderboards need the online relay, which this build has none of.";
   }
   if (gPortCompanionMenu) {
-    return "Not on the second screen: use the game's Start menu.";
+    return portPauseSecondScreenAct(id, dir);
   }
   if (id == kRowRecord) {
     if (!portReplayCanRecordHere()) {

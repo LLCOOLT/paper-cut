@@ -957,8 +957,11 @@ Control hitTest(const Layout& l, float px, float py) {
     return kStick;
   }
   const bool pic = onPicture(l, px, py);
-  // with a selection list up, a tap on the picture is a tap on its rows
-  if (best == kNone && pic && portMenuOpen()) {
+  // with a selection list up, a tap on the picture is a tap on its rows; so is one on a place that wants a
+  // tap (a paper note's sheet, balloon or choices, the players' bars: portMenuTapZone)
+  if (best == kNone && pic &&
+      (portMenuOpen() ||
+       portMenuTapInZone((px - l.area.picX) / l.area.picW, (py - l.area.picY) / l.area.picH))) {
     portMenuTap((px - l.area.picX) / l.area.picW, (py - l.area.picY) / l.area.picH);
     return kNone;
   }

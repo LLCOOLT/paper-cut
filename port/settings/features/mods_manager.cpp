@@ -529,6 +529,14 @@ void installBar(bool launcher) {
   if (!sOpenSaid.empty()) {
     colored(kRed, sOpenSaid); // (a folder the system didn't open: where it is)
   }
+  // where it is, to find it by hand too, and where the user folder is (GitHub #62)
+  {
+    char where[1200];
+    std::snprintf(where, sizeof(where), portTr("The mods folder: %s"), portModsDir());
+    noteRaw(where);
+  }
+  note("The user folder is the system's folder for app data, or the User folder beside the program when "
+       "portable.txt is there (Saves > Portable mode).");
 #endif
 #if defined(__APPLE__) && TARGET_OS_IPHONE
   note("To add a mod: put it in the Files app's Paper Cut folder, Saves > mods, then press Reload.");
@@ -1109,7 +1117,10 @@ int formRows(PortPauseRow* out, int max) {
                           nullptr, kRowManager);
   out[n++] = portPauseRow("Reload mods", "Reads the mods folder again: a mod added or changed.", nullptr, kRowReload);
 #ifdef MODS_OPEN_FOLDERS
-  out[n++] = portPauseRow("Open the mods folder", "Shows the mods folder on the desktop.", nullptr, kRowFolder);
+  out[n++] = portPauseRow("Open the mods folder",
+                          "Shows the mods folder, in the user folder: the system's folder for app data, or User "
+                          "beside the program with portable.txt. The full page shows its path.",
+                          nullptr, kRowFolder);
 #endif
   return n;
 }

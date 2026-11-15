@@ -48,8 +48,8 @@ No mientras haya otro modo en curso.
 Remix: enemies
 Remix: enemigos
 
-The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
-El combate de cada enemigo del escenario se elige entre todos los combates de su zona (no los de jefes), el mismo para una sala y una semilla. Desde la siguiente sala.
+Each field enemy leads to a random fight from its area (never a boss), the same every time for a room and seed. From the next room.
+Cada enemigo del escenario lleva a un combate al azar de su zona (nunca de jefe), siempre el mismo para una sala y una semilla. Desde la siguiente sala.
 
 Remix: badge draft
 Remix: elección de medalla
@@ -60,8 +60,8 @@ En la pantalla de título de cada capítulo, tres medallas entre las que elegir 
 Remix seed
 Semilla del remix
 
-Same seed, same remix: share it with a challenge code.
-Misma semilla, mismo remix; se comparte en código de desafío.
+Same seed, same remix: share it with a challenge code. From the next room.
+Misma semilla, mismo remix; se comparte en código de desafío. Desde la siguiente sala.
 
 Hardcore
 Extremo

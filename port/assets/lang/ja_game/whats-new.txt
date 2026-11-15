@@ -85,3 +85,35 @@ B+X+スタートで　タイトルに　もどります
 
 German and French text that shows; menus that fit.
 ドイツごと　フランスごの　ひょうじを　なおしました
+
+# 0.5.1
+
+Online holds together: drops heal, rooms come back.
+オンラインが　あんてい：きれても　ルームが　もどります
+
+Paper Mario 64's Spin Dash, with its spin badges.
+マリオストーリーの　スピンダッシュと　スピンバッジ
+
+Run from Paper Mario 64's bosses.
+マリオストーリーの　ボスからも　にげられます
+
+Visit Mario's house again from the Journal's map.
+きろくの　マップから　マリオの　家へ
+
+A quick wheel of eight common paper notes.
+よく　つかう　８つの　かみの　メモの　ホイール
+
+Wardrobe colours cover every part, edge to edge.
+きせかえの　いろが　どの　パーツにも　はしまで　ぬられます
+
+Smoother at 120 Hz and above.
+120 Hz　いじょうで　もっと　なめらかに
+
+Low on video memory? Graphics step down instead.
+ビデオメモリが　たりないと　画しつを　さげます
+
+Paper Mario 64 enemies act out every battle state.
+マリオストーリーの　てきが　バトルの　うごきを　ぜんぶ　みせます
+
+Fixes and features for 15 reported issues.
+ほうこくされた　15けんの　もんだいを　なおしました

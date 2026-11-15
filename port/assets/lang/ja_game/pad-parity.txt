@@ -1,0 +1,28 @@
+# Controller and touch parity in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Where to next?
+つぎは　どこへ？
+
+Turn Partner hint on first.
+さきに　なかまの　ヒントを　オンに　してください
+
+Ask your partner
+なかまに　きく
+
+The partner says where the story goes next, as {HINT} does.
+{HINT}と　おなじように　なかまが　つぎに　いく　ばしょを　おしえてくれます
+
+%s saves to slot 1, %s loads it.
+%sで　スロット1に　セーブ　%sで　ロードします
+
+%s type   %s delete   %s space   %s Shift   %s done
+%s にゅうりょく　%s けす　%s スペース　%s シフト　%s おわる
+
+A Paper Mario boss
+マリオストーリーの　ボス
+
+Not tattled yet. Have Goombella tattle this Paper Mario boss in its fight.
+まだ　しらべていません！　この　マリオストーリーの　ボスを　たたかいで　クリスチーヌに　しらべてもらいましょう
+
+Bosses: %d of %d tattled
+ボス　%d/%d　しらべた

@@ -1,0 +1,7 @@
+# The Restorations page's one switch, Restore everything (port/settings/features/enhancement_presets.cpp), in Deutsch: an English line, then its translation, then a blank line.
+
+Restore everything
+Alles wiederherstellen
+
+Everything the Japanese release had that Paper Cut puts back, on or off together: the chalk outline, the Parlor Boo's bunny ears, the screen flashes (warning: rapid flashing light), the 1000 X-Nauts, the bad ending, Hooktail's frogs and the Trial Stew. Each one is also below, to change on its own.
+Alles, was die japanische Version hatte und Paper Cut zurückbringt, zusammen an oder aus: der Kreideumriss, die Hasenohren der Buu-Hostess, die Bildschirmblitze (Warnung: schnelles Blitzlicht), die 1000 X-Nauts, das schlechte Ende, Lohgards Frösche und das Strafgericht. Jedes steht auch einzeln darunter.

@@ -24,8 +24,8 @@ Die Datei lässt sich nicht mehr lesen: Sie wurde verschoben oder gelöscht, ode
 The file isn't there any more.
 Die Datei ist nicht mehr da.
 
-The game's text.
-Der Text des Spiels.
+The language of the game's own text.
+Die Sprache des Spieltexts.
 
 This is %s, and its build (ttyd-%s) isn't beside this one.
 Das ist %s, und deren Build (ttyd-%s) liegt nicht neben diesem.
@@ -249,8 +249,8 @@ Nicht in einer Hardcore-Datei
 On screen and a tap
 Auf dem Bildschirm und ein Tippen
 
-On-screen stick: past a small tilt, always a full one.
-Bildschirm-Stick: Ab einer kleinen Neigung immer voll ausgelenkt.
+A small push of the on-screen stick is enough to run.
+Ein kleiner Schub am Bildschirm-Stick reicht zum Rennen.
 
 One hit
 Ein Treffer
@@ -363,8 +363,8 @@ Test: Ein Zuschauer namens test schickt jeden Befehl der Reihe nach.
 That slot is empty
 Dieser Platz ist leer
 
-The on-screen stick stays in its place.
-Der Bildschirm-Stick bleibt an seinem Platz.
+The on-screen stick stays in one place instead of appearing under your thumb.
+Der Bildschirm-Stick bleibt an einer Stelle, statt unter deinem Daumen zu erscheinen.
 
 This is %s. This app plays %s; the app for that version plays this disc.
 Das ist %s. Diese App spielt %s; die App für jene Version spielt diese Disc.

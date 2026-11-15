@@ -7,6 +7,7 @@
 // costs: "Progress since your last save will be lost." when there is some, and
 // that online play is left and a mode ends first.
 #include "port/bindings.h"
+#include "port/companion.h"
 #include "port/companion_menu.h"
 #include "port/launcher_back.h"
 #include "port/mode_lending.h"
@@ -100,6 +101,13 @@ int confirmButton(int button) {
   if (button != 'A') {
     return 0;
   }
+  if (gPortCompanionMenu) {
+    // the second screen's: confirmed there, done by the game at the point its own Start menu could open
+    std::printf("[launcher-back] confirmed on the second screen: sent to the game\n");
+    std::fflush(stdout);
+    portCompanionTap(PORT_COMPANION_TAP_ASK, PORT_COMPANION_ASK_LAUNCHER, 0);
+    return -2;
+  }
   go("the Start menu");
   return -2; // the whole Start menu closed: the game goes to its title from here
 }
@@ -122,9 +130,6 @@ int formRows(PortPauseRow* out, int max) {
 const char* formAct(int id, int dir) {
   if (id != kRow || dir != 0) {
     return nullptr;
-  }
-  if (gPortCompanionMenu) {
-    return "Not on the second screen: use the game's Start menu.";
   }
   if (portReplayPlaying()) {
     return "Not during a replay.";
@@ -263,3 +268,9 @@ const bool sAdded = [] {
 }();
 
 } // namespace
+
+// The Start menu's Settings front page's row (pause_settings_aurora.c): as General's row's A
+extern "C" const char* portLauncherBackAskStartMenu(void) { return formAct(kRow, 0); }
+
+// The second screen's question confirmed (its A, confirmButton): done here, by the game (companion_menu_aurora.c)
+extern "C" void portLauncherBackSecondScreen(void) { go("the second screen"); }

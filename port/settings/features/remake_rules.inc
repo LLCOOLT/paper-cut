@@ -73,3 +73,4 @@ REMAKE_RULE("rules_glitz_conditions", 1) // Glitz Pit: Iron Adonises want a part
 REMAKE_RULE("rules_tremor_stagehand", 1) // a stagehand carries a helpless partner away from a quake
 // (no line needed: Spinies already use items while curled, and flying shelled
 // enemies already flip when a second hit grounds them, as in the remake)
+REMAKE_RULE("remake_pipe_room", 1)  // the remake pipe room's pipes in the sewers' warp pipe rooms (remake_maps.cpp)

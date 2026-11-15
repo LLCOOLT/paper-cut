@@ -138,15 +138,14 @@ Filter
 Output
 出力
 
-
 In the background
 バックグラウンド
 
 After the story
 クリア後
 
-Extra frames between the game's own 60: smoother motion.
-ゲームの60フレームの間に追加のフレーム：動きがなめらかになります。
+Smoother motion on high-refresh screens; uses more power.
+速い画面で動きがなめらかに。電力を多く使います。
 
 Every key and controller button: the game's, and Paper Cut's own shortcuts.
 すべてのキーとコントローラーのボタン：ゲームのものと、Paper Cut独自のショートカット。

@@ -10,6 +10,11 @@
 #include "port/rando_tracker.h"
 #include "port/sound_shuffle.h"
 #include "../settings_ui.h"
+#include "port/offscreen.h"
+#include <SDL3/SDL.h>
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
 #include <imgui.h>
 #include <cctype>
 #include <cstdio>
@@ -29,6 +34,32 @@ void warn(const char* text) {
 }
 
 std::string sCheck; // the last "Check this seed"
+
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+// The spoiler logs' folder (<user>/randomizer, ttyd_rando.cpp), opened in the file manager, and its path
+// (GitHub #62: easy to find, portable mode's too). A desktop's: phones have no file manager to show it in.
+void spoilerFolderRow() {
+  static std::string sSaid; // (a folder the system didn't open: where it is)
+  const std::string dir = std::string(portSettingsUserPath()) + "/randomizer";
+  if (ImGui::Button(portTrLabel("Open the spoiler logs folder"))) {
+    SDL_CreateDirectory(dir.c_str()); // (made first: it opens before the first log too)
+    char why[1200];
+    sSaid = portOpenFolder(dir.c_str()) ? std::string() : std::string(portOpenError(why, sizeof(why), dir.c_str(), true));
+  }
+  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+  ImGui::TextWrapped(portTr("Spoiler logs: %s"), dir.c_str());
+  ImGui::PopStyleColor();
+  hint("The user folder is the system's folder for app data, or the User folder beside the program when "
+       "portable.txt is there (Saves > Portable mode).");
+  if (!sSaid.empty()) {
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.75f, 0.3f, 1.0f));
+    ImGui::TextWrapped("%s", sSaid.c_str());
+    ImGui::PopStyleColor();
+  }
+}
+#else
+void spoilerFolderRow() {}
+#endif
 char sPresetName[48];
 char sPaste[96];
 std::string sPasteNote;
@@ -400,6 +431,7 @@ void section(int inGame) {
   ImGui::BeginDisabled(shared);
   soundEditorRows();
   ImGui::EndDisabled();
+  spoilerFolderRow(); // (looking only: online too)
 
   if (ImGui::Button(portTrLabel("Check this seed"))) {
     sCheck = portRandoCheck();

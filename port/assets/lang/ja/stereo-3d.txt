@@ -33,5 +33,5 @@ How far apart the two eyes are: more is deeper. Lower it if the picture is hard 
 Screen distance
 画面の距離
 
-Where the screen sits in the scene, against the distance to what the camera follows: at 100% Mario is at the screen, nearer things come out of it and farther ones go behind. More brings more of the scene out of the screen.
-カメラが追うものまでの距離に対して、画面がシーンのどこにあるかです。100%ではマリオが画面の位置にあり、近いものは手前に飛び出し、遠いものは奥に下がります。大きいほどシーンの多くが画面から飛び出します。
+How far the picture comes out of the screen: at 100, Mario sits at the screen's depth; higher brings more of the scene out towards you.
+映像が画面からどれだけ飛び出すか。100ではマリオが画面の深さにいて、高くするほどシーンが手前に出てきます。

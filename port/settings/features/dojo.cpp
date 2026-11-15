@@ -285,7 +285,7 @@ int resultLines(char (*out)[PORT_PAUSE_LINE], int max) {
 
 const PortPauseInfo kResultsInfo = {"Your dojo results", resultLines, nullptr, nullptr, nullptr, nullptr, 0};
 
-enum { kRowDummy, kRowPartner, kRowEvery, kRowAttacks, kRowEnter, kRowLeave, kRowResults };
+enum { kRowDummy, kRowPartner, kRowEvery, kRowAttacks, kRowEnter, kRowLeave, kRowResults, kRowApplyAttacks };
 
 bool dojoHeld() { return portReplayActive() != 0; }
 
@@ -345,9 +345,17 @@ const char* dojoAct(int id, int dir) {
     return dir == 0 ? "The dojo is offline only: not during online play or a replay." : nullptr;
   }
   const bool running = portDojoRunning() != 0;
+  if (id == kRowApplyAttacks) { // (the second screen's change, applied by the game: portPauseSecondScreenAct)
+    if (running) {
+      portDojoSetAttacks(sSetup.attacks);
+    }
+    return nullptr;
+  }
   if (id == kRowAttacks) {
     sSetup.attacks = (sSetup.attacks + step + 3) % 3;
-    if (running && !gPortCompanionMenu) {
+    if (running && gPortCompanionMenu) {
+      portPauseSecondScreenAct(kRowApplyAttacks, 0); // (the run's own count: the game's to change)
+    } else if (running) {
       portDojoSetAttacks(sSetup.attacks); // (changed while it runs: from its next turn)
     }
     return nullptr;
@@ -370,7 +378,7 @@ const char* dojoAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return "Not on the second screen: use the game's Start menu.";
+    return portPauseSecondScreenAct(id, dir);
   }
   if (id == kRowLeave) {
     portDojoStop();
@@ -392,8 +400,8 @@ struct Register {
                            assistSection, "timing assist action command wider window jump hammer guard superguard "
                                           "stylish partner dojo");
     portSettingsAddToggle("Accessibility", "Action command timing in every battle",
-                          "The dojo's window after each action command, guard and Stylish move, in every battle: "
-                          "how many frames early or late.",
+                          "After each action command, guard and Stylish move, in every battle, a note shows how many "
+                          "frames early or late you were.",
                           0, "dojo_feedback", "dojo timing frames feedback action command guard superguard");
   }
 } sRegister;

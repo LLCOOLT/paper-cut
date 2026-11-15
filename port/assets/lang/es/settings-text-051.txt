@@ -1,0 +1,34 @@
+# 0.5.1: every setting says plainly what it does (settings names and descriptions)
+
+Enemy HP when Difficulty is Custom; 100 is the original.
+PC de los enemigos con Dificultad en Personalizada; 100 es el original.
+
+Enemy damage when Difficulty is Custom; 100 is the original.
+Daño de los enemigos con Dificultad en Personalizada; 100 es el original.
+
+How much faster Mario moves while the boost is held.
+Cuánto más rápido va Mario mientras mantienes el impulso.
+
+The save file New Game+ copies from.
+El archivo de partida del que copia New Game+.
+
+Keeps the picture and buttons away from the notch, camera cutout and rounded corners.
+Aparta la imagen y los botones del notch, del hueco de la cámara y de las esquinas redondeadas.
+
+The phone or tablet vibrates when no controller can.
+El móvil o la tableta vibra cuando ningún mando puede.
+
+A light buzz each time you press an on-screen button.
+Una vibración suave cada vez que pulsas un botón en pantalla.
+
+How see-through the on-screen controls are.
+Lo transparentes que son los controles en pantalla.
+
+Tapping the game picture presses A.
+Tocar la imagen del juego pulsa A.
+
+Co-op camera
+Cámara cooperativa
+
+Allow every guard, only Superguards, or no guarding at all.
+Permitir todas las defensas, solo la Súper Defensa o ninguna.

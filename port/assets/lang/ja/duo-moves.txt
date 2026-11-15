@@ -9,8 +9,8 @@ Co-op and versus
 Always
 いつも
 
-Team attacks for Mario and the partner, both their moves of the turn at once: at the end of Mario's Jump or Hammer list and of the partner's moves. With two players each presses {A} for their own; with one (Always, or each side of a versus fight) {A} is Mario's and {B} the partner's. A second one for each partner at Ultra rank.
-マリオと仲間のチーム攻撃。そのターンの2人の行動をまとめて使います。マリオのジャンプかハンマーのリストの最後と、仲間のわざの最後にあります。2人プレイではそれぞれ自分の方を{A}で、1人(「いつも」や対戦の各チーム)ではマリオが{A}、仲間が{B}です。仲間がウルトラランクになると2つ目も使えます。
+Team attacks where Mario and the partner strike together, at the end of their move lists. With two players each presses {A}; alone, {A} is Mario's and {B} the partner's.
+マリオと仲間がいっしょに攻撃するチーム技。技リストの最後にあります。2人なら、それぞれ{A}を押します。1人のときは{A}がマリオ、{B}が仲間です。
 
 Twin Bonk
 ダブルずつき

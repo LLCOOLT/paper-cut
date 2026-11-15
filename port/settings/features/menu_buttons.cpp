@@ -159,7 +159,11 @@ int faceIndex(u32 padButton) {
 // (script: a test's input script's presses may be in the buttons mapped: they are the game's own, not a
 // controller's, so as they are, else a controller left plugged in on the test machine turns the script's B
 // into X; the menu layer moves only the controller's own presses, so it maps with a script running)
-bool menuMap(int port, int to[4], bool script = true) {
+// Only confirm and back move, onto the game's A and B (portMenuLayerPlace): the game's X and Y stay on the
+// buttons the field has them on wherever they can (0.5.0 put X on the controller's third button, so with X and Y
+// bound to a Switch controller's or an Xbox one's X and Y labels, its X gave the game's Y and its Y the game's X
+// in every menu and message: a lesson's "Y" or "X" was the other button, GitHub #60), and keep's not at all.
+bool menuMap(int port, int to[4], bool script = true, unsigned keep = 0) {
   SDL_Gamepad* p = portPad(port);
   if (p == nullptr || (script && port == 0 && portInputActive())) {
     return false;
@@ -175,38 +179,11 @@ bool menuMap(int port, int to[4], bool script = true) {
     }
     return -1;
   };
-  const int c = gameOf(r.confirm), b = gameOf(r.back), t = gameOf(r.third);
+  const int c = gameOf(r.confirm), b = gameOf(r.back);
   if (c < 0 || b < 0 || c == b) {
     return false;
   }
-  bool srcUsed[4] = {}, dstUsed[4] = {};
-  auto put = [&](int src, int dst) {
-    to[src] = dst;
-    srcUsed[src] = dstUsed[dst] = true;
-  };
-  put(c, 0);
-  put(b, 1);
-  if (t >= 0 && !srcUsed[t]) {
-    put(t, 2);
-  }
-  for (int i = 0; i < 4; i++) { // the rest where they are, if they can be
-    if (!srcUsed[i] && !dstUsed[i]) {
-      put(i, i);
-    }
-  }
-  for (int i = 0; i < 4; i++) { // then in turn
-    for (int j = 0; j < 4 && !srcUsed[i]; j++) {
-      if (!dstUsed[j]) {
-        put(i, j);
-      }
-    }
-  }
-  for (int i = 0; i < 4; i++) {
-    if (to[i] != i) {
-      return true;
-    }
-  }
-  return false;
+  return portMenuLayerPlace(c, b, keep, to) != 0;
 }
 
 // --- Dear ImGui ------------------------------------------------------------------------
@@ -312,7 +289,8 @@ extern "C" int portMenuLayerMap(int port, int to[4]) {
   if (!portMenuLayerOn(port) || gPortCompanionMenu != 0) {
     return 0;
   }
-  return menuMap(port, to, false) ? 1 : 0;
+  // (an action the menu reads, the battle menus' X while an audience member winds up a throw: where the field has it)
+  return menuMap(port, to, false, portMenuLayerKeep(port)) ? 1 : 0;
 }
 
 namespace {

@@ -24,8 +24,8 @@ Il file non si può più leggere: è stato spostato o eliminato, o Android ha to
 The file isn't there any more.
 Il file non c'è più.
 
-The game's text.
-Il testo del gioco.
+The language of the game's own text.
+La lingua del testo del gioco.
 
 This is %s, and its build (ttyd-%s) isn't beside this one.
 È %s, e la sua build (ttyd-%s) non è accanto a questa.
@@ -255,8 +255,8 @@ Non in un file hardcore
 On screen and a tap
 Su schermo e un tocco
 
-On-screen stick: past a small tilt, always a full one.
-Levetta su schermo: oltre una piccola inclinazione, sempre al massimo.
+A small push of the on-screen stick is enough to run.
+Una piccola spinta della levetta su schermo basta per correre.
 
 One hit
 Un colpo
@@ -372,8 +372,8 @@ Prova: uno spettatore di nome test invia ogni comando a turno.
 That slot is empty
 Quello slot è vuoto
 
-The on-screen stick stays in its place.
-La levetta su schermo resta al suo posto.
+The on-screen stick stays in one place instead of appearing under your thumb.
+La levetta su schermo resta in un punto invece di comparire sotto il tuo pollice.
 
 This is %s. This app plays %s; the app for that version plays this disc.
 È %s. Questa app avvia %s; l'app di quella versione avvia questo disco.

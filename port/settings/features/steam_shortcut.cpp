@@ -172,7 +172,20 @@ std::string dirOf(const std::string& path);
 // what the player starts: the launcher beside this program (Paper Cut.exe,
 // papercut), else this program
 std::string exePath();
+
+// the Flatpak's app ID when running inside it ($FLATPAK_ID), else null: the
+// program's own path (/app/bin/...) exists only inside the sandbox, so Steam
+// starts it as Steam's own "add a non-Steam game" does for a Flatpak:
+// /usr/bin/flatpak with "run <app ID>" as its launch options
+const char* flatpakId() {
+  const char* id = SDL_getenv("FLATPAK_ID");
+  return id != nullptr && id[0] != '\0' ? id : nullptr;
+}
+
 std::string startPath() {
+  if (flatpakId() != nullptr) {
+    return "/usr/bin/flatpak";
+  }
   const std::string self = exePath();
   if (self.empty() || SDL_getenv("APPIMAGE") != nullptr) {
     return self;
@@ -483,12 +496,16 @@ bool addTo(const std::string& root, const std::string& account, const std::strin
     }
     top = *list;
   }
-  // this program's entry, or one named Paper Cut
+  // this program's entry, or one named Paper Cut (under Flatpak, every Flatpak
+  // app's Exe is /usr/bin/flatpak: only the one whose FlatpakAppID is ours)
+  const char* fid = flatpakId();
   Node* entry = nullptr;
   for (Node& n : top.kids) {
     Node* e = child(n, "Exe");
     Node* name = child(n, "AppName");
-    if ((e != nullptr && e->str == quoted(exe)) || (name != nullptr && name->str == kAppName)) {
+    Node* app = child(n, "FlatpakAppID");
+    const bool ours = fid == nullptr || (app != nullptr && app->str == fid);
+    if ((e != nullptr && e->str == quoted(exe) && ours) || (name != nullptr && name->str == kAppName)) {
       entry = &n;
       break;
     }
@@ -521,6 +538,10 @@ bool addTo(const std::string& root, const std::string& account, const std::strin
     tags.type = 0;
     tags.key = "tags";
     entry->kids.push_back(tags);
+  }
+  if (fid != nullptr) {
+    setStr(*entry, "LaunchOptions", std::string("run ") + fid);
+    setStr(*entry, "FlatpakAppID", fid);
   }
   std::vector<uint8_t> out;
   put(out, top);

@@ -9,6 +9,12 @@ Tuyaux de téléportation dans les sous-sols
 The Director's Cut sewer pipe rooms open from the room before the Pit of 100 Trials, and their last pipe asks where to: Rogueport's plaza, and each chapter's town once its Crystal Star is in. Travel to stays as it is.
 Les salles de tuyaux du Director's Cut s'ouvrent depuis la salle devant le Donjon aux 100 étages, et leur dernier tuyau demande où aller : la place de Port-Lacanaïe, et la ville de chaque chapitre une fois sa Gemme Etoile obtenue. « Aller à » reste tel quel.
 
+The remake's pipe room
+La salle des tuyaux du remake
+
+The sewers' two warp pipe rooms, with the pipes to the towns of chapters 1, 2, 5 and 6, get the rest of the remake's pipe room: a pipe to Rogueport once chapter 1 is over, and one to the town of chapters 3, 4 and 7 each once that chapter is over.
+Les deux salles de tuyaux de téléportation des sous-sols, avec les tuyaux vers les villes des chapitres 1, 2, 5 et 6, reçoivent le reste de la salle des tuyaux du remake : un tuyau vers Port-Lacanaïe une fois le chapitre 1 terminé, et un vers la ville des chapitres 3, 4 et 7 une fois chacun terminé.
+
 The remake's shortcut pipes
 Les tuyaux raccourcis du remake
 
@@ -30,8 +36,8 @@ Des tuyaux pour les longs allers-retours : Penocta et l'Eglise Occulte dans les 
 Keelhaul Key and the Grotto
 Ile Tropatroce et la grotte
 
-Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrel back after chapter 5, and the jungle's Fuzzies stay.
-Des tremplins entre le camp des naufragés et le rocher à tête de mort une fois Bombart dans l'équipe, le tonneau flottant de la Grotte Pirate de retour après le chapitre 5, et les Fuzzy de la jungle restent.
+Jump stands between the castaways' camp and Skull Rock once Bobbery has joined, the Pirate's Grotto's floating barrels back after chapter 5 (two, as in the remake), and the jungle's Fuzzies stay. The barrels and the Fuzzies from the next room.
+Des tremplins entre le camp des naufragés et le rocher à tête de mort une fois Bombart dans l'équipe, les tonneaux flottants de la Grotte Pirate de retour après le chapitre 5 (deux, comme dans le remake), et les Fuzzy de la jungle restent. Les tonneaux et les Fuzzy à partir de la salle suivante.
 
 Jump down the Steeple's stairs
 Sauter des escaliers de l'église
@@ -54,8 +60,8 @@ Les Blocs de sauvegarde et Blocs Coeur ajoutés par le remake : Bois Insolites, 
 New ambush battles
 Nouvelles embuscades
 
-The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress.
-Les nouvelles embuscades du remake : sur le chemin du Fort Baroc, dans la Grotte Pirate, et un Cruxélite dans le Repaire Mégacruxis.
+The remake's new ambushes: on the path to Shhwonk Fortress, in the Pirate's Grotto and an Elite X-Naut in the X-Naut Fortress. From the next room.
+Les nouvelles embuscades du remake : sur le chemin du Fort Baroc, dans la Grotte Pirate, et un Cruxélite dans le Repaire Mégacruxis. À partir de la salle suivante.
 
 Charlieton and a Grotto salesman
 Roublaï et un marchand dans la grotte

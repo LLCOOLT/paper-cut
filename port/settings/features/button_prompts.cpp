@@ -236,9 +236,16 @@ std::string plan(GlyphStyle style, GlyphSpec specs[8], std::string labels[8], un
                                      SDL_GAMEPAD_BUTTON_EAST,  SDL_GAMEPAD_BUTTON_NORTH,
                                      SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, PAD_NATIVE_BUTTON_INVALID,
                                      PAD_NATIVE_BUTTON_INVALID, SDL_GAMEPAD_BUTTON_START};
+    // (a Switch-lettered pad's out of the box: the game's A, B, X and Y on its printed A, B, X and Y,
+    // bindings.cpp's restoreDefaults, GitHub #60)
+    static const u32 kSwitchDefaults[8] = {SDL_GAMEPAD_BUTTON_EAST,  SDL_GAMEPAD_BUTTON_SOUTH,
+                                           SDL_GAMEPAD_BUTTON_NORTH, SDL_GAMEPAD_BUTTON_WEST,
+                                           SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, PAD_NATIVE_BUTTON_INVALID,
+                                           PAD_NATIVE_BUTTON_INVALID, SDL_GAMEPAD_BUTTON_START};
+    const u32* defs = style == GlyphStyle::Switch ? kSwitchDefaults : kDefaults;
     u32 natives[8];
     for (int b = 0; b < 8; b++) {
-      natives[b] = maps != nullptr ? PAD_NATIVE_BUTTON_INVALID : kDefaults[b];
+      natives[b] = maps != nullptr ? PAD_NATIVE_BUTTON_INVALID : defs[b];
       for (u32 i = 0; maps != nullptr && i < count; i++) {
         if (maps[i].padButton == kPadButtons[b]) {
           natives[b] = maps[i].nativeButton;

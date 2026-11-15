@@ -516,6 +516,24 @@ static int towerMap(const char* map) {
     return 0;
 }
 
+int portTowerAutosave(void) {
+    /* autosave (port/src/common/autosave_pc.c): the climb's floor kept as the best as soon as Mario is on it, as
+       endClimb would keep it, so a crash or a closed window mid-climb loses none of it */
+    if (!__atomic_load_n(&sActive, __ATOMIC_SEQ_CST) || sHelped || gp == NULL || seqGetSeq() != SEQ_GAME ||
+        !towerMap(gp->currentMapName) || sFloor < 1) {
+        return 0;
+    }
+    readBest();
+    if (sFloor <= sBestFloor) {
+        return 0;
+    }
+    sBestFloor = sFloor;
+    writeBest();
+    printf("[autosave] Paper Tower: floor %d kept as the best\n", sFloor);
+    fflush(stdout);
+    return 1;
+}
+
 /* --- the gates --------------------------------------------------------------- */
 
 #define GATE_REACH 420.0f /* each side of the way across */

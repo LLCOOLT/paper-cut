@@ -608,19 +608,19 @@ const char* formAct(int id, int dir) {
       return "Today's seed is set: begin a new file from the title screen.";
     }
     if (gPortCompanionMenu) {
-      return "Not on the second screen: use the game's Start menu.";
+      return portPauseSecondScreenAct(id, dir);
     }
     playDay(today);
     return "Set. Begin a new file from the title screen (Restart now first, if a file is in play).";
   case kRowBack:
     if (gPortCompanionMenu) {
-      return "Not on the second screen: use the game's Start menu.";
+      return portPauseSecondScreenAct(id, dir);
     }
     putBack();
     return "Your own randomizer and challenge settings are back.";
   case kRowRestart:
     if (gPortCompanionMenu) {
-      return "Not on the second screen: use the game's Start menu.";
+      return portPauseSecondScreenAct(id, dir);
     }
     portRestartRequest(0);
     return nullptr;

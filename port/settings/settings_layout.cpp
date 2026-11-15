@@ -51,7 +51,7 @@ const Row kLayout[] = {
     ITEM("Difficulty"),
     ITEM("Enemy HP (custom)"),
     ITEM("Enemy attack (custom)"),
-    NEW("Level sync"),
+    NEW("Enemies match your level"),
     GROUP("Speed"),
     ITEM("Text speed"),
     NEW("Fly through text"), // (scene_skip.cpp)
@@ -62,7 +62,7 @@ const Row kLayout[] = {
     ITEM("Run speed"),
     GROUP("Fast-forward and rewind"),
     ITEM("Fast-forward speed"),
-    ITEM("Fast-forward toggles"),
+    ITEM("Fast-forward stays on"),
     ITEM("Rewind"),
     ITEM("Rewind length"),
     ITEM("Rewind key"),
@@ -114,6 +114,7 @@ const Row kLayout[] = {
     GROUP("Maps and places"), // (remake_maps.cpp)
     REMAKE_NEW("Warp pipes in the sewers"),
     REMAKE_NEW("The remake's shortcut pipes"),
+    REMAKE_NEW("The remake's pipe room"), // (remake_maps.cpp)
     REMAKE_NEW("Excess Express skips Riverside"),
     REMAKE_NEW("Chapter shortcuts"),
     REMAKE_NEW("Keelhaul Key and the Grotto"),
@@ -148,6 +149,7 @@ const Row kLayout[] = {
     REMAKE_NEW("Start in Rogueport"),
     REMAKE_NEW("Mail without stopping"),
     REMAKE_NEW("Partner hint"),
+    REMAKE_NEW("Ask your partner"),
     REMAKE_NEW("Prompts over things to check"),
 
     // Paper Cut's own changes, a page each by what they're about (the Start menu: a button each
@@ -162,6 +164,7 @@ const Row kLayout[] = {
     ITEM("Walk-speed boost"),
     ITEM("Boost speed"),
     ITEM("Boost key"),
+    NEW("Spring Jump from standing only"), // (rules.cpp)
     GROUP("Saving"),
     ITEM("Save Blocks save at once"),
     ITEM("Storage at every Save Block"),
@@ -201,7 +204,7 @@ const Row kLayout[] = {
 
     PAGE("Items and badges"),
     GROUP("Items"),
-    ITEM("Junk-item helper in shops"),
+    ITEM("Mark duplicates when selling"),
     NEW("Zess T.'s new dishes"),
     GROUP("Badges"),
     ITEM("Badge loadouts"),
@@ -213,7 +216,7 @@ const Row kLayout[] = {
     PAGE("Story"),
     GROUP("Pace"),
     NEW("Skip Peach's and Bowser's interludes"),
-    NEW("Glitz Pit and chapter 6 pace trims"),
+    NEW("Shorter Glitz Pit and train trips"),
     GROUP("New Game+"),
     ITEM("New Game+"),
     ITEM("New Game+ from file"),
@@ -225,6 +228,7 @@ const Row kLayout[] = {
     NEW("Glitz Pit roster"),
 
     PAGE("Restorations"), // what the Japanese release had (restorations.cpp; three of postgame_extra.cpp's)
+    NEW("Restore everything"), // the one switch for them all first (enhancement_presets.cpp)
     NEW("Restorations"),
     NEW("Rogueport's chalk outline"),
     NEW("The Parlor Boo's bunny ears"),
@@ -243,6 +247,7 @@ const Row kLayout[] = {
     NEW("Paper Mario 64 boss list"), // (pm64_media.cpp: each boss on its own; the Star Haven corner's board too)
     NEW("Paper Mario 64 bosses: Scale to your level"),
     NEW("Paper Mario field abilities"),
+    NEW("Paper Mario Spin Dash"), // (pm64_link.cpp)
     NEW("Paper Mario 64 enemies"),
     NEW("Paper Mario 64 enemies in the story"),
     NEW("Paper Mario 64 badges"),
@@ -258,7 +263,7 @@ const Row kLayout[] = {
     ITEM("VSync"),
     ITEM("Variable refresh rate (G-Sync, FreeSync)"),
     NEW_FROM("Battery saver", "Graphics"),
-    NEW_FROM("Keep game speed when the GPU falls behind", "Graphics"),
+    NEW_FROM("Keep game speed when graphics lag", "Graphics"),
     ITEM("Run at 50 Hz (PAL)"),
     ITEM("Orientation"),
     ITEM("Keep clear of the notch"),
@@ -284,8 +289,10 @@ const Row kLayout[] = {
     ITEM("Texture detail"),
     ITEM("Texture upscaling"),
     NEW("Texture pack memory"),
-    ITEM("Never skip loading graphics"),
+    ITEM("Wait for graphics to load"),
     NEW("Sharp text"),
+    NEW("Safe graphics"), // (safe_graphics.cpp)
+    NEW("Graphics API"),  // (Android)
     GROUP("Light"),
     NEW("Bloom"),
     NEW("Ray-traced lighting"),
@@ -352,6 +359,10 @@ const Row kLayout[] = {
     ITEM("Move the on-screen controls"),
     ITEM("On-screen controls' opacity"),
     ITEM("On-screen controls' size"),
+    ITEM("On-screen D-pad"), // (the touch build's alone, as are the three below: touch_overlay)
+    ITEM("GameCube colours"),
+    ITEM("Photo mode button"),
+    ITEM("Layout button"),
     ITEM("Auto-run"),
     ITEM("Fixed stick"),
     ITEM("Tap the picture to press A"),
@@ -404,7 +415,7 @@ const Row kLayout[] = {
     ITEM("Co-op (up to 4 players)"),
     ITEM("Players"),
     NEW("Player colours"),
-    NEW("Camera"), // (coop_camera.cpp)
+    NEW("Co-op camera"), // (coop_camera.cpp)
     NEW("Brothers mode"),
     NEW("Duo moves"),
     NEW("Dungeon master"),
@@ -413,6 +424,10 @@ const Row kLayout[] = {
     GROUP("Together"),
     NEW("Co-op pings"),
     NEW("Paper notes"),
+    GROUP("Online"),
+    NEW("Direct connection"), // (online_direct.cpp)
+    NEW("Connection icon"),   // (online_status.cpp)
+    NEW("Online diagnostics"),
 
     TAB("Saves"),
     GROUP("Saving"),
@@ -467,6 +482,8 @@ const Row kLayout[] = {
     ITEM("Discord status"),
     ITEM("Crash reports"),
     NEW("Crash notice at start"),
+    NEW("Crash-safe snapshots"), // (soft_crash.cpp)
+    NEW("Report a problem"),
 
     // the modes and tools
     TAB("Modes"),

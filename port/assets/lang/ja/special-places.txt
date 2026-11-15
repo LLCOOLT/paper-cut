@@ -1,0 +1,34 @@
+# Special places (port/src/common/special_places_pc.c, the Journal's map with fast travel: port/src/aurora/warp_map_aurora.c)
+
+Special places
+特別な場所
+
+Bowser's Castle
+クッパ城
+
+Bowser's stage 1
+クッパのステージ1
+
+Bowser's stage 2
+クッパのステージ2
+
+Bowser's stage 3
+クッパのステージ3
+
+Back to where you came from
+来た場所へ戻る
+
+{A}: go there. {B}: back.
+{A}：行く　{B}：戻る
+
+Off in Console-accurate mode.
+ゲームキューブ忠実モードでは使えません。
+
+Not seen in the story yet.
+物語でまだ見ていません。
+
+{X}: leave, back to where Mario came from.
+{X}：出て、マリオが来た場所へ戻る
+
+Bowser's Castle: the far door leads back.
+クッパ城：奥の扉から戻れます。

@@ -9,8 +9,8 @@ Cada combate ganado recibe una nota de D a S por sus comandos acrobáticos, Súp
 Paper Cut badge set
 Colección de medallas Paper Cut
 
-Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
-Doce medallas nuevas, cada una plegada a partir de dos o tres del juego, que vende un mercader Toad en la plaza de Villa Viciosa tras el prólogo. Un archivo que las tenga ya no sirve para el juego de GameCube.
+Twelve new badges, each mixing two or three of the game's, sold by a Toad in Rogueport's plaza after the prologue. A save holding them no longer works on a GameCube.
+Doce medallas nuevas, cada una mezcla de dos o tres del juego, que vende un Toad en la plaza de Villa Viciosa tras el prólogo. Una partida que las tenga ya no funciona en una GameCube.
 
 Paper Cut badges
 Medallas Paper Cut

@@ -249,8 +249,8 @@ MODを再読み込み
 Reads the mods folder again: a mod added or changed.
 modsフォルダを読み直します：追加・変更したMOD。
 
-Shows the mods folder on the desktop.
-デスクトップでmodsフォルダを表示します。
+Shows the mods folder, in the user folder: the system's folder for app data, or User beside the program with portable.txt. The full page shows its path.
+ユーザーフォルダのmodsフォルダを表示します。ユーザーフォルダはシステムのアプリデータ用フォルダ、またはportable.txtがあればプログラムの横のUserフォルダです。フルページにパスが表示されます。
 
 Its code follows at the next start.
 コードは次の起動から反映されます。

@@ -1,4 +1,4 @@
-// Autosave at room changes (port/src/aurora/autosave_aurora.c): the setting
+// Autosave at room changes (port/src/common/autosave_pc.c): the setting
 // on the Gameplay tab, and a small "Saved" mark in the corner for a moment
 // after each autosave (or "Autosave failed" when the card couldn't be written).
 #include "port/settings.h"
@@ -56,11 +56,13 @@ struct AutosaveSettings {
   AutosaveSettings() {
     portSettingsDeclare("autosave", 0, 0, 4);
     portSettingsAddChoice("Gameplay", "Autosave",
-                          "Saves into the file you're playing as you enter each room, as a Save Block would: a "
-                          "crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once "
-                          "the practice tools changed the game.",
+                          "Saves to the file you're playing at each room change and each floor of the Pit of 100 "
+                          "Trials, as a Save Block would, so a crash loses little. The Paper Tower, the Pit in co-op "
+                          "and the endless Glitz Pit keep their deepest floor or most rounds instead. Not in a "
+                          "mode's own fights, as an online guest, in a replay or after practice tools changed the "
+                          "game.",
                           PORT_SETTING_CHANGES_SAVES, "autosave", kChoices, 5,
-                          "auto save room door map memory card save block");
+                          "auto save room door map memory card save block pit floor tower");
     portSettingsAddOverlay(drawMark, nullptr);
   }
 } sAutosave;

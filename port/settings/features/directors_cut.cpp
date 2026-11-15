@@ -45,7 +45,8 @@ const bool sAdded = [] {
   portSettingsAddToggle("Modes", "Director's Cut",
                         "Content the game's code still has but never uses, put back: cut badges sold by Dazzle, "
                         "enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and "
-                        "three lost sewer rooms. Each has a page in the Director's Cut journal below.",
+                        "three lost sewer rooms. Each has a page in the Director's Cut journal below. Its enemies "
+                        "and battles from the next room.",
                         PORT_SETTING_CHANGES_PLAY | PORT_SETTING_CHANGES_SAVES, "directors_cut",
                         "director's cut directors restored unused cut content badges enemies mega jump super charge "
                         "triple dip auto command red buzzy dull bones swooper boo fuzzy level up sewers rooms");

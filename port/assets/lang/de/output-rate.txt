@@ -3,8 +3,8 @@
 Output rate
 Ausgaberate
 
-48 kHz: the game's 32 kHz sound resampled by a high-quality filter before it reaches the system, which then plays it as it is (most devices run at 48 kHz). 32 kHz: as the GameCube, the system resamples it.
-48 kHz: Der 32-kHz-Ton des Spiels wird mit einem hochwertigen Filter umgerechnet, bevor er das System erreicht, das ihn dann unverändert abspielt (die meisten Geräte laufen mit 48 kHz). 32 kHz: wie der GameCube, das System rechnet um.
+48 kHz: Paper Cut converts the sound with a high-quality filter, best for most devices. 32 kHz: the GameCube's own rate, converted by the system.
+48 kHz: Paper Cut rechnet den Ton mit einem hochwertigen Filter um, am besten für die meisten Geräte. 32 kHz: die Rate des GameCube, vom System umgerechnet.
 
 32 kHz (the GameCube's)
 32 kHz (wie der GameCube)

@@ -9,8 +9,8 @@ Ogni battaglia vinta riceve un voto da D a S per le tecniche con stile, le Super
 Paper Cut badge set
 Set di tessere Paper Cut
 
-Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
-Dodici tessere nuove, ognuna piegata da due o tre tessere del gioco, vendute da un mercante Toad nella piazza di Fannullopoli finito il prologo. Un file che le contiene non è più per il gioco GameCube.
+Twelve new badges, each mixing two or three of the game's, sold by a Toad in Rogueport's plaza after the prologue. A save holding them no longer works on a GameCube.
+Dodici tessere nuove, ognuna un misto di due o tre tessere del gioco, vendute da un Toad nella piazza di Fannullopoli dopo il prologo. Un salvataggio che le contiene non funziona più su un GameCube.
 
 Paper Cut badges
 Tessere Paper Cut

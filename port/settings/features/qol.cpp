@@ -22,6 +22,9 @@ extern "C" {
 #include "port/qol.h"
 }
 
+extern "C" int portSettingsPageIsOpen(void); // settings_ui.cpp
+extern "C" void portSettingsToggle(void);    // (the same)
+
 namespace {
 
 constexpr const char* kTab = "Enhancements";
@@ -265,6 +268,23 @@ int hintPressed(int down, int repeat) {
   return 1;
 }
 
+// the hint without its key or button (a touch screen's way, any menu's): asked, the page shut, the partner speaks
+void hintSection(int inGame) {
+  const bool on = portQol("partner_hint") != 0;
+  ImGui::BeginDisabled(!inGame || !on);
+  if (ImGui::Button(portTrLabel("Where to next?##partner_hint_ask"))) {
+    portPartnerHintPress();
+    if (portSettingsPageIsOpen()) {
+      portSettingsToggle();
+    }
+  }
+  ImGui::EndDisabled();
+  if (!on) {
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", portTr("Turn Partner hint on first."));
+  }
+}
+
 struct Register {
   Register() {
     portQolDeclare();
@@ -294,7 +314,7 @@ struct Register {
                           0, "shop_plus", "shop buy sell store storage points held count remake");
     portSettingsAddToggle(kTab, "Prompts over things to check",
                           "The \"!\" over Mario shows at every spot the A button acts on, not only the ones the "
-                          "game marks, and near someone Goombella has not Tattled yet.",
+                          "game marks.",
                           0, "talk_prompts", "prompt balloon exclamation check talk sign remake");
     portSettingsAddToggle(kTab, "Save-file details",
                           "The file screen shows each file's partner and the date it was saved, a colour per file, "
@@ -306,7 +326,7 @@ struct Register {
                           0, "list_lr_scroll", "scroll page list items badges left right remake");
     portSettingsAddToggle(kTab, "Retry in Bowser's stages",
                           "In Bowser's side-scrolling stages, Y on the pause screen plays the stage again from its "
-                          "start (a save state taken as it begins).",
+                          "start (a save state taken as it begins). From the next stage.",
                           kPlay, "bowser_retry", "bowser retry restart stage intermission pause remake");
     static const char* const kJukebox[] = {"Heard on this file", "Remake: a share per Shine Sprite found",
                                            "Every track"};
@@ -324,11 +344,13 @@ struct Register {
                           "only: an interlude seen on any file before. Always: the first time too. Not online.",
                           kPlay, "skip_interludes", kSkipInterludes, 3,
                           "skip interlude peach bowser replay story always");
-    portSettingsAddToggle(kTab, "Glitz Pit and chapter 6 pace trims",
+    portSettingsAddToggle(kTab, "Shorter Glitz Pit and train trips",
                           "After your first Glitz Pit match, no guard walks you to the ring: straight there. Every "
                           "Excess Express trip after chapter 6 goes straight to the other station. Not online.",
                           kPlay, "pace_trims", "pace glitz pit guard ring train express poshley trip faster");
     portBindingsSetHandler(PORT_BIND_PARTNER_HINT, hintPressed);
+    portSettingsAddSection(kTab, "Ask your partner", "The partner says where the story goes next, as {HINT} does.",
+                           PORT_SETTING_IN_GAME, hintSection, "partner hint ask where next help goombella touch");
     portSettingsAddSection(kTab, "Notes", "The Trouble you took, Merluvlee's predictions and the open Troubles.", PORT_SETTING_IN_GAME,
                            notesSection, "notes trouble center job request open remake");
     portSettingsAddSection("Controls", "Controls at a glance", "What each key and button does now.", 0,
@@ -379,7 +401,7 @@ const char* portQolJournalAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return "Not on the second screen: use the game's Start menu.";
+    return portPauseSecondScreenAct(id, dir);
   }
   sCoinHintFile = portPracticeFileLoads();
   switch (portCoinHintBuy(sCoinHint, sizeof(sCoinHint))) {

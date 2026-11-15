@@ -190,8 +190,7 @@ const bool sAdded = [] {
   portSettingsDeclare("colorblind_strength", 100, 0, 100);
   sCaptions = portSettingsDeclare("captions", 0, 0, 1);
   portSettingsAddChoice("Accessibility", "Colour-blind filter",
-                        "Shifts the colours your eyes confuse into ones they can tell apart, over the whole picture "
-                        "(a daltonization correction, not a simulation).",
+                        "Shifts the colours your eyes mix up into ones you can tell apart, over the whole picture.",
                         0, "colorblind", kFilters, 4,
                         "color colour blind blindness daltonize protanopia deuteranopia tritanopia filter");
   portSettingsAddSlider("Accessibility", "Filter strength", "How far the filter moves the colours.", 0, "colorblind_strength", 0, 100, "%d%%",

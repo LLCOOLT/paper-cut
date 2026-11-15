@@ -9,8 +9,8 @@ Aiuto al tempismo per tipo di comando
 Action command timing in every battle
 Tempismo dei comandi in ogni battaglia
 
-The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
-La finestra del dojo dopo ogni comando, difesa e tecnica con stile, in ogni battaglia: quanti fotogrammi in anticipo o in ritardo.
+After each action command, guard and Stylish move, in every battle, a note shows how many frames early or late you were.
+Dopo ogni comando, difesa e tecnica con stile, in ogni battaglia, un avviso mostra di quanti fotogrammi eri in anticipo o in ritardo.
 
 By command type
 Per tipo di comando

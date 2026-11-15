@@ -33,8 +33,8 @@ Ready to install
 Only Paper Cut's own app for this version, from its releases, checked against the release's checksum; then Android asks before it installs.
 Paper Cutの　リリースだけ　いれる　まえに　Androidが　ききます
 
-A new version found at start is downloaded in the background and checked against the release's checksum; then Android asks before it installs. Never during online play or a replay.
-あたらしい　バージョンが　あれば　うらで　ダウンロードして　しらべます　いれる　まえに　Androidが　ききます　オンラインや　リプレイの　あいだは　しません
+A new version found at start downloads in the background and is checked; then Android asks before installing it. Never while playing online.
+あたらしい　バージョンが　あれば　うらで　ダウンロードして　しらべます　いれる　まえに　Androidが　ききます　オンラインの　あいだは　しません
 
 Add to AltStore
 AltStoreに　いれる

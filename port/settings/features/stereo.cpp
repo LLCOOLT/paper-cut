@@ -161,8 +161,9 @@ fn fs_main(in: VsOut) -> @location(0) vec4f {
 bool sUnsupported = false;
 aurora::gfx::DrawTypeId sClearType = aurora::gfx::InvalidDrawType;
 aurora::gfx::DrawTypeId sComposeType = aurora::gfx::InvalidDrawType;
-wgpu::TextureView sLeft;
+wgpu::TextureView sLeft; // the eye kept first (the left, or the right: sKeptRight)
 uint32_t sLeftFrame = UINT32_MAX;
+bool sKeptRight = false;
 uint32_t sComposedFrame = UINT32_MAX;
 
 // (render worker)
@@ -337,9 +338,8 @@ const bool sAdded = [] {
                         "one.",
                         0, "stereo_depth", 0, 100, "%d%%", "stereoscopic 3d depth separation strength");
   portSettingsAddSlider("Graphics", "Screen distance",
-                        "Where the screen sits in the scene, against the distance to what the camera follows: at "
-                        "100% Mario is at the screen, nearer things come out of it and farther ones go behind. More "
-                        "brings more of the scene out of the screen.",
+                        "How far the picture comes out of the screen: at 100, Mario sits at the screen's depth; "
+                        "higher brings more of the scene out towards you.",
                         0, "stereo_screen", 50, 200, "%d%%", "stereoscopic 3d convergence screen distance pop out");
   portSettingsSetShown("stereo_depth", [] { return portStereoMode() != 0 ? 1 : 0; });
   portSettingsSetShown("stereo_screen", [] { return portStereoMode() != 0 ? 1 : 0; });
@@ -352,6 +352,7 @@ extern "C" int portStereoGpuLeftDone(void) {
   if (!registered()) {
     return 0;
   }
+  sKeptRight = false;
   aurora::gfx::ResolvedTargets targets;
   if (!aurora::gfx::resolve_pass({.color = true, .depth = false, .normal = false}, targets) || !targets.color) {
     return 0;
@@ -374,8 +375,12 @@ extern "C" void portStereoGpuCompose(int mode) {
     return;
   }
   // no left eye this frame (a frame drawn once: its own picture for both eyes, flat)
-  wgpu::TextureView left = sLeft && sLeftFrame == aurora::gfx::current_frame() ? sLeft : targets.color;
+  wgpu::TextureView kept = sLeft && sLeftFrame == aurora::gfx::current_frame() ? sLeft : targets.color;
   sLeft = nullptr;
+  // (frame interpolation by replay draws the game's own eye, the right, first: interp_replay_aurora.c)
+  wgpu::TextureView left = sKeptRight ? targets.color : kept;
+  wgpu::TextureView right = sKeptRight ? kept : targets.color;
+  sKeptRight = false;
   Uniforms u{};
   u.size[0] = static_cast<float>(targets.width);
   u.size[1] = static_cast<float>(targets.height);
@@ -387,7 +392,7 @@ extern "C" void portStereoGpuCompose(int mode) {
     return;
   }
   payload.left = left.Get();
-  payload.right = targets.color.Get();
+  payload.right = right.Get();
   payload.width = targets.width;
   payload.height = targets.height;
   wgpuTextureViewAddRef(payload.left);
@@ -397,3 +402,16 @@ extern "C" void portStereoGpuCompose(int mode) {
     wgpuTextureViewRelease(payload.right);
   }
 }
+
+// Frame interpolation by replay (interp_replay_aurora.c): the right eye (the game's own draw) kept first and the
+// frame cleared for the left; a frame composing more than one picture (its in-between frame drawn into it after the
+// game's); a frame whose picture is already composed (the game's, kept and drawn again).
+extern "C" int portStereoGpuRightDone(void) {
+  const int ok = portStereoGpuLeftDone();
+  sKeptRight = ok != 0;
+  return ok;
+}
+
+extern "C" void portStereoGpuNewPicture(void) { sComposedFrame = UINT32_MAX; }
+
+extern "C" void portStereoGpuSkipCompose(void) { sComposedFrame = aurora::gfx::current_frame(); }

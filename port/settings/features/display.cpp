@@ -13,12 +13,12 @@
 
 namespace {
 
-constexpr const char* kAspects[] = {"Widescreen switch", "4:3", "16:9", "16:10 (Steam Deck)",
+constexpr const char* kAspects[] = {"Follow Widescreen", "4:3", "16:9", "16:10 (Steam Deck)",
                                     "21:9 (ultrawide)", "32:9 (super ultrawide)", "The window's"};
 constexpr const char* kAspectMax[] = {"No limit", "16:9", "21:9"};
 constexpr const char* kAniso[] = {"Off (the game's)", "2x", "4x", "8x", "16x"};
-constexpr const char* kLodBias[] = {"The game's", "Sharper (-0.5)", "Sharper still (-1)", "Sharpest (-1.5)",
-                                    "Softer (+0.5)"};
+constexpr const char* kLodBias[] = {"The game's", "Sharper", "Sharper still", "Sharpest",
+                                    "Softer"};
 constexpr const char* kUpscale[] = {"Off", "2x", "4x"};
 constexpr const char* kSupersample[] = {"Off", "2x", "3x", "4x"};
 constexpr const char* kPost[] = {"Off", "CRT", "Paper grain", "Sharpen", "Cut-paper outline", "Folding light"};
@@ -137,12 +137,12 @@ const bool sAdded = [] {
                         "and scenes can end before the screen's edges.",
                         0, "aspect_ratio", kAspects, 7, "ultrawide 21:9 32:9 16:10 steam deck widescreen");
   portSettingsAddChoice("Display", "Widest picture",
-                        "Wider screens get bars past this (see Blurred side bars).", 0, "aspect_max",
+                        "The widest the picture gets; past it, wider screens show bars at the sides.", 0, "aspect_max",
                         kAspectMax, 3, "ultrawide limit clamp pillarbox");
   // port/src/aurora/widescreen_aurora.c
   portSettingsAddToggle("Display", "Bars where a scene ends",
-                        "In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars "
-                        "beside the picture instead of the empty space past the set.",
+                        "Where a room's or battle's scenery ends before a wide screen's edges, bars cover the empty "
+                        "space past it.",
                         0, "aspect_scene_limits", "ultrawide room void black edges pillarbox battle");
   portSettingsAddSlider("Interface", "HUD size",
                         "The status bar, message windows and battle menus, larger or smaller than the game's.", 0,
@@ -154,7 +154,8 @@ const bool sAdded = [] {
                         0, "text_scale", 100, 150, "%d%%", "bigger text font message dialogue window large read");
   portSettingsAddChoice("Graphics", "Anisotropic filtering", "Textures seen at an angle (floors, paths) stay sharp.", 0,
                         "aniso", kAniso, 5, "aniso texture filtering af");
-  portSettingsAddChoice("Graphics", "Texture detail", "Which of a texture's detail levels is used at a distance.", 0,
+  portSettingsAddChoice("Graphics", "Texture detail",
+                        "How sharp textures look in the distance; sharper can shimmer as the camera moves.", 0,
                         "lod_bias", kLodBias, 5, "lod bias mipmap texture sharp");
   // port/src/aurora/upscale_aurora.c
   portSettingsAddChoice("Graphics", "Texture upscaling",
@@ -174,8 +175,8 @@ const bool sAdded = [] {
                         "crt scanlines paper grain sharpen post-processing shader cut paper outline ink fold "
                         "folding light crease");
   portSettingsAddToggle("Display", "Variable refresh rate (G-Sync, FreeSync)",
-                        "Each frame shown as soon as it is ready, without waiting for the screen. For VRR "
-                        "displays (others may tear); goes well with Frame rate: the display's.",
+                        "For G-Sync and FreeSync screens: each frame shows as soon as it's ready, for less delay. "
+                        "Other screens may tear. Best with Frame rate on the display's rate.",
                         0, "vrr", "vrr gsync freesync adaptive sync tearing pacing");
   portSettingsAddSection("Display", "HDR output",
                          "On an HDR display, the picture at the brightness you choose for white (paper white), "
@@ -184,8 +185,9 @@ const bool sAdded = [] {
                          0, hdrSection, "hdr high dynamic range nits brightness paper white edr scrgb hdr10");
   portPauseAddForm(&kHdrForm);
   portSettingsAddChoice("Interface", "Performance overlay",
-                        "The time between frames, and the part spent working.", 0,
-                        "perf_overlay", kPerf, 3, "frame time graph pacing stutter performance fps");
+                        "A graph of how long each frame takes, to spot stutters, with the exact times if you want "
+                        "them.",
+                        0, "perf_overlay", kPerf, 3, "frame time graph pacing stutter performance fps");
   return true;
 }();
 

@@ -8,6 +8,7 @@
 // Adding a row: an on/off is one line in kToggles (its field in
 // PortRandoSettings, and when it is shown); anything else gets an id in the
 // enum and a case in rows() and act().
+#include "port/offscreen.h"
 #include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/companion_menu.h"
@@ -15,10 +16,19 @@
 #include "../../archipelago/ttyd_rando.h"
 #include "../../archipelago/rando_gen.h"
 
+#include <SDL3/SDL.h>
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+
 #include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
+
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+#define RANDO_OPEN_FOLDER 1 // (a desktop's file manager: phones have none to show a folder in)
+#endif
 
 namespace {
 
@@ -79,6 +89,7 @@ enum {
   kLogic,     // glitchless, tricks, no logic (left and right; A goes round)
   kPreset,    // the presets (left and right choose, A applies)
   kPermalink, // the permalink shown; A types one in
+  kSpoilerFolder, // the spoiler logs' folder opened (desktops)
   kTrickBase = 200,
   kToggleBase = 100,
 };
@@ -137,6 +148,14 @@ int rows(PortPauseRow* out, int max) {
     if (t.shown == nullptr || t.shown(s)) {
       add(portPauseRow(t.label, t.note, onOff(s.*(t.field)), kToggleBase + i));
     }
+#ifdef RANDO_OPEN_FOLDER
+    if (t.field == &PortRandoSettings::spoiler) {
+      add(portPauseRow("Open the spoiler logs folder",
+                       "Shows the randomizer folder in the user folder, where each start's spoiler log is written: the "
+                       "system's folder for app data, or User beside the program with portable.txt.",
+                       nullptr, kSpoilerFolder));
+    }
+#endif
     if (t.field == &PortRandoSettings::openWorld && s.openWorld) {
       PortPauseRow r = portPauseRow("Crystal Stars for the goal",
                                     "The goal: this many Crystal Stars, from any chapters. The logic makes sure that "
@@ -210,7 +229,7 @@ const char* act(int id, int dir) {
   // change here would stamp another seed on this side's next new file. Only
   // looking stays (the presets' notes, the permalink, "Check this seed").
   const bool looks = id == kCheck || id == kThisRun || id == kUseBuiltIn || id == kPermalink ||
-                     (id == kPreset && dir != 0);
+                     id == kSpoilerFolder || (id == kPreset && dir != 0);
   if (portRandoShared() && !looks) return "The session's settings can't be changed here.";
   if (id >= kToggleBase && id < kToggleBase + kToggleCount) {
     int& v = s->*(kToggles[id - kToggleBase].field);
@@ -272,6 +291,18 @@ const char* act(int id, int dir) {
       sCheck = portRandoCheck();
     }
     return nullptr;
+#ifdef RANDO_OPEN_FOLDER
+  case kSpoilerFolder:
+    if (dir == 0) {
+      // (where ttyd_rando.cpp writes spoiler_<seed>.txt; made first, so it opens before the first log)
+      const std::string folder = std::string(portSettingsUserPath()) + "/randomizer";
+      SDL_CreateDirectory(folder.c_str());
+      if (!portOpenFolder(folder.c_str())) {
+        return "The folder didn't open: it is the randomizer folder in the user folder.";
+      }
+    }
+    return nullptr;
+#endif
   case kGoal: {
     // 1 to 5 (left and right; A goes round), 5 kept as 0: all the chapters
     const int goal = s->openGoal > 0 && s->openGoal < 7 ? s->openGoal : 7;

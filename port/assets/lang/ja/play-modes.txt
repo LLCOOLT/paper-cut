@@ -48,8 +48,8 @@ Not while another mode runs.
 Remix: enemies
 リミックス: 敵
 
-The fight behind each enemy in the field is drawn from all of its area's fights (not the bosses'), the same for a room and a seed. From the next room.
-フィールドの敵とのバトルが、そのエリアのすべてのバトル(ボス以外)から選ばれます。部屋とシードが同じなら同じです。次の部屋から。
+Each field enemy leads to a random fight from its area (never a boss), the same every time for a room and seed. From the next room.
+フィールドの敵とのバトルが、そのエリアのバトル（ボス以外）からランダムに選ばれます。部屋とシードが同じなら毎回同じです。次の部屋から。
 
 Remix: badge draft
 リミックス: バッジドラフト
@@ -60,8 +60,8 @@ Each chapter's title card offers three badges: pick one.
 Remix seed
 リミックスのシード
 
-Same seed, same remix: share it with a challenge code.
-同じシードなら同じリミックスです(チャレンジコードでシェアできます)。
+Same seed, same remix: share it with a challenge code. From the next room.
+同じシードなら同じリミックスです(チャレンジコードでシェアできます)。次の部屋から。
 
 Hardcore
 ハードコア

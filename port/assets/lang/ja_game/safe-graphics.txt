@@ -1,0 +1,34 @@
+# The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
+
+Safe graphics
+セーフグラフィック
+
+The least the graphics card is asked for, for a device whose screen slows right down or that restarts while playing: no anti-aliasing, supersampling, upscaling or effects, the picture at 480 lines, smaller graphics buffers. Most of it at once, the rest from the next start.
+画面が　とても　おそくなったり　プレイちゅうに　さいきどう　したりする　デバイスの　ための　いちばん　かるい　グラフィック　アンチエイリアス　スーパーサンプリング　アップスケール　エフェクトは　なし　画面は　480ライン　ほとんどは　すぐに　のこりは　つぎの　きどうから
+
+Graphics API
+グラフィックAPI
+
+How the game talks to the graphics chip. Try OpenGL ES if the game slows right down or the device restarts with Vulkan.
+ゲームと　グラフィックチップの　つなぎかた　Vulkanで　とても　おそくなったり　さいきどう　したりする　ときは　OpenGL ESを　ためして　ください
+
+Auto (Vulkan)
+オート（Vulkan）
+
+Vulkan
+Vulkan
+
+OpenGL ES
+OpenGL ES
+
+How the game talks to the graphics card. Try Direct3D 11 if the screen goes white, the game stops or lags badly with an older or Intel graphics driver. Safe graphics on Auto uses Direct3D 11.
+ゲームと　グラフィックカードの　つなぎかた　ふるい　ドライバーや　Intelの　グラフィックで　がめんが　しろく　なったり　とまったり　とても　おもい　ときは　Direct3D 11を　ためして　ください　オートの　まま　セーフグラフィックを　オンにすると　Direct3D 11を　つかいます
+
+Auto (Direct3D 12)
+オート（Direct3D 12）
+
+Direct3D 12
+Direct3D 12
+
+Direct3D 11
+Direct3D 11

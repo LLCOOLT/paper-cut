@@ -1,0 +1,34 @@
+# Special places (port/src/common/special_places_pc.c, the Journal's map with fast travel: port/src/aurora/warp_map_aurora.c)
+
+Special places
+Luoghi speciali
+
+Bowser's Castle
+Il castello di Bowser
+
+Bowser's stage 1
+Livello di Bowser 1
+
+Bowser's stage 2
+Livello di Bowser 2
+
+Bowser's stage 3
+Livello di Bowser 3
+
+Back to where you came from
+Torna al punto di partenza
+
+{A}: go there. {B}: back.
+{A}: vai lì. {B}: indietro.
+
+Off in Console-accurate mode.
+Disattivato nella modalità fedele alla console.
+
+Not seen in the story yet.
+Non ancora visto nella storia.
+
+{X}: leave, back to where Mario came from.
+{X}: esci, torna dove era Mario.
+
+Bowser's Castle: the far door leads back.
+Castello di Bowser: la porta in fondo riporta indietro.

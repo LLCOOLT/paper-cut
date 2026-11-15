@@ -3,14 +3,14 @@
 Skip any scene
 Passer n'importe quelle scène
 
-While a scene holds Mario, hold {START} until the ring fills: the scene runs on to its end at once, unseen and unheard, so whatever it gives or changes still happens. {B} stops it. It stops at a choice, a menu or a battle (they're yours), and never runs during play, minigames or online.
-Quand une scène retient Mario, maintiens {START} jusqu'à ce que l'anneau se remplisse : la scène va aussitôt jusqu'à sa fin, sans image ni son, et tout ce qu'elle donne ou change a quand même lieu. {B} l'arrête. Elle s'arrête à un choix, un menu ou un combat (c'est à toi), et n'agit jamais pendant le jeu, les mini-jeux ou en ligne.
+During a scene, hold {START} until the ring fills to jump to its end; whatever it gives or changes still happens, and it stops at choices and battles. Not online.
+Pendant une scène, maintenez {START} jusqu'à ce que l'anneau se remplisse pour sauter à sa fin ; tout ce qu'elle donne ou change a quand même lieu, et elle s'arrête aux choix et aux combats. Pas en ligne.
 
 Fly through text
 Faire défiler le texte
 
-In a conversation, hold {B}: its pages turn as fast as they print, up to the next choice. A tap of {B} is the game's own.
-Dans une conversation, maintiens {B} : les pages défilent aussi vite qu'elles s'affichent, jusqu'au prochain choix. Un appui bref sur {B} reste celui du jeu.
+Hold {B} in a conversation to race through its pages, up to the next choice; a tap of {B} works as usual.
+Maintenez {B} dans une conversation pour faire défiler ses pages à toute vitesse jusqu'au prochain choix ; un appui bref sur {B} agit comme d'habitude.
 
 Hold {START} to skip, {B} to stop
 Maintiens {START} pour passer, {B} pour arrêter

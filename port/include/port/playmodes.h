@@ -97,6 +97,9 @@ unsigned long long portPitCoopElapsed(void);
 int portPitCoopResult(int* floor, unsigned long long* ms);
 /* The deepest floor and the best time to the bottom (0: none). */
 int portPitCoopBest(int* floor, unsigned long long* ms);
+/* Autosave on (port/src/common/autosave_pc.c), each frame: a run's new deepest floor kept at once; 1 when it
+ * was written now. */
+int portPitCoopAutosave(void);
 
 /* The game side, each frame (playmodes_aurora.c's marioStMain hook), and its hooks. */
 void portChaptersFrame(void);

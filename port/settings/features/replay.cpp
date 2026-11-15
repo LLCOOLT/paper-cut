@@ -501,7 +501,7 @@ std::string stopAndSave() {
     path = replayDir() + "/" + fileSafe(sRec.name) + " " + now(true) + kExt;
   }
   if (!writeFile(path, encode(sRec))) {
-    std::fprintf(stderr, "[replay] couldn't write %s: %s\n", path.c_str(), SDL_GetError());
+    std::fprintf(stdout, "[replay] couldn't write %s: %s\n", path.c_str(), SDL_GetError());
     sMessage = portTr("The replay couldn't be saved.");
     return {};
   }

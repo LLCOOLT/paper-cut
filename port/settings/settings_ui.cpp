@@ -15,6 +15,7 @@ extern "C" void portBindingsPageEvent(const void* sdlEvent); // features/binding
 #include "port/tr.h"
 #include "port/resume.h"
 #include "port/restart.h"
+#include "port/soft_crash.h"
 #include "settings_ui.h"
 #include "launcher_style.h"
 #include "button_glyphs.h"
@@ -28,6 +29,7 @@ extern "C" void portBindingsPageEvent(const void* sdlEvent); // features/binding
 #include "port/layout.h"
 #include "port/overlay_place.h"
 #include "port/bindings.h"
+#include "port/pad_keyboard.h"
 #include "port/menu_typing.h"
 #include "../archipelago/ttyd_ap.h"
 
@@ -36,6 +38,7 @@ extern "C" void portBindingsPageEvent(const void* sdlEvent); // features/binding
 #include <aurora/gfx.h>
 #include <dolphin/pad.h>
 #include <imgui.h>
+#include <imgui_internal.h> // (ImHashStr, OpenPopupEx: $TTYD_SETTINGS_COMBO_OPEN)
 
 #include <algorithm>
 #include <cctype>
@@ -145,15 +148,35 @@ constexpr const char* kCorners[] = {"Off", "Top left", "Top right", "Bottom left
 // a label in the menu language (port/include/port/tr.h)
 const char* trl(const char* label) { return portTrLabel(label); }
 
-bool combo(const char* label, int* value, const char* const* names, int count) {
+// maxOk: the highest choice this device allows (portSettingChoiceMax), -1 any: the ones above it greyed
+bool combo(const char* label, int* value, const char* const* names, int count, int maxOk = -1) {
   bool change = false;
   // (a value outside the list, a feature's declared range wider than its
   // names or one not settled yet: shown as "?", nothing picked)
   const bool inList = *value >= 0 && *value < count;
+  // tests: $TTYD_SETTINGS_COMBO_OPEN=<English label> opens that choice's list once (BeginCombo's popup id)
+  static const char* sOpenWant = SDL_getenv("TTYD_SETTINGS_COMBO_OPEN");
+  static bool sOpened;
+  if (sOpenWant != nullptr && !sOpened && std::strcmp(sOpenWant, label) == 0) {
+    sOpened = true;
+    ImGui::OpenPopupEx(ImHashStr("##ComboPopup", 0, ImGui::GetID(trl(label))));
+  }
   if (ImGui::BeginCombo(trl(label), inList ? portTr(names[*value]) : "?")) {
     for (int i = 0; i < count; i++) {
       ImGui::PushID(i);
-      const bool picked = ImGui::Selectable(portTr(names[i]), i == *value);
+      const bool off = maxOk >= 0 && i > maxOk;
+      if (off) {
+        static std::string sLogged; // (each greyed choice named once: the tests' record)
+        const std::string key = std::string(label) + "|" + names[i] + ";";
+        if (sLogged.find(key) == std::string::npos) {
+          sLogged += key;
+          std::printf("[settings] %s: %s greyed, not on this device\n", label, names[i]);
+          std::fflush(stdout);
+        }
+      }
+      const std::string name = off ? std::string(portTr(names[i])) + " (" + portTr("not on this device") + ")"
+                                   : std::string(portTr(names[i]));
+      const bool picked = ImGui::Selectable(name.c_str(), i == *value, off ? ImGuiSelectableFlags_Disabled : 0);
       ImGui::PopID();
       if (picked) {
         *value = i;
@@ -209,6 +232,7 @@ bool copyCrashReport() {
 void crashSection() {
   ImGui::Separator();
   static bool sCopied;
+  portFlightRecordButtons(); // the last run's graphics record (port/settings/features/safe_graphics.cpp)
   if (portCrashReportLast() == nullptr) {
     note("No crash reports.");
     return;
@@ -222,6 +246,13 @@ void crashSection() {
   }
   note("last_crash.txt in the save folder; paste it to whoever is helping you.");
   portCrashReportButtons(); // GitHub, a zip (port/settings/features/crash_report.cpp)
+}
+
+// Report a problem: with or without a crash (port/settings/features/report_problem.cpp)
+void reportSection() {
+  portReportProblemSection("settings");
+  note("One zip of what helps a bug report (the records, your settings' values, the last log lines), shown "
+       "before it is made; then GitHub's page for a new issue, to attach it to.");
 }
 
 // The last run crashed and the launcher was left out (a disc given at start, $TTYD_NO_LAUNCHER): the
@@ -250,12 +281,51 @@ void drawCrashNotice(float scale) {
   const int pick = portRecoveryDraw(sResume, scale, false, noteWindow); // (its place: touches go to it)
   if (pick == 1) {
     portWarpRequestResume(sResume.path.c_str(), sResume.slot);
+  } else if (pick >= 3 && pick - 3 < int(sResume.snaps.size())) {
+    // a crash-safe snapshot, a few minutes earlier (port/include/port/soft_crash.h), as the file it came from
+    const PortRecoverySnap& snap = sResume.snaps[size_t(pick - 3)];
+    portWarpRequestResume(snap.path.c_str(), snap.slot);
   }
   if (pick != 0) {
     portCrashReportDismiss();
     sHeld = false;
     PADBlockInput(false);
     portUiReleaseInput(); // (the game has the controls again)
+  }
+}
+
+// The last run stopped on screen with no crash report and the launcher was left out: the undo question and
+// the crash-safe snapshots in a window of their own over the game's title, once (soft_crash.cpp; the
+// launcher shows it otherwise), holding the game's input as the recovery screen does
+void drawSoftCrashWindow(float scale) {
+  static bool sHeld, sGone;
+  if (!sHeld && !sGone) {
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
+  }
+  const int shown = portSoftCrashWindowDraw(scale, PORT_GAME_ID, false, noteWindow);
+  if (shown == 0) {
+    sHeld = true;
+    PADBlockInput(true);
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
+    portMenuUiFrame(); // (each controller's own confirm and back)
+  } else {
+    if (sHeld) {
+      sHeld = false;
+      PADBlockInput(false);
+      portUiReleaseInput();
+    } else if (!sGone) {
+      // (no window to show: the navigation set above, before it said so, goes. Left on every frame, a
+      // controller's press woke ImGui's navigation in play, which then took the keyboard: the map
+      // editor's Ctrl+S and Esc, after its Back)
+      ImGui::GetIO().ConfigFlags &= ~(ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad);
+    }
+    sGone = true;
+  }
+  // a snapshot picked there: loaded as the save file it came from, through the save warp
+  std::string gameId, path;
+  int slot = 3;
+  if (portSoftCrashTakeContinue(&gameId, &path, &slot) && gameId == PORT_GAME_ID) {
+    portWarpRequestResume(path.c_str(), slot);
   }
 }
 
@@ -373,7 +443,16 @@ void statesTab() {
     ImGui::TextDisabled("%s", info != nullptr ? info : "empty");
     ImGui::PopID();
   }
-  note("Keyboard: F5 saves to slot 1, F8 loads it.");
+  { // slot 1's key and controller binding as they are now (Controls > Bindings)
+    auto both = [](int action) {
+      const std::string key = portBindingsKeyName(action), pad = portBindingsPadName(action);
+      return key.empty() ? pad : pad.empty() ? key : key + " / " + pad;
+    };
+    char line[256];
+    std::snprintf(line, sizeof(line), portTr("%s saves to slot 1, %s loads it."), both(PORT_BIND_SAVE_STATE).c_str(),
+                  both(PORT_BIND_LOAD_STATE).c_str());
+    note(line);
+  }
 }
 
 // The Action Command cue (port/src/common/ac_cue_pc.c): an A button low in
@@ -817,7 +896,7 @@ constexpr int kCueCount = 2;
 #endif
 
 bool widescreenOn(const PortSettings* s) { return s->widescreen != 0 || portWidescreenWide(); }
-// Widescreen does something only while Aspect ratio is on "Widescreen switch" (its default)
+// Widescreen does something only while Aspect ratio is on "Follow Widescreen" (its default)
 bool widescreenSwitch(const PortSettings*) {
   const int* aspect = portSettingsFind("aspect_ratio");
   return aspect == nullptr || *aspect == PORT_ASPECT_SWITCH;
@@ -827,9 +906,10 @@ bool isEurope(const PortSettings*) { return std::strcmp(PORT_GAME_ID, "G8MP01") 
 Item kItems[] = {
     // Display
     {"Display", "Frame rate",
-     "The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).", 0,
+     "Smoother motion on high-refresh screens: extra frames drawn between the game's 60. Uses more power.", 0,
      videoRate, "fps hz 120 144 240 smooth interpolation", nullptr},
-    {"Display", "VSync", "Present at the display's refresh: no tearing.", 0, TOGGLE(vsync), "tearing", nullptr},
+    {"Display", "VSync", "Waits for the screen before showing each frame: no tearing, slightly more input delay.", 0,
+     TOGGLE(vsync), "tearing", nullptr},
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
     {"Display", "Display mode",
      "Borderless: the whole screen, switching away at once. Full screen: the screen is the game's alone, at its own "
@@ -844,37 +924,49 @@ Item kItems[] = {
      0, TOGGLE(wideHud), "status bar hud edges", widescreenOn},
     {"Display", "Blurred side bars", "Where the picture doesn't fill the screen, a blurred copy of it instead of black bars.",
      0, TOGGLE(sideBars), "pillarbox black bars", nullptr},
-    {"Graphics", "Internal resolution", "Auto: the window's size; or a multiple of 640x480.", 0, resolution, "resolution scale sharp 4k", nullptr},
+    {"Graphics", "Internal resolution",
+     "How sharp the 3D picture is: higher is crisper but works the graphics card harder. Auto matches the window.", 0,
+     resolution, "resolution scale sharp 4k", nullptr},
     {"Graphics", "Texture filtering", "Smooth as the game draws them, or sharp pixels.", 0, CHOICE(texFilter, kFilters, 2), "pixels smooth sharp", nullptr},
-    {"Graphics", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, TOGGLE(msaa), "msaa jaggies edges",
-     nullptr, nullptr, &PortSettings::msaa},
-    {"Interface", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, overlay,
+    {"Graphics", "Anti-aliasing (4x MSAA)", "Smooths jagged edges; costs a little graphics card time.", kNextStart,
+     TOGGLE(msaa), "msaa jaggies edges", nullptr, nullptr, &PortSettings::msaa},
+    {"Interface", "Overlay corner", "Shows the frame rate, clock and battery level in the corner you pick.", 0,
+     overlay,
      "fps counter clock battery", nullptr},
-    {"Graphics", "Never skip loading graphics",
-     "Something drawn for the first time waits for its graphics to be ready (a short pause, once) instead of "
-     "appearing a moment later.",
-     0, TOGGLE(noPopIn), "pop-in stutter shaders", nullptr},
+    {"Graphics", "Wait for graphics to load",
+     "Something new on screen waits a moment for its graphics instead of popping in late; a short pause the first "
+     "time.",
+     0, TOGGLE(noPopIn), "pop-in stutter shaders never skip loading graphics wait", nullptr},
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
     {"Display", "Orientation", "Held upright, the picture is at the top and the controls below it.", 0,
      CHOICE(orientation, kOrientations, 3), "portrait landscape rotate", nullptr},
-    {"Display", "Keep clear of the notch", nullptr, 0, TOGGLE(safeArea), "safe area island", nullptr},
+    {"Display", "Keep clear of the notch",
+     "Keeps the picture and buttons away from the notch, camera cutout and rounded corners.", 0, TOGGLE(safeArea),
+     "safe area island", nullptr},
 #endif
 
     // Audio: port/settings/features/volume.cpp (the mixer, the volume keys)
 
     // Controls
     {"Controls", "Rumble", "The controller's rumble.", 0, TOGGLE(rumble), "vibration", nullptr},
-    {"Controls", "Rumble strength", "The game's own Rumble option (on the file select) still applies.", 0,
+    {"Controls", "Rumble strength",
+     "How strongly the controller vibrates. The game's own Rumble option on the file screen still applies.", 0,
      PERCENT(rumbleStrength, 0, 100), "vibration", nullptr},
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Controls", "Vibrate without a controller", nullptr, 0, TOGGLE(phoneRumble), "haptics", nullptr},
-    {"Controls", "Haptic tap on button press", nullptr, 0, TOGGLE(touchHaptics), "touch on-screen", nullptr},
-    {"Controls", "On-screen controls' opacity", nullptr, 0, PERCENT(touchOpacity, 20, 100), "touch on-screen controls", nullptr},
+    {"Controls", "Vibrate without a controller", "The phone or tablet vibrates when no controller can.", 0,
+     TOGGLE(phoneRumble), "haptics", nullptr},
+    {"Controls", "Haptic tap on button press", "A light buzz each time you press an on-screen button.", 0,
+     TOGGLE(touchHaptics), "touch on-screen", nullptr},
+    {"Controls", "On-screen controls' opacity", "How see-through the on-screen controls are.", 0,
+     PERCENT(touchOpacity, 20, 100), "touch on-screen controls", nullptr},
     {"Controls", "On-screen controls' size", kTouchSizeHelp, 0, PERCENT(touchSize, 50, 200),
      "touch on-screen controls buttons bigger larger smaller", nullptr},
-    {"Controls", "Auto-run", "On-screen stick: past a small tilt, always a full one.", 0, TOGGLE(autoRun), "touch stick", nullptr},
-    {"Controls", "Fixed stick", "The on-screen stick stays in its place.", 0, TOGGLE(stickFixed), "touch", nullptr},
-    {"Controls", "Tap the picture to press A", nullptr, 0, TOGGLE(tapA), "touch", nullptr},
+    {"Controls", "Auto-run", "A small push of the on-screen stick is enough to run.", 0, TOGGLE(autoRun),
+     "touch stick", nullptr},
+    {"Controls", "Fixed stick", "The on-screen stick stays in one place instead of appearing under your thumb.", 0,
+     TOGGLE(stickFixed), "touch", nullptr},
+    {"Controls", "Tap the picture to press A", "Tapping the game picture presses A.", 0, TOGGLE(tapA), "touch",
+     nullptr},
     {"Controls", "Move the on-screen controls",
      "Over the paused game: drag them where you like (each cluster moves together), tap one for its size, "
      "opacity or to hide it, or pick a preset; then Done. Held upright and sideways each keep their own. Holding "
@@ -902,7 +994,7 @@ Item kItems[] = {
        }
      },
      "timing guard superguard battle", nullptr},
-    {"Gameplay", "Fast-forward speed", "Fast-forward: {FF}, or the on-screen >> button.",
+    {"Gameplay", "Fast-forward speed", "How fast the game runs while fast-forwarding ({FF}, or >> on screen).",
      0,
      [](PortSettings* s, const Item& it) {
        int ff = s->ffSpeed - 2;
@@ -912,9 +1004,12 @@ Item kItems[] = {
        }
      },
      "speed turbo", nullptr},
-    {"Gameplay", "Fast-forward toggles", "On: a press turns it on and off. Off: held.", 0, TOGGLE(ffToggle), "turbo", nullptr},
+    {"Gameplay", "Fast-forward stays on",
+     "On: one press starts fast-forward and the next stops it. Off: it lasts only while held.", 0, TOGGLE(ffToggle),
+     "turbo toggles hold press", nullptr},
     {"Gameplay", "Text speed", "How fast the game's text appears.", 0, CHOICE(textSpeed, kTextSpeeds, 4), "dialogue messages", nullptr},
-    {"Gameplay", "Run speed", "Faster running can make some jumps longer than intended.", kChangesPlay,
+    {"Gameplay", "Run speed", "How fast Mario runs. Faster can make some jumps longer than the game intended.",
+     kChangesPlay,
      [](PortSettings* s, const Item& it) {
        int run = (s->runSpeed - 100) / 25;
        if (combo(it.label, &run, kRunSpeeds, 3)) {
@@ -927,7 +1022,7 @@ Item kItems[] = {
      "The logos go by quickly and the story opening is skipped (it still plays from the title screen if left "
      "alone).",
      0, TOGGLE(skipIntro), "logos opening", nullptr},
-    {"Language", "Text language", "The game's text.", kNextStart, CHOICE(language, kLanguages, 6),
+    {"Language", "Text language", "The language of the game's own text.", kNextStart, CHOICE(language, kLanguages, 6),
      "english deutsch francais espanol italiano text", isEurope, nullptr, &PortSettings::language},
     {"Display", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower. 60 Hz otherwise.",
      kNextStart | kChangesPlay, TOGGLE(pal50Hz), "pal 60 hz eurgb60 refresh", isEurope, nullptr,
@@ -985,6 +1080,8 @@ Item kItems[] = {
 #endif
     {"General", "Crash reports", nullptr, 0, [](PortSettings*, const Item&) { crashSection(); }, "crash report bug",
      nullptr},
+    {"General", "Report a problem", nullptr, 0, [](PortSettings*, const Item&) { reportSection(); },
+     "report problem bug issue github zip diagnostics logs", nullptr},
 };
 
 // --- Features' own controls (portSettingsAdd*), for settings they declared
@@ -1042,7 +1139,13 @@ void drawExtra(PortSettings*, const Item& it) {
   if (e.kind == 0) {
     edited = check(it.label, v);
   } else if (e.kind == 1) {
-    edited = combo(it.label, v, e.choices, e.count);
+    // (a phone's memory: the choices it can't hold greyed, and why under it)
+    const char* why = nullptr;
+    const int maxOk = e.get == nullptr ? portSettingChoiceMax(v, &why) : -1;
+    edited = combo(it.label, v, e.choices, e.count, maxOk);
+    if (maxOk >= 0 && why != nullptr) {
+      note(why);
+    }
   } else {
     ImGui::SliderInt(trl(it.label), v, e.min, e.max, e.format != nullptr ? portTr(e.format) : "%d");
     edited = ImGui::IsItemDeactivatedAfterEdit();
@@ -1419,7 +1522,7 @@ void portSettingsTabs(bool inGame) {
           }
         }
       }
-      std::fprintf(stderr, "[settings] search \"%s\" on the %s page: %d found (in: %s)\n", sSearch,
+      std::fprintf(stdout, "[settings] search \"%s\" on the %s page: %d found (in: %s)\n", sSearch,
                    inGame ? "game's" : "launcher's", found, in.c_str());
     }
     ImGui::PopItemWidth();
@@ -1550,13 +1653,13 @@ void portSettingsTabs(bool inGame) {
     for (const std::string& tab : tabs) {
       list += (list.empty() ? "" : ", ") + tab;
     }
-    std::fprintf(stderr, "[settings] the %s tabs: %s\n", page, list.c_str());
+    std::fprintf(stdout, "[settings] the %s tabs: %s\n", page, list.c_str());
     if (const char* want = SDL_getenv("TTYD_SETTINGS_TAB")) {
       if (std::find(tabs.begin(), tabs.end(), std::string(want)) == tabs.end()) {
-        std::fprintf(stderr, "[settings] %s on the %s page: not there\n", want, page);
+        std::fprintf(stdout, "[settings] %s on the %s page: not there\n", want, page);
       }
     }
-    std::fprintf(stderr, "[settings] %s on the %s page: %d rows\n", sTab.c_str(), page, drawn);
+    std::fprintf(stdout, "[settings] %s on the %s page: %d rows\n", sTab.c_str(), page, drawn);
   }
   if (walkShot && !sWalkShot) {
     char name[128];
@@ -1574,7 +1677,7 @@ void portSettingsTabs(bool inGame) {
       sWalkScroll = std::min(max, y + ImGui::GetWindowHeight() * 0.85f);
       sWalkPart++;
     } else if (++sWalk >= count) {
-      std::fprintf(stderr, "[walk] settings page: %d tabs\n", count);
+      std::fprintf(stdout, "[walk] settings page: %d tabs\n", count);
     } else {
       sWalkPart = 0;
     }
@@ -1582,6 +1685,27 @@ void portSettingsTabs(bool inGame) {
   }
   ImGui::EndChild();
   ImGui::PopID();
+}
+
+// --settings-layout-check (the build runs it after linking, CMakeLists.txt): every control, the page's own and
+// the features', has its place in settings_layout.cpp; each one without is named. Returns how many.
+extern "C" int portSettingsLayoutCheck(void) {
+  int missing = 0;
+  const auto one = [&missing](const Item& it) {
+    const char* tab = it.declTab != nullptr ? it.declTab : it.tab;
+    PortSettingsPlaceInfo p;
+    if (!portSettingsPlace(tab, it.label, &p) && it.order == 0) {
+      std::fprintf(stderr, "settings: \"%s\" (%s) has no place in settings_layout.cpp\n", it.label, tab);
+      missing++;
+    }
+  };
+  for (const Item& it : kItems) {
+    one(it);
+  }
+  for (const Item& it : extraItems()) {
+    one(it);
+  }
+  return missing;
 }
 
 extern "C" void portSettingsAddToggle(const char* tab, const char* label, const char* note, unsigned flags,
@@ -1831,6 +1955,9 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
     touchToMouse(e);
   }
   portMenuUiEvent(sdlEvent); // a controller's confirm and back, as its own (menu_buttons.cpp)
+  if (portPadKeyboardEvent(sdlEvent)) {
+    return; // the on-screen keyboard's, while a text field is typed in with a controller (pad_keyboard.cpp)
+  }
   portBindingsPageEvent(sdlEvent); // (the Bindings page: the top button switches its view)
   if (portMenuTypingEvent(sdlEvent)) {
     return; // typed into a Start menu keyboard (menu_typing.cpp)
@@ -1950,6 +2077,13 @@ extern "C" void portSettingsDraw(void) {
 #else
     drawCrashNotice(sTouchDevice ? 1.6f : 1.0f);
 #endif
+  } else if (!sOpen && !gPortLauncherShown) {
+    // after a run that stopped on screen, the launcher left out: the undo question and the snapshots
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+    drawSoftCrashWindow(1.6f);
+#else
+    drawSoftCrashWindow(sTouchDevice ? 1.6f : 1.0f);
+#endif
   }
   if (!sOpen) {
     sWasOpen = false;
@@ -2030,7 +2164,8 @@ struct PauseField {
 };
 
 const PauseField kPauseFields[] = {
-    {"Display", "VSync", "Present at the display's refresh: no tearing.", 0, 0, &PortSettings::vsync},
+    {"Display", "VSync", "Waits for the screen before showing each frame: no tearing, slightly more input delay.", 0,
+     0, &PortSettings::vsync},
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
     {"Display", "Display mode", "A window, the whole screen borderless, or full screen (F11 or Alt+Enter).", 0, 1,
      &PortSettings::fullscreen, nullptr, kDisplayModes, 3},
@@ -2041,17 +2176,21 @@ const PauseField kPauseFields[] = {
      &PortSettings::wideHud, nullptr, nullptr, 0, 0, 0, 0, nullptr, widescreenOn},
     {"Display", "Blurred side bars", "A blurred copy of the picture instead of black bars beside it.", 0, 0,
      &PortSettings::sideBars},
-    {"Graphics", "Internal resolution", "Auto: the window's size; or a multiple of 640x480.", 0, 1,
-     &PortSettings::resolution, nullptr, kResNames, 9},
+    {"Graphics", "Internal resolution",
+     "How sharp the 3D picture is: higher is crisper but works the graphics card harder. Auto matches the window.", 0,
+     1, &PortSettings::resolution, nullptr, kResNames, 9},
     {"Graphics", "Texture filtering", "Smooth as the game draws them, or sharp pixels.", 0, 1,
      &PortSettings::texFilter, nullptr, kFilters, 2},
-    {"Interface", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, 1, &PortSettings::fps,
-     nullptr, kCorners, 5},
-    {"Graphics", "Never skip loading graphics", "Something drawn for the first time waits for its graphics.", 0, 0,
+    {"Interface", "Overlay corner", "Shows the frame rate, clock and battery level in the corner you pick.", 0, 1,
+     &PortSettings::fps, nullptr, kCorners, 5},
+    {"Graphics", "Wait for graphics to load", "New things wait for their graphics instead of popping in.", 0, 0,
      &PortSettings::noPopIn},
-    {"Graphics", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, 0, &PortSettings::msaa},
+    {"Graphics", "Anti-aliasing (4x MSAA)", "Smooths jagged edges; costs a little graphics card time.", kNextStart, 0,
+     &PortSettings::msaa},
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Display", "Keep clear of the notch", nullptr, 0, 0, &PortSettings::safeArea},
+    {"Display", "Keep clear of the notch",
+     "Keeps the picture and buttons away from the notch, camera cutout and rounded corners.", 0, 0,
+     &PortSettings::safeArea},
 #endif
     {"Audio", "Volume", "Everything's volume.", 0, 2, &PortSettings::volume, nullptr, nullptr, 0, 0, 100, 5, "%d%%"},
     {"Audio", "Music", "The music's volume.", 0, 2, nullptr, "music_volume", nullptr, 0, 0, 100, 5, "%d%%"},
@@ -2062,30 +2201,35 @@ const PauseField kPauseFields[] = {
     {"Audio", "Mute in the background", "Silent while another window has the focus.", 0, 0,
      &PortSettings::muteUnfocused},
     {"Controls", "Rumble", "The controller's rumble.", 0, 0, &PortSettings::rumble},
-    {"Controls", "Rumble strength", "The game's own Rumble option still applies.", 0, 2, &PortSettings::rumbleStrength,
+    {"Controls", "Rumble strength", "How strongly the controller vibrates.", 0, 2, &PortSettings::rumbleStrength,
      nullptr, nullptr, 0, 0, 100, 10, "%d%%"},
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Controls", "Vibrate without a controller", nullptr, 0, 0, &PortSettings::phoneRumble},
-    {"Controls", "Haptic tap on button press", nullptr, 0, 0, &PortSettings::touchHaptics},
-    {"Controls", "On-screen controls' opacity", nullptr, 0, 2, &PortSettings::touchOpacity, nullptr, nullptr, 0, 20,
-     100, 10, "%d%%"},
+    {"Controls", "Vibrate without a controller", "The phone or tablet vibrates when no controller can.", 0, 0,
+     &PortSettings::phoneRumble},
+    {"Controls", "Haptic tap on button press", "A light buzz each time you press an on-screen button.", 0, 0,
+     &PortSettings::touchHaptics},
+    {"Controls", "On-screen controls' opacity", "How see-through the on-screen controls are.", 0, 2,
+     &PortSettings::touchOpacity, nullptr, nullptr, 0, 20, 100, 10, "%d%%"},
     {"Controls", "On-screen controls' size", kTouchSizeHelp, 0, 2, &PortSettings::touchSize, nullptr, nullptr, 0, 50,
      200, 10, "%d%%"},
-    {"Controls", "Auto-run", "On-screen stick: past a small tilt, always a full one.", 0, 0, &PortSettings::autoRun},
-    {"Controls", "Fixed stick", "The on-screen stick stays in its place.", 0, 0, &PortSettings::stickFixed},
-    {"Controls", "Tap the picture to press A", nullptr, 0, 0, &PortSettings::tapA},
+    {"Controls", "Auto-run", "A small push of the on-screen stick is enough to run.", 0, 0, &PortSettings::autoRun},
+    {"Controls", "Fixed stick", "The on-screen stick stays in one place instead of appearing under your thumb.", 0, 0,
+     &PortSettings::stickFixed},
+    {"Controls", "Tap the picture to press A", "Tapping the game picture presses A.", 0, 0, &PortSettings::tapA},
 #endif
     {"Gameplay", "Text speed", "How fast the game's text appears.", 0, 1, &PortSettings::textSpeed, nullptr,
      kTextSpeeds, 4},
     {"Accessibility", "Action Command cue", "A ring shows when to press {A} in battle.", 0, 1, &PortSettings::acCue, nullptr,
      kCues, kCueCount},
-    {"Gameplay", "Fast-forward speed", "Fast-forward: {FF}, or >> on screen.", 0, 2,
+    {"Gameplay", "Fast-forward speed", "How fast the game runs while fast-forwarding ({FF}, or >> on screen).", 0, 2,
      &PortSettings::ffSpeed, nullptr, nullptr, 0, 2, 8, 1, "%dx"},
-    {"Gameplay", "Fast-forward toggles", "On: a press turns it on and off. Off: held.", 0, 0, &PortSettings::ffToggle},
-    {"Gameplay", "Run speed", "Faster running can make some jumps longer than intended.", kChangesPlay, 2,
-     &PortSettings::runSpeed, nullptr, nullptr, 0, 100, 150, 25, "%d%%"},
-    {"Language", "Text language", "The game's text.", kNextStart, 1, &PortSettings::language, nullptr, kLanguages, 6, 0, 0,
-     0, nullptr, isEurope},
+    {"Gameplay", "Fast-forward stays on",
+     "On: one press starts fast-forward and the next stops it. Off: it lasts only while held.", 0, 0,
+     &PortSettings::ffToggle},
+    {"Gameplay", "Run speed", "How fast Mario runs. Faster can make some jumps longer than the game intended.",
+     kChangesPlay, 2, &PortSettings::runSpeed, nullptr, nullptr, 0, 100, 150, 25, "%d%%"},
+    {"Language", "Text language", "The language of the game's own text.", kNextStart, 1, &PortSettings::language,
+     nullptr, kLanguages, 6, 0, 0, 0, nullptr, isEurope},
     {"Display", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower.",
      kNextStart | kChangesPlay, 0, &PortSettings::pal50Hz, nullptr, nullptr, 0, 0, 0, 0, nullptr, isEurope},
     {"General", "Pause in the background", "The game waits while another window has the focus.", 0, 0,
@@ -2211,4 +2355,33 @@ extern "C" int portSettingsPageRows(const char* tab, PortSettingsPageRow* out, i
     }
   }
   return n;
+}
+
+// A setting's name on the page by its key (English, for portTr), or nullptr when the page has no control of
+// its own for it (an internal mark, a choice made of other settings): the undo offer after a crash names the
+// setting changed by it (port/settings/features/soft_crash.cpp)
+const char* portSettingsLabelOf(const char* key) {
+  if (key == nullptr || key[0] == '\0') {
+    return nullptr;
+  }
+  if (std::strcmp(key, "framerate") == 0) {
+    return "Frame rate";
+  }
+  PortSettings* s = portSettings();
+  const int* field = portSettingsFieldValue(key);
+  for (const PauseField& f : kPauseFields) {
+    if ((f.field != nullptr && field != nullptr && &(s->*f.field) == field) ||
+        (f.field == nullptr && f.key != nullptr && std::strcmp(f.key, key) == 0)) {
+      return f.label;
+    }
+  }
+  for (const Item& it : extraItems()) {
+    if (!it.section && it.draw == drawExtra && it.data != nullptr) {
+      const Extra& e = *static_cast<const Extra*>(it.data);
+      if (e.get == nullptr && std::strcmp(e.key, key) == 0) {
+        return it.label;
+      }
+    }
+  }
+  return nullptr;
 }

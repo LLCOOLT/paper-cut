@@ -3,11 +3,11 @@
 Skip any scene
 どの　シーンも　とばす
 
-While a scene holds Mario, hold {START} until the ring fills: the scene runs on to its end at once, unseen and unheard, so whatever it gives or changes still happens. {B} stops it. It stops at a choice, a menu or a battle (they're yours), and never runs during play, minigames or online.
-シーンで　マリオが　うごけない　あいだ　リングが　いっぱいに　なるまで　{START}を　おしつづけると　シーンが　みえず　きこえないまま　さいごまで　すすみます　もらえる　ものは　ちゃんと　もらえます　{B}を　おすと　とまります　えらぶ　ばめんや　メニュー　バトルでは　とまり　そうさちゅうや　ミニゲーム　オンラインでは　はたらきません
+During a scene, hold {START} until the ring fills to jump to its end; whatever it gives or changes still happens, and it stops at choices and battles. Not online.
+シーンの　あいだ　リングが　いっぱいに　なるまで　{START}を　おしつづけると　さいごまで　とばします　もらえる　ものは　ちゃんと　もらえます　オンラインでは　つかえません
 
 Fly through text
 テキストを　はやおくり
 
-In a conversation, hold {B}: its pages turn as fast as they print, up to the next choice. A tap of {B} is the game's own.
-かいわちゅうに　{B}を　おしつづけると　つぎの　えらぶ　ばめんまで　ページが　どんどん　すすみます　{B}を　ちょっと　おすのは　ゲームの　まま
+Hold {B} in a conversation to race through its pages, up to the next choice; a tap of {B} works as usual.
+かいわちゅうに　{B}を　おしつづけると　つぎの　えらぶ　ばめんまで　ページが　どんどん　すすみます

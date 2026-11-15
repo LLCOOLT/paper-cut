@@ -55,8 +55,8 @@ Salvataggi
 Frame rate
 Fotogrammi al secondo
 
-The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).
-Il gioco gira a 60 fotogrammi al secondo; frequenze più alte disegnano fotogrammi intermedi (telecamera e personaggi più fluidi).
+Smoother motion on high-refresh screens: extra frames drawn between the game's 60. Uses more power.
+Movimento più fluido sugli schermi ad alta frequenza: fotogrammi in più tra i 60 del gioco. Consuma più energia.
 
 Widescreen (16:9)
 Panoramico (16:9)
@@ -88,8 +88,8 @@ Antialiasing (MSAA 4x)
 next start
 al prossimo avvio
 
-Smooths jagged edges.
-Smussa i bordi seghettati.
+Smooths jagged edges; costs a little graphics card time.
+Smussa i bordi seghettati; impegna un po' la scheda grafica.
 
 Off
 No
@@ -97,16 +97,16 @@ No
 Overlay corner
 Angolo dell'indicatore
 
-Frame rate, clock and battery in a corner of the screen.
-Fotogrammi al secondo, ora e batteria in un angolo dello schermo.
+Shows the frame rate, clock and battery level in the corner you pick.
+Mostra i fotogrammi al secondo, l'ora e la batteria nell'angolo che scegli.
 
 Never skip graphics that are still loading
 Non saltare mai la grafica ancora in caricamento
 
-Something drawn for the first time waits for its graphics to be ready (a short pause, once) instead of appearing a moment later.
-Ciò che viene disegnato per la prima volta aspetta che la sua grafica sia pronta (una breve pausa, una volta) invece di comparire un attimo dopo.
+Something new on screen waits a moment for its graphics instead of popping in late; a short pause the first time.
+Ciò che appare per la prima volta aspetta un attimo la sua grafica invece di spuntare in ritardo; una breve pausa la prima volta.
 
-Widescreen switch
+Follow Widescreen
 Secondo il panoramico
 
 Aspect ratio
@@ -121,8 +121,8 @@ Nessun limite
 Widest picture
 Immagine più larga
 
-Wider screens get bars past this (see Blurred side bars).
-Oltre questo, bande ai lati (vedi Bande laterali sfocate).
+The widest the picture gets; past it, wider screens show bars at the sides.
+La larghezza massima dell'immagine; oltre, gli schermi più larghi mostrano bande ai lati.
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
 La barra di stato, le finestre dei messaggi e i menu di battaglia, più grandi o più piccoli che nel gioco.
@@ -142,8 +142,8 @@ Come il gioco
 Texture detail
 Dettaglio delle texture
 
-Which of a texture's detail levels is used at a distance.
-Quale livello di dettaglio di una texture si usa da lontano.
+How sharp textures look in the distance; sharper can shimmer as the camera moves.
+Quanto sono nitide le texture da lontano; più nitido può sfarfallare quando la telecamera si muove.
 
 Draws the picture several times larger than the window and shrinks it: smoother edges, much more work for the graphics card.
 Disegna l'immagine molte volte più grande della finestra e la rimpicciolisce: bordi più morbidi, molto più lavoro per la scheda video.
@@ -154,8 +154,8 @@ Filtro immagine
 Variable refresh rate (G-Sync, FreeSync)
 Frequenza variabile (G-Sync, FreeSync)
 
-Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
-Ogni fotogramma viene mostrato appena è pronto, senza aspettare lo schermo. Per schermi VRR (sugli altri l'immagine può spezzarsi); va bene con Fotogrammi al secondo: quelli dello schermo.
+For G-Sync and FreeSync screens: each frame shows as soon as it's ready, for less delay. Other screens may tear. Best with Frame rate on the display's rate.
+Per schermi G-Sync e FreeSync: ogni fotogramma appare appena è pronto, con meno ritardo. Sugli altri schermi l'immagine può spezzarsi. Meglio con Fotogrammi al secondo: quelli dello schermo.
 
 HDR output
 Uscita HDR
@@ -166,14 +166,14 @@ Su uno schermo HDR, l'immagine alla luminosità che scegli per il bianco (bianco
 Performance overlay
 Indicatore delle prestazioni
 
-The time between frames, and the part spent working.
-Il tempo tra i fotogrammi e la parte spesa a lavorare.
+A graph of how long each frame takes, to spot stutters, with the exact times if you want them.
+Un grafico di quanto dura ogni fotogramma, per scovare gli scatti, con i tempi esatti se vuoi.
 
 Sharp text
 Testo nitido
 
-The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
-Il carattere del gioco ricostruito come campo di distanza, così le sue lettere restano nitide a ogni risoluzione (le stesse lettere; il carattere proprio di un pacchetto di texture si vede come lo disegna il pacchetto).
+Keeps the game's letters crisp at any resolution; a texture pack's own font is left as it is.
+Mantiene nitide le lettere del gioco a ogni risoluzione; il carattere proprio di un pacchetto di texture resta com'è.
 
 Window
 Finestra
@@ -184,8 +184,8 @@ Vibrazione
 Rumble strength
 Intensità della vibrazione
 
-The game's own Rumble option (on the file select) still applies.
-L'opzione Vibrazione del gioco (nella selezione dei file) vale ancora.
+How strongly the controller vibrates. The game's own Rumble option on the file screen still applies.
+Quanto vibra forte il controller. L'opzione Vibrazione del gioco, nella selezione dei file, vale ancora.
 
 Auto (the controller used last)
 Auto (l'ultimo controller usato)
@@ -220,8 +220,8 @@ In battaglia, un anello si chiude su un tasto {A} per indicare quando premere {A
 Fast-forward speed
 Velocità dell'avanzamento rapido
 
-Fast-forward: {FF}, or the on-screen >> button.
-Avanzamento rapido: {FF} o il pulsante >> sullo schermo.
+How fast the game runs while fast-forwarding ({FF}, or >> on screen).
+Quanto va veloce il gioco durante l'avanzamento rapido ({FF} o >> sullo schermo).
 
 Fast-forward toggles (instead of held)
 L'avanzamento rapido si attiva con una pressione (invece di tenerlo premuto)
@@ -238,8 +238,8 @@ Velocità di corsa
 changes play
 cambia il gioco
 
-Faster running can make some jumps longer than intended.
-Correre più veloce può allungare alcuni salti più del previsto.
+How fast Mario runs. Faster can make some jumps longer than the game intended.
+Quanto corre veloce Mario. Più veloce può allungare alcuni salti più di quanto il gioco preveda.
 
 Skip the intro
 Salta l'introduzione
@@ -253,8 +253,8 @@ Salvataggio automatico
 changes saves
 cambia i salvataggi
 
-Saves into the file you're playing as you enter each room, as a Save Block would: a crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once the practice tools changed the game.
-Salva nel file che stai giocando quando entri in ogni stanza, come farebbe un Blocco Salvataggio: un crash non costa più della stanza. Non durante la serie di boss o lo Stadio infinito, né dopo che gli strumenti di allenamento hanno cambiato il gioco.
+Saves to the file you're playing at each room change and each floor of the Pit of 100 Trials, as a Save Block would, so a crash loses little. The Paper Tower, the Pit in co-op and the endless Glitz Pit keep their deepest floor or most rounds instead. Not in a mode's own fights, as an online guest, in a replay or after practice tools changed the game.
+Salva nel file in gioco a ogni cambio di stanza e a ogni piano del Labirinto dei 100 livelli, come un Blocco Salvataggio, così un crash costa poco. La Torre di carta, il Labirinto in cooperativa e lo Stadio infinito tengono invece il piano più profondo o il maggior numero di round. Non nei combattimenti di una modalità, come ospite online, durante un replay o dopo che gli strumenti di allenamento hanno cambiato la partita.
 
 Text language
 Lingua del testo
@@ -265,8 +265,8 @@ Il testo della versione europea, letto dalla sua immagine disco nella libreria d
 Difficulty
 Difficoltà
 
-Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy attack (custom).
-I PV dei nemici e i danni dei loro attacchi. Personalizzata usa PV dei nemici (personalizzato) e Attacco dei nemici (personalizzato).
+How much HP enemies have and how hard they hit. Custom uses the two sliders below. HP changes from the next battle.
+Quanti PV hanno i nemici e quanto colpiscono forte. Personalizzata usa i due cursori qui sotto. I PV cambiano dalla battaglia successiva.
 
 Enemy HP (custom)
 PV dei nemici (personalizzato)
@@ -277,8 +277,8 @@ Attacco dei nemici (personalizzato)
 Action commands: attacks
 Comandi: attacchi
 
-Wider timing for attack commands, or all done for you.
-Tempismo più ampio per i comandi d'attacco, oppure ogni comando d'attacco fatto per te.
+Easier attack timing: wider windows, done for you, or set per command type (Timing assist by command type).
+Tempismo d'attacco più facile: finestre più ampie, fatto per te o regolato per tipo di comando (Aiuto al tempismo per tipo di comando).
 
 Action commands: guards
 Comandi: difesa
@@ -412,14 +412,14 @@ Mentre giochi, il gioco tiene un salvataggio di dove sei, scritto quando l'app s
 Check for updates at start
 Cerca aggiornamenti all'avvio
 
-Asks GitHub for the latest release of Paper Cut.
-Chiede a GitHub l'ultima versione di Paper Cut.
+At start, checks online whether a newer Paper Cut is out.
+All'avvio, controlla online se è uscito un Paper Cut più recente.
 
 New version
 Nuova versione
 
-Earned from what each save file has done (its flags), kept beside the memory cards (not in the save), with a small notice when one is earned.
-Si ottengono con ciò che ha fatto ogni file di salvataggio (i suoi flag), tenuti accanto alle memory card (non nel salvataggio), con un piccolo avviso quando se ne ottiene uno.
+Earn achievements for what each save file has done, with a small notice for each. Kept beside your saves, not in them.
+Obiettivi per ciò che ha fatto ogni file di salvataggio, con un piccolo avviso per ciascuno. Tenuti accanto ai salvataggi, non al loro interno.
 
 This file
 Questo file
@@ -460,8 +460,8 @@ I comandi degli spettatori nella chat del tuo canale fanno lanciare oggetti al p
 Cooldown
 Attesa
 
-Seconds between commands (three times that per viewer).
-Secondi tra i comandi (il triplo per ogni spettatore).
+Seconds between chat commands; each viewer waits three times as long.
+Secondi tra i comandi della chat; ogni spettatore aspetta il triplo.
 
 Allow the harmful ones
 Consenti quelli dannosi
@@ -541,8 +541,8 @@ Energia Stella come nel remake (più dal pubblico, meno dai comandi, dal pericol
 Pit of 100 Trials extras
 Extra del Labirinto dei 100 livelli
 
-Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared.
-Monete per ogni livello superato (1 in più ogni 10 livelli), e il cinetrasporto a ogni livello una volta superato il livello 50.
+Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared. The Mover from the next floor.
+Monete per ogni livello superato (1 in più ogni 10 livelli), e il cinetrasporto a ogni livello una volta superato il livello 50. Il cinetrasporto dal livello successivo.
 
 Glitz Pit kindness
 Stadio più clemente
@@ -604,20 +604,20 @@ Pulsante della spinta
 Coins from battles
 Monete dalle battaglie
 
-A battle's coins, after Merlee, Money Money and co.
-Monete di una battaglia, dopo Merluna, Multimonete e simili.
+Multiplies the coins each battle pays (after Merlee and Money Money).
+Moltiplica le monete che dà ogni battaglia (dopo Merluna e Multimonete).
 
 Star Points from battles
 Punti Stella dalle battaglie
 
-A battle's Star Points (still at most 100, a level).
-Punti Stella di una battaglia (al massimo 100, un livello).
+Multiplies the Star Points each battle gives (still at most 100 at once).
+Moltiplica i Punti Stella di ogni battaglia (sempre al massimo 100 alla volta).
 
 Star Piece and Shine Sprite tracker
 Contatore di Scheggiastelle e Soli Custodi
 
-The map's Star Pieces and Shine Sprites, in a corner.
-Quante Scheggiastelle e Soli Custodi della mappa attuale sono stati trovati, in un angolo.
+How many of this map's Star Pieces and Shine Sprites you've found, in the corner you pick.
+Quante Scheggiastelle e Soli Custodi di questa mappa hai trovato, nell'angolo che scegli.
 
 On this map
 In questa mappa
@@ -637,11 +637,11 @@ Elenca la musica sentita in questo file nella pagina delle impostazioni (Tutte l
 Tracks
 Brani
 
-Junk-item helper in shops
-Aiuto per gli oggetti doppi nei negozi
+Mark duplicates when selling
+Segna i doppioni nella vendita
 
-Selling, an item or badge Mario has more than one of shows how many (a worn badge is never marked).
-Vendendo, un oggetto o una tessera che Mario ha più di una volta mostra quanti ne ha (una tessera indossata non viene mai segnata).
+When selling, items and badges Mario has more than one of show how many he holds; worn badges are never marked.
+Vendendo, gli oggetti e le tessere che Mario ha più di una volta mostrano quanti ne ha; le tessere indossate non vengono mai segnate.
 
 Boss rush
 Serie di boss
@@ -676,14 +676,14 @@ Sì
 Widescreen
 Panoramico
 
-Never skip loading graphics
-Non saltare mai la grafica in caricamento
+Wait for graphics to load
+Aspetta il caricamento della grafica
 
 Extra frames between the game's 60: smoother motion.
 Fotogrammi in più tra i 60 del gioco: movimento più fluido.
 
-Present at the display's refresh: no tearing.
-Mostra al ritmo dello schermo: niente immagini spezzate.
+Waits for the screen before showing each frame: no tearing, slightly more input delay.
+Aspetta lo schermo prima di mostrare ogni fotogramma: niente immagini spezzate, un po' più di ritardo nei comandi.
 
 16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.
 16:9 invece del 4:3 del gioco. Alcune stanze e scene finiscono ai bordi del 4:3.
@@ -691,14 +691,14 @@ Mostra al ritmo dello schermo: niente immagini spezzate.
 A blurred copy of the picture instead of black bars beside it.
 Una copia sfocata dell'immagine invece delle bande nere ai lati.
 
-Auto: the window's size; or a multiple of 640x480.
-Auto: la dimensione della finestra; o un multiplo di 640x480.
+How sharp the 3D picture is: higher is crisper but works the graphics card harder. Auto matches the window.
+Quanto è nitida l'immagine 3D: più alta è più definita ma impegna di più la scheda grafica. Auto segue la finestra.
 
 Smooth as the game draws them, or sharp pixels.
 Morbide come le disegna il gioco, o pixel nitidi.
 
-Something drawn for the first time waits for its graphics.
-Ciò che viene disegnato per la prima volta aspetta la sua grafica.
+New things wait for their graphics instead of popping in.
+Ciò che è nuovo aspetta la sua grafica invece di spuntare in ritardo.
 
 Everything's volume.
 Il volume di tutto.
@@ -730,8 +730,8 @@ Silenzio in secondo piano
 The controller's rumble.
 La vibrazione del controller.
 
-The game's own Rumble option still applies.
-L'opzione Vibrazione del gioco vale ancora.
+How strongly the controller vibrates.
+Quanto vibra forte il controller.
 
 How fast the game's text appears.
 La velocità con cui compare il testo del gioco.
@@ -739,14 +739,11 @@ La velocità con cui compare il testo del gioco.
 A ring shows when to press {A} in battle.
 Un anello indica quando premere {A} in battaglia.
 
-Fast-forward: {FF}, or >> on screen.
-Avanzamento rapido: {FF} o >> sullo schermo.
+On: one press starts fast-forward and the next stops it. Off: it lasts only while held.
+Sì: una pressione avvia l'avanzamento rapido e la successiva lo ferma. No: dura solo finché tieni premuto.
 
-On: a press turns it on and off. Off: held.
-Sì: una pressione lo attiva e lo spegne. No: tenere premuto.
-
-Fast-forward toggles
-Avanzamento rapido con una pressione
+Fast-forward stays on
+L'avanzamento rapido resta attivo
 
 The game waits while another window has the focus.
 Il gioco aspetta mentre un'altra finestra è attiva.
@@ -823,17 +820,17 @@ Il più difficile (come 3)
 The window's
 Quella della finestra
 
-Sharper (-0.5)
-Più nitido (-0,5)
+Sharper
+Più nitido
 
-Sharper still (-1)
-Ancora più nitido (-1)
+Sharper still
+Ancora più nitido
 
-Sharpest (-1.5)
-Il più nitido (-1,5)
+Sharpest
+Il più nitido
 
-Softer (+0.5)
-Più morbido (+0,5)
+Softer
+Più morbido
 
 Paper grain
 Grana della carta
@@ -915,7 +912,6 @@ Ora:
 
 The story is over: go wherever you like.
 La storia è finita: vai dove vuoi.
-
 
 Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
 Il giocatore 2 controlla il compagno: {START} su un altro controller lo fa entrare. In battaglia: le sue mosse, i comandi d'azione e le difese. Sul campo: la levetta lo fa camminare, {A} salta, {B} parla o colpisce, {X} è la sua abilità, {L} o {R} il compagno successivo; la {Y} di Mario lo richiama. Su un telefono o tablet, abbina due controller.
@@ -1624,8 +1620,8 @@ Tieni la finestra sopra le altre
 Drag the window's edges to any size; the picture keeps its shape. F11 or Alt+Enter: full screen. The window opens where you left it next time.
 Trascina i bordi della finestra a qualsiasi dimensione; l'immagine mantiene la sua forma. F11 o Alt+Invio: schermo intero. La finestra si apre la prossima volta dove l'hai lasciata.
 
-!rock, !drain and !leave.
-!rock, !drain e !leave.
+Lets chat use !rock, !drain and !leave, which hurt or cost you.
+Permette alla chat di usare !rock, !drain e !leave, che ti danneggiano o ti costano.
 
 Chat
 Chat
@@ -1642,8 +1638,8 @@ LiveSplit
 RNG
 Caso
 
-GSW and GSWF: the story's progress and what has happened.
-GSW e GSWF: il progresso della storia e ciò che è successo.
+The story's progress and what has happened so far, to read or change.
+Il progresso della storia e ciò che è successo finora, da leggere o cambiare.
 
 the bottom face button (A on the GameCube)
 il pulsante in basso (A sul GameCube)
@@ -1838,8 +1834,8 @@ un controller
 Bars where a scene ends
 Bande dove finisce una scena
 
-In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars beside the picture instead of the empty space past the set.
-Nelle stanze la cui scenografia finisce prima dei bordi di uno schermo largo, e nelle battaglie oltre il 16:9: bande accanto all'immagine invece dello spazio vuoto oltre la scenografia.
+Where a room's or battle's scenery ends before a wide screen's edges, bars cover the empty space past it.
+Dove la scenografia di una stanza o di una battaglia finisce prima dei bordi di uno schermo largo, delle bande coprono lo spazio vuoto oltre.
 
 File %d
 File %d

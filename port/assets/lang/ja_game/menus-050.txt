@@ -1,10 +1,10 @@
 # The JP release's own font (kana and its few kanji): an English line, its translation, a blank line.
 
-!rock, !drain and !leave.
-!rock　!drain　!leave
+Lets chat use !rock, !drain and !leave, which hurt or cost you.
+!rock　!drain　!leaveを　つかえる
 
-GSW and GSWF: the story's progress and what has happened.
-GSWと　GSWF：ストーリーの　すすみぐあいと　おきた　こと
+The story's progress and what has happened so far, to read or change.
+ストーリーの　すすみぐあいと　おきた　こと
 
 L clicks at
 Lが　入る　いち

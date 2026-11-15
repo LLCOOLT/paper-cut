@@ -33,8 +33,8 @@ Ready to install
 Only Paper Cut's own app for this version, from its releases, checked against the release's checksum; then Android asks before it installs.
 このバージョン用のPaper Cutのアプリだけをリリースから取得し、チェックサムで確認します。インストールの前にAndroidが確認します。
 
-A new version found at start is downloaded in the background and checked against the release's checksum; then Android asks before it installs. Never during online play or a replay.
-起動時に見つかった新しいバージョンをバックグラウンドでダウンロードし、リリースのチェックサムで確認します。インストールの前にAndroidが確認します。オンラインプレイ中やリプレイ中は行いません。
+A new version found at start downloads in the background and is checked; then Android asks before installing it. Never while playing online.
+起動時に見つかった新しいバージョンをバックグラウンドでダウンロードして確認し、インストールの前にAndroidが確認します。オンラインプレイ中は行いません。
 
 AltStore and SideStore update Paper Cut from its source: add it once.
 AltStoreとSideStoreはソースからPaper Cutをアップデートします。一度追加してください。

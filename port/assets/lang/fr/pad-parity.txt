@@ -1,0 +1,28 @@
+# Controller and touch parity (port/settings/features/qol.cpp, pad_keyboard.cpp, pm64_media.cpp, port/settings/settings_ui.cpp, port/src/aurora/pm64_journal_aurora.c), in Français: an English line, then its translation, then a blank line.
+
+Where to next?
+Où aller ensuite ?
+
+Turn Partner hint on first.
+Active d'abord Indice du partenaire.
+
+Ask your partner
+Demander au partenaire
+
+The partner says where the story goes next, as {HINT} does.
+Le partenaire dit où l'histoire continue, comme {HINT}.
+
+%s saves to slot 1, %s loads it.
+%s sauvegarde dans l'emplacement 1, %s le charge.
+
+%s type   %s delete   %s space   %s Shift   %s done
+%s taper   %s effacer   %s espace   %s Maj   %s terminé
+
+A Paper Mario boss
+Un boss de Paper Mario
+
+Not tattled yet. Have Goombella tattle this Paper Mario boss in its fight.
+Pas encore commenté. Fais utiliser Indic à Goomélie sur ce boss de Paper Mario pendant son combat.
+
+Bosses: %d of %d tattled
+Boss : %d sur %d commentés

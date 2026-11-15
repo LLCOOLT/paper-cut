@@ -20,7 +20,10 @@
 #include "port/mod_host.h"
 #include "port/hook_list.h"
 #include "port/settings.h"
+#include "port/statesync.h"
 #include "driver/msgdrv.h"
+#include "driver/windowdrv.h"
+#include "port/overlay_place.h"
 #include "driver/npcdrv.h"
 #include "driver/seqdrv.h"
 #include "driver/swdrv.h"
@@ -247,11 +250,28 @@ USER_FUNC(evt_mode_refused) {
     return EVT_RETURN_DONE;
 }
 
+/* out: 1 when this game is an online co-op guest (the host's game runs the mode; this one follows its world) */
+USER_FUNC(evt_mode_coop_guest) {
+    (void)isFirstCall;
+    evtSetValue(event, event->args[0], portStateSyncCoopGuest() ? 1 : 0);
+    return EVT_RETURN_DONE;
+}
+
 /* LW(0): the battle table entry (-1: no mode runs: nothing) */
 static EVT_BEGIN(mode_fight_evt)
     WAIT_FRAMES(20)
     CALL(evt_mode_battle, LW(0), LW(1), LW(2), LW(3), LW(4), LW(5))
     IF_INT_EQUAL(LW(0), -1)
+        /* an online co-op guest runs no mode of its own: the host's fight comes as a shared battle, whose
+           invitation names the host's foe. Its stand-in here (hidden, below the room: the battle itself comes
+           from the invitation), or the guest declined "that enemy isn't here" and only ever watched (a dungeon
+           master online never had its enemies) */
+        CALL(evt_mode_coop_guest, LW(9))
+        IF_INT_EQUAL(LW(9), 1)
+            CALL(evt_npc_entry, STRING("mode_foe"), STRING("c_kuribo"))
+            CALL(evt_npc_flag_onoff, 1, STRING("mode_foe"), NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE | NPC_FLAG_NO_SHADOW)
+            CALL(evt_npc_set_position, STRING("mode_foe"), 0, -1000, 0)
+        END_IF
         RETURN
     END_IF
     CALL(evt_npc_entry, STRING("mode_foe"), STRING("c_kuribo"))
@@ -357,7 +377,8 @@ USER_FUNC(evt_mode_battle) {
     evtSetValue(event, args[3], sCondition >= 0 ? kConditions[sCondition].param : 0);
     evtSetValue(event, args[4], battle >= 0 && f != NULL && f->pm64 > 0 ? f->pm64 - 1 : -1);
     /* a Paper Mario 64 boss fought on its own: a loss isn't the game's Game Over (back where it started) */
-    /* (and, "pm64_boss_scale" on, scaled to Mario's level: the boss rush keeps its post-game rule) */
+    /* (and, "pm64_boss_scale" on, scaled to Mario's level: the boss rush keeps its post-game rule). Run Away: a
+       refight's works (fled: back where it started, evt_mode_battle_end); the boss rush's stays off, its rule */
     {
         static int* sScaleOn;
         const int pm64 = sStatus.mode == PORT_MODE_REFIGHT && isPm64Fight(sStatus.step - 1);
@@ -367,7 +388,7 @@ USER_FUNC(evt_mode_battle) {
         evtSetValue(event, args[5],
                     pm64 ? NPC_BATTLE_LOSS_OK | (sScaleOn != NULL && *sScaleOn ? PM64_BOSS_FLAG_SCALE : 0) |
                                (sEarlyRun ? PM64_BOSS_FLAG_EARLY : 0)
-                         : 0);
+                         : NPC_BATTLE_NO_ESCAPE);
     }
     if (sStatus.mode == PORT_MODE_ENDLESS_PIT && sCondition >= 0) {
         /* the condition's text from the Pit map's own messages (stg3_tou_*), loaded now; looked up
@@ -959,6 +980,21 @@ void portModeQueue(int mode, int loadout) {
 
 void portModeStop(void) {
     __atomic_store_n(&sStopAsked, 1, __ATOMIC_SEQ_CST);
+}
+
+extern WindowEntry* WinObjects; /* windowdrv.c */
+
+int portBattleBubbleUp(void) {
+    int i;
+    if (gp == NULL || !gp->inBattle || WinObjects == NULL) {
+        return 0;
+    }
+    for (i = 0; i < PORT_WINDOW_SLOTS; i++) {
+        if (WinObjects[i].flags & WINDOW_FLAG_USED) {
+            return 1; /* (a battle's windows are its speech bubbles and its messages) */
+        }
+    }
+    return 0;
 }
 
 const PortModeStatus* portModeStatus(void) {

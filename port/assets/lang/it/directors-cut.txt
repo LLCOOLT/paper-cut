@@ -3,8 +3,8 @@
 Director's Cut
 Director's Cut
 
-Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
-Contenuti che il codice del gioco ha ancora ma non usa mai, rimessi: tessere tagliate vendute da Collezionastro, nemici e battaglie che niente avvia, la famiglia delle Nelle rosse, una conferma al passaggio di livello e tre stanze perdute dei sotterranei. Ognuno ha una pagina nel diario Director's Cut qui sotto.
+Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below. Its enemies and battles from the next room.
+Contenuti che il codice del gioco ha ancora ma non usa mai, rimessi: tessere tagliate vendute da Collezionastro, nemici e battaglie che niente avvia, la famiglia delle Nelle rosse, una conferma al passaggio di livello e tre stanze perdute dei sotterranei. Ognuno ha una pagina nel diario Director's Cut qui sotto. I suoi nemici e battaglie dalla stanza successiva.
 
 Director's Cut journal
 Diario Director's Cut

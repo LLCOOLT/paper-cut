@@ -1,0 +1,121 @@
+# After a crash: crash-safe snapshots, undoing a setting, Report a problem (port/settings/features/soft_crash.cpp, report_problem.cpp, crash_report.cpp): see tools/port/gen_lang.py
+
+Crash-safe snapshots
+クラッシュ対策スナップショット
+
+Keeps a copy of where you are every few minutes and at room changes; after a crash, the next start offers to continue from it. Not online, in leaderboard runs, the daily seed or bingo, or on a Hardcore file.
+数分ごとと部屋を移るたびに、今いる場所のコピーを残します。クラッシュしたら、次の起動でそこから続けられます。オンライン中、ランキング挑戦、今日のシード、ビンゴ、ハードコアのファイルでは作りません。
+
+Undone: it is back as it was. A setting used at start takes effect from the next start.
+元に戻しました。起動時に使う設定は次の起動から反映されます。
+
+Paper Cut closed after you changed %s. Undo it?
+%sを変更したあとにPaper Cutが終了しました。元に戻しますか?
+
+Paper Cut closed after you changed %s and %d other settings. Undo them?
+%sとほか%d個の設定を変更したあとにPaper Cutが終了しました。元に戻しますか?
+
+Last time the game stopped with no crash report: the system or the graphics driver ended it.
+前回、ゲームはクラッシュレポートなしで止まりました。システムかグラフィックドライバーが終了させました。
+
+Load your save as usual
+いつもどおりセーブをロード
+
+at %s
+%s
+
+Continue from a few minutes ago: %s, %s.
+数分前から続ける: %s、%s。
+
+An earlier snapshot: %s, %s.
+もっと前のスナップショット: %s、%s。
+
+Continue from a few minutes ago
+数分前から続ける
+
+Continue from the earlier one
+もっと前から続ける
+
+No snapshots were made while playing online: the world was the host's, not yours to come back to alone.
+オンライン中はスナップショットを作りません。世界はホストのもので、ひとりで戻るためのものではないからです。
+
+No snapshots were made during a replay or a ghost race: it plays from its own start.
+リプレイとゴーストレースの間はスナップショットを作りません。それぞれの最初から再生されるからです。
+
+No snapshots were made during a leaderboard run: its replay is what counts.
+ランキング挑戦の間はスナップショットを作りません。そのリプレイが記録になるからです。
+
+No snapshots were made on the daily seed: its clock is a race against everyone's.
+デイリーシードではスナップショットを作りません。タイムはみんなとの競争だからです。
+
+No snapshots were made in a bingo lockout room: it is a race against the others.
+ビンゴのロックアウトの部屋ではスナップショットを作りません。ほかの人との競争だからです。
+
+No snapshots were made on a hardcore file: it has one life.
+ハードコアのファイルではスナップショットを作りません。命はひとつだけです。
+
+the version, the build, the system and the graphics card
+バージョン、ビルド、システム、グラフィックカード
+
+the last crash report
+最後のクラッシュレポート
+
+what the graphics were doing as the last run ended
+前回の終了時にグラフィックがしていたこと
+
+the memory record of the last run (phones and tablets)
+前回のメモリーの記録(スマホとタブレット)
+
+the online diagnostics: the connection, no names or codes
+オンライン診断: 接続の情報(名前やコードは含みません)
+
+your settings' values (numbers only)
+設定の値(数値のみ)
+
+the settings you changed lately, and when
+最近変更した設定とその時刻
+
+the last lines of this run's log
+今回のログの最後の行
+
+%d bytes
+%dバイト
+
+%d KB
+%d KB
+
+The zip couldn't be made in the save folder.
+セーブフォルダーにzipを作れませんでした。
+
+Made %s in the save folder. Add what happened on the GitHub page and attach the zip there.
+セーブフォルダーに%sを作りました。GitHubのページで何が起きたかを書き、zipを添付してください。
+
+Saved a copy of the zip.
+zipのコピーを保存しました。
+
+Report a problem...
+問題を報告...
+
+One zip of what helps a bug report, shown before it is made. Nothing is sent: you attach it on GitHub yourself.
+バグ報告に役立つものをひとつのzipにまとめます。作る前に中身を表示します。何も送信されません。GitHubには自分で添付します。
+
+The zip will hold:
+zipの中身:
+
+Taken out first: your name in folder paths, online names, the secret half of room codes and IP addresses. Nothing is sent anywhere: you attach the zip to the GitHub issue yourself.
+先に取り除くもの: フォルダーのパスにある名前、オンラインの名前、ルームコードの秘密の半分、IPアドレス。どこにも何も送信されません。GitHubのissueには自分でzipを添付します。
+
+Make the zip and open GitHub
+zipを作ってGitHubを開く
+
+Save a copy of the zip...
+zipのコピーを保存...
+
+It is here: %s
+保存場所: %s
+
+Report a problem
+問題を報告
+
+One zip of what helps a bug report (the records, your settings' values, the last log lines), shown before it is made; then GitHub's page for a new issue, to attach it to.
+バグ報告に役立つもの(記録、設定の値、ログの最後の行)をひとつのzipにまとめ、作る前に中身を表示します。そのあと、添付するためにGitHubの新しいissueのページを開きます。

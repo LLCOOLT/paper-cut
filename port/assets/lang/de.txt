@@ -49,8 +49,8 @@ Spielstände
 Frame rate
 Bildrate
 
-The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).
-Das Spiel läuft mit 60 Bildern pro Sekunde; höhere Raten zeichnen Zwischenbilder (flüssigere Kamera und Figuren).
+Smoother motion on high-refresh screens: extra frames drawn between the game's 60. Uses more power.
+Flüssigere Bewegung auf Bildschirmen mit hoher Bildwiederholrate: zusätzliche Bilder zwischen den 60 des Spiels. Braucht mehr Strom.
 
 Widescreen (16:9)
 Breitbild (16:9)
@@ -82,8 +82,8 @@ Kantenglättung (4x MSAA)
 next start
 beim nächsten Start
 
-Smooths jagged edges.
-Glättet gezackte Kanten.
+Smooths jagged edges; costs a little graphics card time.
+Glättet gezackte Kanten; kostet die Grafikkarte etwas Zeit.
 
 Off
 Aus
@@ -91,17 +91,17 @@ Aus
 Overlay corner
 Ecke der Anzeige
 
-Frame rate, clock and battery in a corner of the screen.
-Bildrate, Uhrzeit und Akku in einer Bildschirmecke.
+Shows the frame rate, clock and battery level in the corner you pick.
+Zeigt Bildrate, Uhrzeit und Akkustand in der Ecke deiner Wahl.
 
 Never skip graphics that are still loading
 Noch ladende Grafik nie überspringen
 
-Something drawn for the first time waits for its graphics to be ready (a short pause, once) instead of appearing a moment later.
-Was zum ersten Mal gezeichnet wird, wartet, bis seine Grafik bereit ist (eine kurze Pause, einmal), statt einen Moment später zu erscheinen.
+Something new on screen waits a moment for its graphics instead of popping in late; a short pause the first time.
+Neues auf dem Bildschirm wartet kurz auf seine Grafik, statt verspätet aufzutauchen; beim ersten Mal eine kurze Pause.
 
-Widescreen switch
-Breitbild-Schalter
+Follow Widescreen
+Wie Breitbild
 
 Aspect ratio
 Seitenverhältnis
@@ -115,8 +115,8 @@ Keine Grenze
 Widest picture
 Breitestes Bild
 
-Wider screens get bars past this (see Blurred side bars).
-Darüber hinaus besteht der restliche Bildschirm aus Balken (unscharf mit Unscharfe Seitenbalken).
+The widest the picture gets; past it, wider screens show bars at the sides.
+Das breiteste Bild; darüber hinaus zeigen breitere Bildschirme Balken an den Seiten.
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
 Statusleiste, Textfenster und Kampfmenüs größer/kleiner.
@@ -136,8 +136,8 @@ Wie im Spiel
 Texture detail
 Texturdetail
 
-Which of a texture's detail levels is used at a distance.
-Welche Detailstufe einer Textur in der Ferne gilt.
+How sharp textures look in the distance; sharper can shimmer as the camera moves.
+Wie scharf Texturen in der Ferne aussehen; schärfer kann bei Kamerabewegung flimmern.
 
 Draws the picture several times larger than the window and shrinks it: smoother edges, much more work for the graphics card.
 Zeichnet das Bild mehrfach größer als das Fenster und verkleinert es: glattere Kanten, viel mehr Arbeit für die Grafikkarte.
@@ -148,8 +148,8 @@ Bildfilter
 Variable refresh rate (G-Sync, FreeSync)
 Variable Bildwiederholrate (G-Sync, FreeSync)
 
-Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
-Jedes Bild wird gezeigt, sobald es fertig ist, ohne auf den Bildschirm zu warten. Für VRR-Bildschirme (andere können reißen); passt gut zu Bildrate: die des Bildschirms.
+For G-Sync and FreeSync screens: each frame shows as soon as it's ready, for less delay. Other screens may tear. Best with Frame rate on the display's rate.
+Für G-Sync- und FreeSync-Bildschirme: Jedes Bild erscheint, sobald es fertig ist, mit weniger Verzögerung. Andere Bildschirme können reißen. Am besten mit Bildrate: die des Bildschirms.
 
 HDR output
 HDR-Ausgabe
@@ -160,14 +160,14 @@ Auf einem HDR-Bildschirm das Bild in der Helligkeit, die du für Weiß wählst (
 Performance overlay
 Leistungsanzeige
 
-The time between frames, and the part spent working.
-Wie lange jedes Bild dauert: die Zeit zwischen den Bildern und der Anteil, in dem gearbeitet wird.
+A graph of how long each frame takes, to spot stutters, with the exact times if you want them.
+Ein Diagramm, wie lange jedes Bild dauert, um Ruckler zu finden, auf Wunsch mit den genauen Zeiten.
 
 Sharp text
 Scharfer Text
 
-The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
-Die Schrift des Spiels als Distanzfeld neu aufgebaut, damit ihre Buchstaben bei jeder Auflösung scharf bleiben (dieselben Buchstaben; die eigene Schrift eines Texturpakets wird so gezeigt, wie das Paket sie zeichnet).
+Keeps the game's letters crisp at any resolution; a texture pack's own font is left as it is.
+Hält die Buchstaben des Spiels bei jeder Auflösung scharf; die eigene Schrift eines Texturpakets bleibt, wie sie ist.
 
 Window
 Fenster
@@ -181,8 +181,8 @@ Vibration
 Rumble strength
 Vibrationsstärke
 
-The game's own Rumble option (on the file select) still applies.
-Die Vibrationsoption des Spiels (in der Dateiauswahl) gilt weiterhin.
+How strongly the controller vibrates. The game's own Rumble option on the file screen still applies.
+Wie stark der Controller vibriert. Die Vibrationsoption des Spiels in der Dateiauswahl gilt weiterhin.
 
 Auto (the controller used last)
 Auto (zuletzt benutzter Controller)
@@ -217,8 +217,8 @@ Im Kampf schließt sich ein Ring um eine {A}-Taste, wann {A} für einen Sprung (
 Fast-forward speed
 Vorspulgeschwindigkeit
 
-Fast-forward: {FF}, or the on-screen >> button.
-Vorspulen: {FF} oder die >>-Taste auf dem Bildschirm.
+How fast the game runs while fast-forwarding ({FF}, or >> on screen).
+Wie schnell das Spiel beim Vorspulen läuft ({FF} oder >> auf dem Bildschirm).
 
 Fast-forward toggles (instead of held)
 Vorspulen umschalten (statt halten)
@@ -232,8 +232,8 @@ Laufgeschwindigkeit
 changes play
 ändert das Spiel
 
-Faster running can make some jumps longer than intended.
-Schnelleres Laufen kann manche Sprünge weiter machen als vorgesehen.
+How fast Mario runs. Faster can make some jumps longer than the game intended.
+Wie schnell Mario läuft. Schneller kann manche Sprünge weiter machen als vom Spiel vorgesehen.
 
 Skip the intro
 Intro überspringen
@@ -247,8 +247,8 @@ Automatisches Speichern
 changes saves
 ändert Spielstände
 
-Saves into the file you're playing as you enter each room, as a Save Block would: a crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once the practice tools changed the game.
-Speichert in die gespielte Datei, sobald du einen Raum betrittst, wie ein Speicherblock: ein Absturz kostet nicht mehr als den Raum. Nicht im Boss-Marathon oder in der endlosen Arena und nicht, nachdem die Trainingswerkzeuge das Spiel verändert haben.
+Saves to the file you're playing at each room change and each floor of the Pit of 100 Trials, as a Save Block would, so a crash loses little. The Paper Tower, the Pit in co-op and the endless Glitz Pit keep their deepest floor or most rounds instead. Not in a mode's own fights, as an online guest, in a replay or after practice tools changed the game.
+Speichert bei jedem Raumwechsel und auf jeder Ebene des Duellkerkers in die gespielte Datei, wie ein Speicherblock, sodass ein Absturz wenig kostet. Der Papierturm, der Duellkerker im Koop und die Endlose Arena behalten stattdessen ihre tiefste Ebene oder die meisten Runden. Nicht in den eigenen Kämpfen eines Modus, als Online-Gast, in einer Wiederholung oder nachdem die Trainingswerkzeuge das Spiel verändert haben.
 
 Text language
 Textsprache
@@ -259,8 +259,8 @@ Der Text der europäischen Version, gelesen aus ihrem Disc-Image in der Biblioth
 Difficulty
 Schwierigkeit
 
-Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy attack (custom).
-Die KP der Gegner und der Schaden ihrer Angriffe. Benutzerdefiniert verwendet Gegner-KP (benutzerdefiniert) und Gegner-Angriff (benutzerdefiniert).
+How much HP enemies have and how hard they hit. Custom uses the two sliders below. HP changes from the next battle.
+Wie viele KP Gegner haben und wie hart sie zuschlagen. Benutzerdefiniert nutzt die beiden Regler darunter. Die KP ändern sich ab dem nächsten Kampf.
 
 Enemy HP (custom)
 Gegner-KP (benutzerdefiniert)
@@ -271,8 +271,8 @@ Gegner-Angriff (benutzerdefiniert)
 Action commands: attacks
 Action-Kommandos: Angriffe
 
-Wider timing for attack commands, or all done for you.
-Großzügigeres Timing für Angriffsbefehle, oder jeder Angriffsbefehl wird für dich erledigt.
+Easier attack timing: wider windows, done for you, or set per command type (Timing assist by command type).
+Leichteres Angriffs-Timing: größere Zeitfenster, für dich erledigt oder je Kommando-Art eingestellt (Timing-Hilfe je Kommando-Art).
 
 Action commands: guards
 Action-Kommandos: Abwehr
@@ -400,14 +400,14 @@ Während du spielst, hält das Spiel einen Spielstand von deinem Ort, geschriebe
 Check for updates at start
 Beim Start nach Updates suchen
 
-Asks GitHub for the latest release of Paper Cut.
-Fragt GitHub nach der neuesten Version von Paper Cut.
+At start, checks online whether a newer Paper Cut is out.
+Prüft beim Start online, ob es ein neueres Paper Cut gibt.
 
 New version
 Neue Version
 
-Earned from what each save file has done (its flags), kept beside the memory cards (not in the save), with a small notice when one is earned.
-Verdient durch das, was jede Spielstand-Datei geschafft hat (ihre Flags), neben den Speicherkarten aufbewahrt (nicht im Spielstand), mit einem kleinen Hinweis, wenn einer verdient wird.
+Earn achievements for what each save file has done, with a small notice for each. Kept beside your saves, not in them.
+Erfolge für das, was jede Spielstand-Datei geschafft hat, mit einem kleinen Hinweis für jeden. Neben deinen Spielständen aufbewahrt, nicht in ihnen.
 
 This file
 Diese Datei
@@ -448,8 +448,8 @@ Befehle der Zuschauer im Chat deines Kanals lassen das Publikum Items werfen, ei
 Cooldown
 Abklingzeit
 
-Seconds between commands (three times that per viewer).
-Sekunden zwischen Befehlen (pro Zuschauer das Dreifache).
+Seconds between chat commands; each viewer waits three times as long.
+Sekunden zwischen Chat-Befehlen; jeder Zuschauer wartet dreimal so lange.
 
 Allow the harmful ones
 Die schädlichen erlauben
@@ -529,8 +529,8 @@ Sternen-Energie wie im Remake (mehr vom Publikum, weniger aus Kommandos, Gefahr 
 Pit of 100 Trials extras
 Extras im Duellkerker
 
-Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared.
-Münzen für jede geschaffte Ebene (1 mehr alle 10 Ebenen tiefer), und der Verschicker auf jeder Ebene, sobald Ebene 50 geschafft ist.
+Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared. The Mover from the next floor.
+Münzen für jede geschaffte Ebene (1 mehr alle 10 Ebenen tiefer), und der Verschicker auf jeder Ebene, sobald Ebene 50 geschafft ist. Der Verschicker ab der nächsten Ebene.
 
 Glitz Pit kindness
 Nachsicht in der Arena
@@ -592,20 +592,20 @@ Schub-Taste (Controller)
 Coins from battles
 Münzen aus Kämpfen
 
-A battle's coins, after Merlee, Money Money and co.
-Die Münzen, die ein gewonnener Kampf abwirft, nach Merlee, Geld! Geld! und einem Erstangriff.
+Multiplies the coins each battle pays (after Merlee and Money Money).
+Vervielfacht die Münzen, die jeder Kampf bringt (nach Merlee und Geld! Geld!).
 
 Star Points from battles
 Sternenpunkte aus Kämpfen
 
-A battle's Star Points (still at most 100, a level).
-Sternenpunkte eines Kampfes (weiter max. 100, ein Level).
+Multiplies the Star Points each battle gives (still at most 100 at once).
+Vervielfacht die Sternenpunkte jedes Kampfes (weiterhin höchstens 100 auf einmal).
 
 Star Piece and Shine Sprite tracker
 Anzeige für Sternsplitter und Insignien
 
-The map's Star Pieces and Shine Sprites, in a corner.
-Sternsplitter und Insignien der Karte, in einer Ecke.
+How many of this map's Star Pieces and Shine Sprites you've found, in the corner you pick.
+Wie viele Sternsplitter und Insignien dieser Karte du gefunden hast, in der Ecke deiner Wahl.
 
 On this map
 Auf dieser Karte
@@ -628,11 +628,11 @@ Listet die auf dieser Datei gehörte Musik auf der Einstellungsseite auf (Alle E
 Tracks
 Stücke
 
-Junk-item helper in shops
-Hilfe für Kram-Items in Läden
+Mark duplicates when selling
+Doppelte beim Verkaufen zeigen
 
-Selling, an item or badge Mario has more than one of shows how many (a worn badge is never marked).
-Beim Verkaufen zeigt ein Item oder Orden, den Mario mehr als einmal hat, wie viele (ein getragener Orden wird nie markiert).
+When selling, items and badges Mario has more than one of show how many he holds; worn badges are never marked.
+Beim Verkaufen zeigen Items und Orden, die Mario mehrfach hat, wie viele er besitzt; getragene Orden werden nie markiert.
 
 Boss rush
 Boss-Marathon
@@ -667,14 +667,14 @@ An
 Widescreen
 Breitbild
 
-Never skip loading graphics
-Ladende Grafik nie überspringen
+Wait for graphics to load
+Auf das Laden der Grafik warten
 
 Extra frames between the game's 60: smoother motion.
 Zwischenbilder zu den 60 des Spiels: flüssigere Bewegung.
 
-Present at the display's refresh: no tearing.
-Bei der Bildwiederholung des Bildschirms zeigen: kein Reißen.
+Waits for the screen before showing each frame: no tearing, slightly more input delay.
+Wartet vor jedem Bild auf den Bildschirm: kein Reißen, etwas mehr Eingabeverzögerung.
 
 16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.
 16:9 statt des 4:3 des Spiels. Manche Räume und Szenen enden an den 4:3-Rändern.
@@ -682,14 +682,14 @@ Bei der Bildwiederholung des Bildschirms zeigen: kein Reißen.
 A blurred copy of the picture instead of black bars beside it.
 Eine unscharfe Kopie des Bildes statt schwarzer Balken daneben.
 
-Auto: the window's size; or a multiple of 640x480.
-Auto: die Fenstergröße; oder ein Vielfaches von 640x480.
+How sharp the 3D picture is: higher is crisper but works the graphics card harder. Auto matches the window.
+Wie scharf das 3D-Bild ist: höher ist klarer, fordert aber die Grafikkarte mehr. Auto passt sich dem Fenster an.
 
 Smooth as the game draws them, or sharp pixels.
 Weich, wie das Spiel sie zeichnet, oder scharfe Pixel.
 
-Something drawn for the first time waits for its graphics.
-Was zum ersten Mal gezeichnet wird, wartet auf seine Grafik.
+New things wait for their graphics instead of popping in.
+Neues wartet auf seine Grafik, statt verspätet aufzutauchen.
 
 Everything's volume.
 Die Lautstärke von allem.
@@ -721,8 +721,8 @@ Im Hintergrund stumm
 The controller's rumble.
 Die Vibration des Controllers.
 
-The game's own Rumble option still applies.
-Die Vibrationsoption des Spiels gilt weiterhin.
+How strongly the controller vibrates.
+Wie stark der Controller vibriert.
 
 How fast the game's text appears.
 Wie schnell der Text des Spiels erscheint.
@@ -730,14 +730,11 @@ Wie schnell der Text des Spiels erscheint.
 A ring shows when to press {A} in battle.
 Ein Ring zeigt im Kampf, wann {A} zu drücken ist.
 
-Fast-forward: {FF}, or >> on screen.
-Vorspulen: {FF} oder >> auf dem Bildschirm.
+On: one press starts fast-forward and the next stops it. Off: it lasts only while held.
+An: Ein Druck startet das Vorspulen, der nächste beendet es. Aus: Es läuft nur, solange du hältst.
 
-On: a press turns it on and off. Off: held.
-An: ein Druck schaltet ein und aus. Aus: halten.
-
-Fast-forward toggles
-Vorspulen umschalten
+Fast-forward stays on
+Vorspulen bleibt an
 
 The game waits while another window has the focus.
 Das Spiel wartet, während ein anderes Fenster aktiv ist.
@@ -820,17 +817,17 @@ Am schwersten (wie 3)
 The window's
 Die des Fensters
 
-Sharper (-0.5)
-Schärfer (-0,5)
+Sharper
+Schärfer
 
-Sharper still (-1)
-Noch schärfer (-1)
+Sharper still
+Noch schärfer
 
-Sharpest (-1.5)
-Am schärfsten (-1,5)
+Sharpest
+Am schärfsten
 
-Softer (+0.5)
-Weicher (+0,5)
+Softer
+Weicher
 
 Paper grain
 Papierkörnung
@@ -912,7 +909,6 @@ Als Nächstes:
 
 The story is over: go wherever you like.
 Die Geschichte ist vorbei: geh, wohin du willst.
-
 
 Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
 Spieler 2 spielt den Partner: {START} auf einem anderen Controller tritt bei. Im Kampf: seine Aktionen, Action-Kommandos und Abwehr. Im Feld: der Stick lässt ihn laufen, {A} springt, {B} spricht oder schlägt, {X} ist seine Fähigkeit, {L} oder {R} der nächste Partner; Marios {Y} ruft ihn zurück. Auf einem Handy oder Tablet koppele zwei Controller.
@@ -1624,8 +1620,8 @@ Fenster über anderen halten
 Drag the window's edges to any size; the picture keeps its shape. F11 or Alt+Enter: full screen. The window opens where you left it next time.
 Zieh die Ränder des Fensters auf jede Größe; das Bild behält seine Form. F11 oder Alt+Enter: Vollbild. Das Fenster öffnet sich nächstes Mal dort, wo du es gelassen hast.
 
-!rock, !drain and !leave.
-!rock, !drain und !leave.
+Lets chat use !rock, !drain and !leave, which hurt or cost you.
+Erlaubt dem Chat !rock, !drain und !leave, die dir schaden oder etwas kosten.
 
 Chat
 Chat
@@ -1648,8 +1644,8 @@ LiveSplit
 RNG
 Zufall
 
-GSW and GSWF: the story's progress and what has happened.
-GSW und GSWF: der Fortschritt der Story und was geschehen ist.
+The story's progress and what has happened so far, to read or change.
+Der Fortschritt der Story und was bisher geschehen ist, zum Lesen oder Ändern.
 
 the bottom face button (A on the GameCube)
 die untere Aktionstaste (A beim GameCube)
@@ -1844,8 +1840,8 @@ ein Controller
 Bars where a scene ends
 Balken, wo eine Szene endet
 
-In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars beside the picture instead of the empty space past the set.
-In Räumen, deren Kulissen vor den Rändern eines Breitbilds enden, und in Kämpfen über 16:9: Balken neben dem Bild statt des leeren Raums hinter der Kulisse.
+Where a room's or battle's scenery ends before a wide screen's edges, bars cover the empty space past it.
+Wo die Kulisse eines Raums oder Kampfes vor den Rändern eines Breitbilds endet, verdecken Balken den leeren Raum dahinter.
 
 File %d
 Datei %d

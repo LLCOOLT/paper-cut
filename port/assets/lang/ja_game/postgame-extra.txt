@@ -135,8 +135,8 @@ After chapter 7, the Rogueport paper's editor in the plaza needs three newslette
 Crane game prizes
 クレーンゲームの　けいひん
 
-After the story, the X-Naut crane game's coins are prizes, a new batch each visit.
-ストーリーの　あと　メガバッテンの　クレーンゲームの　コインが　けいひんに　なります　くるたびに　あたらしく　なります
+After the story, the X-Naut crane game's coins are prizes, a new batch each visit. From the next room.
+ストーリーの　あと　メガバッテンの　クレーンゲームの　コインが　けいひんに　なります　くるたびに　あたらしく　なります　つぎの　へやから
 
 Buy Pianta tokens
 チップを　かう

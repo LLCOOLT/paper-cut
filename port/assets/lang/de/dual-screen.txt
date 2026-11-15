@@ -107,3 +107,6 @@ Abwehr
 
 Not tattled yet.
 Noch nicht analysiert.
+
+Sent to the game: it happens there as soon as Mario is free.
+An das Spiel geschickt: Es passiert dort, sobald Mario frei ist.

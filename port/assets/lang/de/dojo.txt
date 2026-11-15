@@ -9,8 +9,8 @@ Timing-Hilfe je Kommando-Art
 Action command timing in every battle
 Action-Kommando-Timing in jedem Kampf
 
-The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
-Das Fenster des Dojos nach jedem Action-Kommando, jeder Abwehr und jedem Trick, in jedem Kampf: wie viele Frames zu früh oder zu spät.
+After each action command, guard and Stylish move, in every battle, a note shows how many frames early or late you were.
+Nach jedem Action-Kommando, jeder Abwehr und jedem Trick zeigt in jedem Kampf ein Hinweis, wie viele Frames du zu früh oder zu spät warst.
 
 By command type
 Je Kommando-Art

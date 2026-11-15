@@ -25,7 +25,6 @@
 namespace {
 
 constexpr const char* kTab = "Modes";
-constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 // --- the trophy room ---
 
@@ -64,7 +63,7 @@ const char* trophyAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   const char* why = nullptr;
   return portTrophyRoomVisit(&why) ? "The room opens once the menu is closed." : why;
@@ -258,7 +257,7 @@ const char* towerAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return kSecondScreen;
+    return portPauseSecondScreenAct(id, dir);
   }
   if (id == 0) {
     return portTowerStart(&why) ? "The climb starts once the menu is closed." : why;
@@ -273,7 +272,7 @@ const char* towerAct(int id, int dir) {
 const PortPauseForm kTowerForm = {kTab, "The Paper Tower", towerRows, towerAct};
 
 void towerHud() {
-  if (!portTowerActive()) {
+  if (!portTowerActive() || portBattleBubbleUp()) { // (none across a battle's speech bubble)
     return;
   }
   char line[128];
@@ -440,9 +439,8 @@ struct Register {
     portPauseAddForm(&kTowerForm);
     portSettingsDeclare("daily_specials", 0, 0, 1);
     portSettingsAddToggle(kTab, "Daily shop specials",
-                          "Five shops each put one rare item on a shelf at 30% off, a different one each day and the "
-                          "same for everyone that day (by the UTC date). It takes one shelf's place for the day. "
-                          "Online, the host's day; not during a replay.",
+                          "Five shops each sell one rare item at 30% off, a different one each day and the same for "
+                          "everyone. It takes one shelf's place for the day. From the next room.",
                           PORT_SETTING_CHANGES_PLAY, "daily_specials", "daily shop specials discount sale rare items");
     portSettingsAddSection(kTab, "Today's specials", nullptr, 0, dailySection, "daily shop specials today");
     portPauseAddForm(&kDailyForm);

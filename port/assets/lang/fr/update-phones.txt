@@ -33,8 +33,8 @@ Prêt à installer
 Only Paper Cut's own app for this version, from its releases, checked against the release's checksum; then Android asks before it installs.
 Uniquement l'appli de Paper Cut pour cette version, depuis ses publications, vérifiée avec la somme de contrôle de la version ; Android demande ensuite avant d'installer.
 
-A new version found at start is downloaded in the background and checked against the release's checksum; then Android asks before it installs. Never during online play or a replay.
-Une nouvelle version trouvée au démarrage est téléchargée en arrière-plan et vérifiée avec la somme de contrôle de la version ; Android demande ensuite avant de l'installer. Jamais pendant le jeu en ligne ou un replay.
+A new version found at start downloads in the background and is checked; then Android asks before installing it. Never while playing online.
+Une nouvelle version trouvée au démarrage se télécharge en arrière-plan et est vérifiée ; Android demande ensuite avant de l'installer. Jamais en jouant en ligne.
 
 AltStore and SideStore update Paper Cut from its source: add it once.
 AltStore et SideStore mettent Paper Cut à jour depuis sa source : ajoutez-la une fois.

@@ -61,8 +61,8 @@ Saves
 Frame rate
 フレームレート
 
-The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).
-ゲームは毎秒60フレームで動きます。高いフレームレートでは間のフレームを描きます（カメラとキャラクターがなめらかに）。
+Smoother motion on high-refresh screens: extra frames drawn between the game's 60. Uses more power.
+リフレッシュレートの高い画面で動きがなめらかに：ゲームの60フレームの間にフレームを足します。電力を多く使います。
 
 Widescreen (16:9)
 ワイド画面（16:9）
@@ -94,8 +94,8 @@ Anti-aliasing (4x MSAA)
 next start
 次回起動時
 
-Smooths jagged edges.
-ギザギザの縁をなめらかにします。
+Smooths jagged edges; costs a little graphics card time.
+ギザギザの縁をなめらかにします。グラフィックカードの負担が少し増えます。
 
 Off
 オフ
@@ -103,16 +103,16 @@ Off
 Overlay corner
 情報表示の位置
 
-Frame rate, clock and battery in a corner of the screen.
-フレームレート、時計、バッテリーを画面の隅に表示します。
+Shows the frame rate, clock and battery level in the corner you pick.
+フレームレート、時計、バッテリーの残りを、選んだ隅に表示します。
 
 Never skip graphics that are still loading
 読み込み中のグラフィックを飛ばさない
 
-Something drawn for the first time waits for its graphics to be ready (a short pause, once) instead of appearing a moment later.
-初めて描くものは、少し後に現れる代わりに、グラフィックの準備ができるまで待ちます（一度だけの短い停止）。
+Something new on screen waits a moment for its graphics instead of popping in late; a short pause the first time.
+初めて出るものは、遅れて現れる代わりに、グラフィックの準備ができるまで少し待ちます（最初だけ短く止まります）。
 
-Widescreen switch
+Follow Widescreen
 ワイド画面に合わせる
 
 Aspect ratio
@@ -127,8 +127,8 @@ No limit
 Widest picture
 最大の横幅
 
-Wider screens get bars past this (see Blurred side bars).
-これを超えた分は帯になります（「ぼかした両端の帯」でぼかせます）。
+The widest the picture gets; past it, wider screens show bars at the sides.
+画面の最大の横幅。これより広い画面では、両端に帯が出ます。
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
 ステータスバー、メッセージウィンドウ、バトルメニューを、ゲームより大きく、または小さくします。
@@ -148,8 +148,8 @@ The game's
 Texture detail
 テクスチャの細かさ
 
-Which of a texture's detail levels is used at a distance.
-遠くでテクスチャのどの細かさを使うか。
+How sharp textures look in the distance; sharper can shimmer as the camera moves.
+遠くのテクスチャのくっきりさ。くっきりにすると、カメラが動くときにちらつくことがあります。
 
 Supersampling
 スーパーサンプリング
@@ -163,8 +163,8 @@ Picture filter
 Variable refresh rate (G-Sync, FreeSync)
 可変リフレッシュレート（G-Sync、FreeSync）
 
-Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
-画面を待たずに、できたフレームをすぐ表示します。VRR対応の画面向け（ほかの画面ではちらつくことがあります）。フレームレートを「画面に合わせる」にすると相性が良いです。
+For G-Sync and FreeSync screens: each frame shows as soon as it's ready, for less delay. Other screens may tear. Best with Frame rate on the display's rate.
+G-SyncやFreeSyncの画面向け：できたフレームをすぐ表示し、遅れが減ります。ほかの画面ではちらつくことがあります。フレームレートを「画面に合わせる」にすると最適です。
 
 HDR output
 HDR出力
@@ -175,14 +175,14 @@ HDR対応の画面で、白を選んだ明るさ（ペーパーホワイト）�
 Performance overlay
 パフォーマンス表示
 
-The time between frames, and the part spent working.
-各フレームにかかる時間：フレームの間隔と、そのうち処理にかかった時間。
+A graph of how long each frame takes, to spot stutters, with the exact times if you want them.
+各フレームにかかる時間のグラフ。カクつきを見つけるのに使えます。くわしい時間も表示できます。
 
 Sharp text
 くっきりした文字
 
-The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
-ゲームのフォントを距離フィールドとして作り直し、どの解像度でも文字がくっきりします（同じ文字のまま。テクスチャパックが自分のフォントを持つときは、そのフォントが表示されます）。
+Keeps the game's letters crisp at any resolution; a texture pack's own font is left as it is.
+どの解像度でもゲームの文字をくっきりさせます。テクスチャパックのフォントはそのままです。
 
 Window
 ウィンドウ
@@ -196,8 +196,8 @@ Rumble
 Rumble strength
 振動の強さ
 
-The game's own Rumble option (on the file select) still applies.
-ゲーム自体の振動の設定（ファイル選択画面）もそのまま有効です。
+How strongly the controller vibrates. The game's own Rumble option on the file screen still applies.
+コントローラーの振動の強さ。ファイル選択画面のゲーム自体の振動の設定もそのまま有効です。
 
 Auto (the controller used last)
 自動（最後に使ったコントローラー）
@@ -232,8 +232,8 @@ In battle, a ring closes on an {A} button when to press {A} for a Jump (and part
 Fast-forward speed
 早送りの速さ
 
-Fast-forward: {FF}, or the on-screen >> button.
-早送り：{FF}、または画面の >> ボタン。
+How fast the game runs while fast-forwarding ({FF}, or >> on screen).
+早送りしているときのゲームの速さ（{FF}、または画面の >>）。
 
 Fast-forward toggles (instead of held)
 早送りを押すたびに切り替え（押し続けない）
@@ -250,8 +250,8 @@ Run speed
 changes play
 ゲームが変わる
 
-Faster running can make some jumps longer than intended.
-速く走ると、一部のジャンプが想定より長くなることがあります。
+How fast Mario runs. Faster can make some jumps longer than the game intended.
+マリオの走る速さ。速くすると、一部のジャンプがゲームの想定より長くなることがあります。
 
 Skip the intro
 オープニングを飛ばす
@@ -265,8 +265,8 @@ Autosave
 changes saves
 セーブが変わる
 
-Saves into the file you're playing as you enter each room, as a Save Block would: a crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once the practice tools changed the game.
-部屋に入るたびに、セーブブロックと同じように遊んでいるファイルにセーブします。ゲームが落ちても、失うのはその部屋だけです。ボスラッシュやエンドレスとうぎ場の間と、練習ツールでゲームを変えた後は行いません。
+Saves to the file you're playing at each room change and each floor of the Pit of 100 Trials, as a Save Block would, so a crash loses little. The Paper Tower, the Pit in co-op and the endless Glitz Pit keep their deepest floor or most rounds instead. Not in a mode's own fights, as an online guest, in a replay or after practice tools changed the game.
+部屋を移るたびと１００階ダンジョンの階ごとに、セーブブロックと同じように遊んでいるファイルにセーブします。ゲームが落ちても失うものはわずかです。ペーパータワー、協力プレイの１００階ダンジョン、エンドレスとうぎ場は、かわりに一番深い階や一番多いラウンドを残します。モードの戦闘中、オンラインのゲストの時、リプレイ中、練習ツールでゲームを変えた後は行いません。
 
 Text language
 テキストの言語
@@ -277,8 +277,8 @@ The European release's text, read from its disc image in the launcher's library.
 Difficulty
 むずかしさ
 
-Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy attack (custom).
-敵のＨＰと、敵の攻撃のダメージ。「カスタム」は「敵のＨＰ（カスタム）」と「敵の攻撃（カスタム）」を使います。
+How much HP enemies have and how hard they hit. Custom uses the two sliders below. HP changes from the next battle.
+敵のＨＰと、敵の攻撃の強さ。「カスタム」では下の2つのスライダーを使います。ＨＰは次のバトルから変わります。
 
 Enemy HP (custom)
 敵のＨＰ（カスタム）
@@ -289,8 +289,8 @@ Enemy attack (custom)
 Action commands: attacks
 アクションコマンド：攻撃
 
-Wider timing for attack commands, or all done for you.
-攻撃のアクションコマンドのタイミングを広くするか、すべて自動で成功させます。
+Easier attack timing: wider windows, done for you, or set per command type (Timing assist by command type).
+攻撃のタイミングを楽に：受付を広くする、自動で成功させる、またはコマンドの種類ごとに設定（コマンドの種類ごとのタイミング補助）。
 
 Action commands: guards
 アクションコマンド：ガード
@@ -424,14 +424,14 @@ While you play, the game keeps a save of where you are, written when the app clo
 Check for updates at start
 起動時にアップデートを確認
 
-Asks GitHub for the latest release of Paper Cut.
-GitHubにPaper Cutの最新版を問い合わせます。
+At start, checks online whether a newer Paper Cut is out.
+起動時に、新しいPaper Cutが出ているかをオンラインで確かめます。
 
 New version
 新しいバージョン
 
-Earned from what each save file has done (its flags), kept beside the memory cards (not in the save), with a small notice when one is earned.
-各セーブファイルがやったこと（フラグ）から得られます。セーブの中ではなくメモリーカードの隣に保存され、得た時には小さなお知らせが出ます。
+Earn achievements for what each save file has done, with a small notice for each. Kept beside your saves, not in them.
+各セーブファイルがやったことで実績が手に入り、そのたびに小さなお知らせが出ます。セーブの中ではなく、その隣に保存されます。
 
 This file
 このファイル
@@ -472,8 +472,8 @@ Viewers' commands in your channel's chat make the crowd throw items, give or tak
 Cooldown
 間隔
 
-Seconds between commands (three times that per viewer).
-この秒数ごとにコマンド1つ。1人の視聴者はその3倍ごとに1つ。
+Seconds between chat commands; each viewer waits three times as long.
+チャットのコマンドの間の秒数。視聴者1人ごとには、その3倍待ちます。
 
 Allow the harmful ones
 害のあるものも許可
@@ -556,8 +556,8 @@ Star Power as the remake gives it (more from the crowd, less from commands, Dang
 Pit of 100 Trials extras
 １００階ダンジョンのおまけ
 
-Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared.
-クリアした階ごとにコイン（10階ごとに1枚ずつ増加）、50階をクリアした後はすべての階にいどう屋。
+Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared. The Mover from the next floor.
+クリアした階ごとにコイン（10階ごとに1枚ずつ増加）、50階をクリアした後はすべての階にいどう屋。いどう屋は次の階から。
 
 Glitz Pit kindness
 やさしいとうぎ場
@@ -619,20 +619,20 @@ Boost button
 Coins from battles
 バトルのコイン
 
-A battle's coins, after Merlee, Money Money and co.
-勝ったバトルで出るコイン（サンデール、コインコイン、せんせいこうげきの後）。
+Multiplies the coins each battle pays (after Merlee and Money Money).
+バトルで出るコインを増やします（サンデールとコインコインの後）。
 
 Star Points from battles
 バトルのスターポイント
 
-A battle's Star Points (still at most 100, a level).
-バトルのスターポイント（今までどおり最大100、1レベル分）。
+Multiplies the Star Points each battle gives (still at most 100 at once).
+バトルでもらえるスターポイントを増やします（一度に最大100のまま）。
 
 Star Piece and Shine Sprite tracker
 ほしのかけらとシャインの記録
 
-The map's Star Pieces and Shine Sprites, in a corner.
-今のマップのほしのかけらとシャインをいくつ見つけたかを、隅に表示します。
+How many of this map's Star Pieces and Shine Sprites you've found, in the corner you pick.
+今のマップのほしのかけらとシャインをいくつ見つけたかを、選んだ隅に表示します。
 
 On this map
 このマップ
@@ -655,11 +655,11 @@ Lists the music heard on this file on the settings page (All settings, Tracks); 
 Tracks
 曲
 
-Junk-item helper in shops
-お店で余ったアイテムを教える
+Mark duplicates when selling
+売る時にダブりを表示
 
-Selling, an item or badge Mario has more than one of shows how many (a worn badge is never marked).
-売る時、マリオが2つ以上持っているアイテムやバッジに個数を表示します（つけているバッジには表示しません）。
+When selling, items and badges Mario has more than one of show how many he holds; worn badges are never marked.
+売る時、マリオが2つ以上持っているアイテムやバッジに個数を表示します。つけているバッジには表示しません。
 
 Boss rush
 ボスラッシュ
@@ -694,14 +694,14 @@ On
 Widescreen
 ワイド画面
 
-Never skip loading graphics
-読み込み中のグラフィックを飛ばさない
+Wait for graphics to load
+グラフィックの読み込みを待つ
 
 Extra frames between the game's 60: smoother motion.
 ゲームの60フレームの間に追加のフレーム：動きがなめらかに。
 
-Present at the display's refresh: no tearing.
-画面の更新に合わせて表示：ちらつきなし。
+Waits for the screen before showing each frame: no tearing, slightly more input delay.
+画面に合わせて各フレームを表示：ちらつきがなくなり、操作の遅れが少し増えます。
 
 16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.
 ゲームの4:3ではなく16:9。部屋やシーンによっては4:3の端で終わります。
@@ -709,14 +709,14 @@ Present at the display's refresh: no tearing.
 A blurred copy of the picture instead of black bars beside it.
 横の黒い帯の代わりに、画面をぼかしたもの。
 
-Auto: the window's size; or a multiple of 640x480.
-自動：ウィンドウの大きさ、または640x480の倍数。
+How sharp the 3D picture is: higher is crisper but works the graphics card harder. Auto matches the window.
+3Dの映像のくっきりさ。高いほどきれいですが、グラフィックカードの負担が増えます。「自動」はウィンドウに合わせます。
 
 Smooth as the game draws them, or sharp pixels.
 ゲームのとおりなめらかに、またはくっきりしたドットで。
 
-Something drawn for the first time waits for its graphics.
-初めて描くものはグラフィックを待ちます。
+New things wait for their graphics instead of popping in.
+新しいものはグラフィックを待ってから出ます。
 
 Everything's volume.
 すべての音量。
@@ -748,8 +748,8 @@ Mute in the background
 The controller's rumble.
 コントローラーの振動。
 
-The game's own Rumble option still applies.
-ゲーム自体の振動の設定もそのまま有効です。
+How strongly the controller vibrates.
+コントローラーの振動の強さ。
 
 How fast the game's text appears.
 ゲームの文字が出る速さ。
@@ -757,14 +757,11 @@ How fast the game's text appears.
 A ring shows when to press {A} in battle.
 バトルで{A}を押すタイミングを輪で示します。
 
-Fast-forward: {FF}, or >> on screen.
-早送り：{FF}、または画面の >>。
+On: one press starts fast-forward and the next stops it. Off: it lasts only while held.
+オン：1回押すと早送りが始まり、もう1回で止まります。オフ：押している間だけ早送り。
 
-On: a press turns it on and off. Off: held.
-オン：押すたびに切り替え。オフ：押し続ける。
-
-Fast-forward toggles
-早送りを押して切り替え
+Fast-forward stays on
+早送りをオンのままにする
 
 The game waits while another window has the focus.
 ほかのウィンドウを使っている間、ゲームが止まります。
@@ -850,17 +847,17 @@ Hardest (as 3)
 The window's
 ウィンドウに合わせる
 
-Sharper (-0.5)
-くっきり（-0.5）
+Sharper
+くっきり
 
-Sharper still (-1)
-もっとくっきり（-1）
+Sharper still
+もっとくっきり
 
-Sharpest (-1.5)
-いちばんくっきり（-1.5）
+Sharpest
+いちばんくっきり
 
-Softer (+0.5)
-やわらかく（+0.5）
+Softer
+やわらかく
 
 CRT
 ブラウン管
@@ -945,7 +942,6 @@ Where next:
 
 The story is over: go wherever you like.
 物語は終わりました。好きな所へどうぞ。
-
 
 Player 2 plays the partner: {START} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
 プレイヤー2が仲間を操作します：別のコントローラーの{START}で参加。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで歩き、{A}でジャンプ、{B}で話すか叩き、{X}で仲間の能力、{L}か{R}で次の仲間。マリオの{Y}で呼び戻せます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
@@ -1654,8 +1650,8 @@ Keep the window above others
 Drag the window's edges to any size; the picture keeps its shape. F11 or Alt+Enter: full screen. The window opens where you left it next time.
 ウィンドウのふちをどんな大きさにもドラッグできます。画面は形を保ちます。F11かAlt+Enter：全画面。次回は前に置いた場所で開きます。
 
-!rock, !drain and !leave.
-!rock、!drain、!leave。
+Lets chat use !rock, !drain and !leave, which hurt or cost you.
+チャットが!rock、!drain、!leaveを使えるようにします。ダメージや損があります。
 
 New Game+
 New Game+
@@ -1666,8 +1662,8 @@ LiveSplit
 RNG
 乱数
 
-GSW and GSWF: the story's progress and what has happened.
-GSWとGSWF：ストーリーの進み具合と、起きたこと。
+The story's progress and what has happened so far, to read or change.
+ストーリーの進み具合と、これまでに起きたこと。見たり変えたりできます。
 
 the bottom face button (A on the GameCube)
 下のボタン（ゲームキューブのA）
@@ -1871,8 +1867,8 @@ a controller
 Bars where a scene ends
 シーンの端に帯
 
-In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars beside the picture instead of the empty space past the set.
-ワイド画面の端まで届かない部屋や、16:9より広いバトルで、セットの外の何もない所の代わりに、画面の横に帯を表示します。
+Where a room's or battle's scenery ends before a wide screen's edges, bars cover the empty space past it.
+部屋やバトルのセットがワイド画面の端まで届かない所では、その外の何もない所を帯でかくします。
 
 File %d
 ファイル%d

@@ -221,6 +221,7 @@ static int sInFight;        /* the puzzle's battle chosen and not ended yet */
 static void finish(int solved, int turns);
 static PouchData sSavedPouch;
 static int sPouchSaved;
+static int sSavedParty = -1; /* the partner out in the field before the puzzle (its battle leaves its own out) */
 static unsigned sResultCount;
 static int sResultPuzzle, sResultSolved, sResultTurns;
 static int sBest[64]; /* fewest turns solved in (0: never) */
@@ -330,6 +331,15 @@ static void restorePouch(void) {
         sPouchSaved = 0;
         portPm64JoinHold(0);
     }
+    if (sSavedParty >= 0) { /* (the file's partner out again: the puzzle's came back out of its battle) */
+        if (marioGetPartyId() != sSavedParty) {
+            marioPartyKill();
+            if (sSavedParty > 0) {
+                marioPartyEntry((PartyId)sSavedParty);
+            }
+        }
+        sSavedParty = -1;
+    }
 }
 
 static void giveSetup(const Puzzle* z) {
@@ -338,6 +348,7 @@ static void giveSetup(const Puzzle* z) {
     int i;
     sSavedPouch = *p;
     sPouchSaved = 1;
+    sSavedParty = marioGetPartyId();
     portPm64JoinHold(1); /* (the lent partner isn't a join: no PM64 partner by it, Watt's mark stays) */
     for (i = 1; i <= 7; i++) {
         p->partyData[i].attackLevel = p->partyData[i].HPLevel = p->partyData[i].techLevel = t->rank;

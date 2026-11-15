@@ -1,0 +1,7 @@
+# The Restorations page's one switch, Restore everything (port/settings/features/enhancement_presets.cpp), in Japanese for the JP release's own font: kana, words apart
+
+Restore everything
+すべて　ふくげん
+
+Everything the Japanese release had that Paper Cut puts back, on or off together: the chalk outline, the Parlor Boo's bunny ears, the screen flashes (warning: rapid flashing light), the 1000 X-Nauts, the bad ending, Hooktail's frogs and the Trial Stew. Each one is also below, to change on its own.
+日本ばんに　あった　ものを　まとめて　オン　オフ　チョークの　人がた　テレサの　ウサギみみ　画面フラッシュ　メガバッテン　バッドエンド　カエル　しれんの　ナベ　ひとつずつ　かえる　ことも　できる

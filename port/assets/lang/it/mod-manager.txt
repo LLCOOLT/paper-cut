@@ -249,8 +249,8 @@ Ricarica le mod
 Reads the mods folder again: a mod added or changed.
 Rilegge la cartella delle mod: una mod aggiunta o cambiata.
 
-Shows the mods folder on the desktop.
-Mostra la cartella delle mod sul desktop.
+Shows the mods folder, in the user folder: the system's folder for app data, or User beside the program with portable.txt. The full page shows its path.
+Mostra la cartella delle mod, nella cartella utente: la cartella di sistema per i dati delle app, o User accanto al programma con portable.txt. La pagina completa mostra il percorso.
 
 Its code follows at the next start.
 Il suo codice segue al prossimo avvio.

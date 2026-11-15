@@ -9,8 +9,8 @@ Each battle won is graded D to S for its Stylish moves, Superguards, damage take
 Paper Cut badge set
 Paper Cutのバッジセット
 
-Twelve new badges, each folded from two or three of the game's, sold by a Toad merchant in Rogueport's plaza once the prologue is done. A file holding them isn't for the GameCube game any more.
-ゲームのバッジ2つか3つを折って作った新しいバッジ12個。プロローグのあと、ゴロツキタウンの広場でキノピオの商人が売ります。これを持っているファイルは、ゲームキューブ版のゲームでは使えなくなります。
+Twelve new badges, each mixing two or three of the game's, sold by a Toad in Rogueport's plaza after the prologue. A save holding them no longer works on a GameCube.
+ゲームのバッジ2つか3つを合わせた新しいバッジ12個。プロローグのあと、ゴロツキタウンの広場でキノピオが売ります。これを持っているセーブは、ゲームキューブでは使えなくなります。
 
 Paper Cut badges
 Paper Cutのバッジ

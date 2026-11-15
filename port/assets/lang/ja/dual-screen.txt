@@ -107,3 +107,6 @@ Defense
 
 Not tattled yet.
 まだ調べていません。
+
+Sent to the game: it happens there as soon as Mario is free.
+ゲームに送りました。マリオが動けるようになったら、そちらで行われます。
