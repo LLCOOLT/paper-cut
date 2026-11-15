@@ -48,7 +48,7 @@
   "\\[spin\\] Mario's spin ends \\(its end\\): \\d\\d+ units in \\d+ frames, at \\(-?\\d+, 0, -10\\)"
  ],
  "log_must_not": [
-  "Speedy Spin",
+  ", Speedy Spin",
   "OSPanic",
   "\\bassert"
  ],

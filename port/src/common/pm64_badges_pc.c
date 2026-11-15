@@ -131,15 +131,31 @@ const char* portPm64BadgeEnglish(int id) {
     return i >= 0 ? kBadges[i].english : "";
 }
 
+/* A move with no name of its own (0: Speedy Spin, Spin Attack, Dizzy Attack, the field badges) is named by its
+ * badge item's: the item table's entry with the same full description; 0 when there's none */
+static uint32_t itemNameOf(uint32_t fullDescMsg) {
+    Pm64Item it;
+    int k;
+    for (k = 0; fullDescMsg != 0 && portPm64Item(k, &it); k++) {
+        if (it.fullDescMsg == fullDescMsg) {
+            return it.nameMsg;
+        }
+    }
+    return 0;
+}
+
 /* the badge's name and description from the ROM (UTF-8); 0 without them */
 int portPm64BadgeText(int id, char* name, size_t nameSize, char* desc, size_t descSize) {
     const int i = badgeOf(id);
     Pm64Move m;
+    uint32_t nameMsg;
     name[0] = desc[0] = '\0';
     if (i < 0 || !portPm64Move(kBadges[i].move, &m)) {
         return 0;
     }
-    if (portPm64MessageText(m.nameMsg, 0, name, nameSize) <= 0) {
+    /* (message 0 is the archive's first, "a": never a name) */
+    nameMsg = m.nameMsg != 0 ? m.nameMsg : itemNameOf(m.fullDescMsg);
+    if (nameMsg == 0 || portPm64MessageText(nameMsg, 0, name, nameSize) <= 0) {
         snprintf(name, nameSize, "%s", kBadges[i].english);
     }
     portPm64MessageText(m.fullDescMsg, 0, desc, descSize);

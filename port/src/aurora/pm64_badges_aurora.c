@@ -88,6 +88,17 @@ static void setStandInTexts(void) {
     portModsSetMessage("pc_pm64_dizzy_stomp_desc", wrapped);
 }
 
+/* a text on one line, for the log */
+static const char* oneLine(const char* s) {
+    static char out[256];
+    size_t n;
+    for (n = 0; s[n] != '\0' && n + 1 < sizeof(out); n++) {
+        out[n] = s[n] == '\n' ? ' ' : s[n];
+    }
+    out[n] = '\0';
+    return out;
+}
+
 static void setTexts(void) {
     char name[64], desc[256], wrapped[300];
     int i;
@@ -98,6 +109,7 @@ static void setTexts(void) {
             snprintf(name, sizeof(name), "%s", portPm64BadgeEnglish(id));
             desc[0] = '\0';
         }
+        printf("[pm64] badge %03x: %s | %s\n", id, name, oneLine(desc)); /* (tests/port/testpass/pm64_badge_names.json) */
         wrap(desc, wrapped, sizeof(wrapped), 30);
         portModsSetMessage(itemDataTable[id].name, name);
         portModsSetMessage(itemDataTable[id].description, wrapped);
