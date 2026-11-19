@@ -1,5 +1,5 @@
 /* The Paper Mario 64 partners in their own TTYD models (the setting "Partners' look"; port/include/port/pm64.h,
- * docs/PM64_LINK.md): the Thousand-Year Door's disc has a paper model of each of the eight (c_kurio Goombario ..
+ * docs/ROM_LINK.md): the Thousand-Year Door's disc has a paper model of each of the eight (c_kurio Goombario ..
  * c_pokopi Lakilester), made for cameos, which stand and talk and little else. At startup each is made again from
  * the player's disc with every move a partner needs added by a recipe of ours (anim_recipe.h; the recipes:
  * tools/port/pm64_partner_motions.py) and served as a disc file (a/c_kurio_pc ..). With "Partners' look" on the

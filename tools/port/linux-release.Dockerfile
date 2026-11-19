@@ -1,7 +1,7 @@
 # The Linux x86-64 machine for the release's Linux packages and local CI's
 # Linux job (tools/port/linux_container.py runs commands in it): Ubuntu with
 # clang, the build tools and the development packages Aurora's SDL3 build
-# needs (docs/PC_PORT.md, "Linux"); gcc-multilib for the 32-bit C headers the
+# needs (docs/TECHNICAL.md, "Linux"); gcc-multilib for the 32-bit C headers the
 # layout check (gen_bedecode.py --check, a unit test) compiles against. The
 # checkout is mounted at /src.
 #

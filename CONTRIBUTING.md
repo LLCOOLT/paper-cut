@@ -1,6 +1,6 @@
 # Contributing to Paper Cut
 
-Thanks for wanting to help! Paper Cut is a PC port of Paper Mario: The Thousand-Year Door built on the
+Thanks for wanting to help! Paper Cut is a reimplementation of the platform that the decompilation of Paper Mario: The Thousand-Year Door runs on, built on the
 [matching decompilation](https://github.com/LLCOOLT/ttyd). Bug reports, ideas, translations, fixes and features
 are all welcome.
 
@@ -31,7 +31,7 @@ These protect the project. A pull request that breaks one can't be merged, howev
 
 ## Building and testing
 
-- Build: see [docs/PC_PORT.md](docs/PC_PORT.md). You need your own disc image for each version you test.
+- Build: see [docs/TECHNICAL.md](docs/TECHNICAL.md). You need your own disc image for each version you test.
 - Code in `src/` and `rels/` is the game's decompiled code: port changes there go inside `#ifdef TARGET_PC`,
   so the GameCube build still matches.
 - Paper Cut's own code lives in `port/`.

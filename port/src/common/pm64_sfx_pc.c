@@ -2021,7 +2021,7 @@ void portPm64SfxMix(short* out, unsigned frames) {
     if (sRom.ready <= 0 || sSfxVolume == NULL || sSfxMute == NULL) {
         return; /* (the settings are declared on the game thread before anything loads) */
     }
-    /* The level: PM64's effects brought to the game's own (measured: the captures in docs/PM64_LINK.md's
+    /* The level: PM64's effects brought to the game's own (measured: the captures in docs/ROM_LINK.md's
      * notes), times the settings page's sound effect volume. */
     gain = 1.6f * portVolumeGain(*sSfxMute ? 0 : *sSfxVolume);
     LOCK();

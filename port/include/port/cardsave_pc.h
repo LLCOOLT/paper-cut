@@ -1,6 +1,6 @@
 #ifndef PORT_CARDSAVE_PC_H
 #define PORT_CARDSAVE_PC_H
-/* Memory card saves on PC (src/manager/cardmgr.c). See docs/PC_PORT.md,
+/* Memory card saves on PC (src/manager/cardmgr.c). See docs/TECHNICAL.md,
  * "Card saves".
  *
  * Policy: the card file ("mariost_save_file", written by Aurora's CARD as a

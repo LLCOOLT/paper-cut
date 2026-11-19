@@ -205,7 +205,7 @@ it. The test pass runs it as `playas_text_dump` then `playas_text_verdict`
 
 ## Their new moves
 
-As Luigi's ([LUIGI_ANIMS.md](LUIGI_ANIMS.md)): at startup the port makes
+As Luigi's ([LUIGI_ANIMS.md](LUIGI_ANIMS.md)): at startup Paper Cut makes
 `a/c_peach_pc`, `a/c_peach_r_pc`, `a/c_koopa_pc` and `a/c_koopa_r_pc` from
 the disc's models and a pack of our own animations and a hammer plane for each
 (`port/assets/luigi/peach_anims.bin`, `peach_r_anims.bin`,

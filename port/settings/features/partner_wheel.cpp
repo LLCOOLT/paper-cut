@@ -119,7 +119,7 @@ void draw(int pageOpen) {
     close();
     return;
   }
-  // tests (docs/PC_PORT.md): TTYD_WHEEL_TEST=<id>[,<frames>] holds the wheel open that many drawn frames
+  // tests (docs/TECHNICAL.md): TTYD_WHEEL_TEST=<id>[,<frames>] holds the wheel open that many drawn frames
   // (default 90) once the field is free, pointing at partner id (a Paper Mario 64 partner: 8 + 1..7, PM64_WHEEL_BASE), then
   // lets go; the list is logged as it opens
   static int sTestId = -1, sTestFrames = 90, sTestHeld = 0;

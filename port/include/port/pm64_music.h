@@ -1,7 +1,7 @@
 #ifndef PORT_PM64_MUSIC_H
 #define PORT_PM64_MUSIC_H
 
-/* The Paper Mario 64 soundtrack (docs/PM64_EXTRAS.md): Paper Cut's own player
+/* The Paper Mario 64 soundtrack (docs/ROM_EXTRAS.md): Paper Cut's own player
  * for the N64 game's music, reading the SBN archive in the linked ROM's cache
  * (portPm64Segment(PM64_SEG_AUDIO)): its INIT table (songs, banks, drums), the
  * BGM sequences and the BK instrument banks (VADPCM samples, envelopes). It
@@ -29,7 +29,7 @@ void portPm64SongClose(Pm64Song* s);
 const char* portPm64SongName(int songId);
 
 /* The PM64 song for TTYD track name (BGM_STG1_NOK1, ...), or -1: the area
- * mapping listed in docs/PM64_EXTRAS.md. */
+ * mapping listed in docs/ROM_EXTRAS.md. */
 int portPm64SongForTrack(const char* track);
 /* Settings "pm64_music": 0 the game's, 1 PM64's, 2 mixed by area. With a
  * linked ROM, the song to play for track in area (gp->currentMapName's first

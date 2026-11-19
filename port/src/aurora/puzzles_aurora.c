@@ -613,7 +613,7 @@ static void frameHook(void) {
     int ask = -1;
     sTestCalm = calm ? sTestCalm + 1 : 0;
     if (!sTestAsked && sTestCalm >= 120 && getenv("TTYD_PUZZLE_TEST") != NULL) {
-        /* tests ($TTYD_PUZZLE_TEST=N, or "daily"; docs/PC_PORT.md): puzzle N once a game runs */
+        /* tests ($TTYD_PUZZLE_TEST=N, or "daily"; docs/TECHNICAL.md): puzzle N once a game runs */
         const char* test = getenv("TTYD_PUZZLE_TEST");
         const char* why = "";
         const int daily = strcmp(test, "daily") == 0;

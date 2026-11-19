@@ -2,7 +2,7 @@
  *
  * - stdout/stderr: an app's go to /dev/null, so both are piped to logcat
  *   (tag "ttyd") by a reader thread: OSReport, the trace, Aurora's log.
- * - env.txt: the debugging switches of docs/PC_PORT.md (TTYD_TRACE, TTYD_MAP,
+ * - env.txt: the debugging switches of docs/TECHNICAL.md (TTYD_TRACE, TTYD_MAP,
  *   ...) have no command line here; NAME=value lines in the app's external
  *   files folder (adb push env.txt /sdcard/Android/data/<app id>/files/) are
  *   set before the game starts.

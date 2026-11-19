@@ -1,5 +1,5 @@
 /* The Paper Mario 64 partners' own field abilities (port/include/port/pm64.h,
- * docs/PM64_LINK.md), on top of their hosts' (pm64_partner_pc.c). Each uses the
+ * docs/ROM_LINK.md), on top of their hosts' (pm64_partner_pc.c). Each uses the
  * game's own systems:
  *
  * - Watt (on Ms. Mowz) lights the way: in a room whose fog is dark, the fog is

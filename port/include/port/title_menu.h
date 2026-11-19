@@ -1,6 +1,6 @@
 #ifndef PORT_TITLE_MENU_H
 #define PORT_TITLE_MENU_H
-/* The title menu (port/src/aurora/title_menu_aurora.c, docs/PC_PORT.md): once
+/* The title menu (port/src/aurora/title_menu_aurora.c, docs/TECHNICAL.md): once
  * "Press Start" is pressed, a row of four in the game's windows instead of
  * the file select at once: Play (the file select, as before), Modes, Online
  * and Settings, before any save file is loaded.

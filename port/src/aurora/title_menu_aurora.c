@@ -1,4 +1,4 @@
-/* The title menu (port/include/port/title_menu.h, docs/PC_PORT.md): once
+/* The title menu (port/include/port/title_menu.h, docs/TECHNICAL.md): once
  * "Press Start" is pressed, a dark band along the bottom with four buttons
  * in a row, painted as the Start menu's Settings tab's front page (the
  * Journal's entries) but smaller: Play, Modes, Online and Settings, with the

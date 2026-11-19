@@ -1,4 +1,4 @@
-# Paper Mario 64 extras: the soundtrack, enemies, badges, small touches (docs/PM64_EXTRAS.md)
+# Paper Mario 64 extras: the soundtrack, enemies, badges, small touches (docs/ROM_EXTRAS.md)
 
 Paper Mario 64's
 マリオストーリーの

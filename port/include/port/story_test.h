@@ -2,7 +2,7 @@
 #define PORT_STORY_TEST_H
 
 /* Test-only hooks for playing the story unattended (tools/port/story_sweep.py;
- * docs/PC_PORT.md's environment table): each is off unless its variable is
+ * docs/TECHNICAL.md's environment table): each is off unless its variable is
  * set, and none is ever on in an online session or a replay.
  *
  *   TTYD_EVENT=<row>          start a new game at that row of the game's own

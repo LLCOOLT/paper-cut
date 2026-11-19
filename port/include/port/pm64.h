@@ -1,7 +1,7 @@
 #ifndef PORT_PM64_H
 #define PORT_PM64_H
 
-/* Link your Paper Mario 64 ROM (docs/PM64_LINK.md): the player points Paper
+/* Link your Paper Mario 64 ROM (docs/ROM_LINK.md): the player points Paper
  * Cut at their own Paper Mario ROM (US, JP, PAL or iQue, known by its SHA-1;
  * .z64, .v64 or .n64 byte order). Linking reads the parts used below out of it
  * into a cache in the user folder (<user>/pm64/rom_cache.bin) and nothing else:

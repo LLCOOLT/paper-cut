@@ -12,7 +12,7 @@ default: Frame rate on the settings page (F1), `framerate=` in
 TTYD's logic runs once per frame at 60 Hz (NTSC): movement speeds, animation
 steps, script waits (`WAIT_FRAMES`), timers and battle action commands all
 count frames. Running the logic faster would run the game faster, so the
-logic stays at 60 Hz and the port draws extra frames in between.
+logic stays at 60 Hz and Paper Cut draws extra frames in between.
 
 ## Replay: the game draws once a frame (`port/src/aurora/interp_replay_aurora.c`)
 
@@ -62,7 +62,7 @@ picture shown.
 ## Redraw (`port/src/aurora/interp_aurora.c`): the in-between frames of 120 Hz and up, and stereo with them
 
 The game draws (`marioStDisp` -> `camDraw`), then runs its logic. So at the
-retrace (`VIWaitForRetrace`, `vi_aurora.c`), the port holds the state it has
+retrace (`VIWaitForRetrace`, `vi_aurora.c`), Paper Cut holds the state it has
 just shown (frame N, kept in a snapshot) and the next one (N+1, live, after
 `viPostCallback` has advanced the render clocks). Instead of recording and
 replaying GX draws, an in-between frame **draws the live scene again** with
@@ -134,7 +134,7 @@ state, which a redraw must not change:
   memory.c), so a draw callback that frees what it draws with can't have the
   game's own frame use freed memory; a pose released while such a frame is
   drawn is released after it, and none is made in it (`animPoseEntry`
-  returns -1: the port's stand-ins make theirs in the game's frame).
+  returns -1: Paper Cut's stand-ins make theirs in the game's frame).
 - **The draw list's order**: kept, see above.
 - **The `$TTYD_FAST` virtual clock**: it advances 1 us per read, so it is put
   back after the in-between frames.

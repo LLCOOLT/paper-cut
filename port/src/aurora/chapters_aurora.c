@@ -360,7 +360,7 @@ void portChaptersFrame(void) {
         return;
     }
     {
-        /* tests ($TTYD_CHAPTER_TEST=N, docs/PC_PORT.md): chapter N again once a game runs (with
+        /* tests ($TTYD_CHAPTER_TEST=N, docs/TECHNICAL.md): chapter N again once a game runs (with
          * TTYD_MAP and TTYD_STORY=405; online in the same frame of every game) */
         static int sTestAsked;
         const char* test = getenv("TTYD_CHAPTER_TEST");

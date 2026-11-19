@@ -2,7 +2,7 @@
 """Bring the decomp's new work (LLCOOLT/ttyd) into Paper Cut's game code.
 
 The game code (src/, rels/, include/, libs/, config/, configure.py and the
-decomp's tools) is the decomp's, plus the port's changes (docs/PC_PORT.md,
+decomp's tools) is the decomp's, plus the port's changes (docs/TECHNICAL.md,
 "The game code and the decomp"). port/decomp_base.txt names the decomp commit
 it's on. A sync applies the decomp's changes since then, base..target, to the
 port's files with a three-way merge, so the port's own changes stay where the

@@ -438,7 +438,7 @@ other layouts), so nothing that is an address of one program crosses:
   each game builds again from the same battle.
 - The progress crosses as flags, words, item ids and counts; the room's NPCs
   and objects by their names; settings by their names; a party game's state as
-  its numbers; random numbers as the game's own generator's state (the port's
+  its numbers; random numbers as the game's own generator's state (Paper Cut's
   `rand`, the same everywhere).
 
 `TTYD_WIRE_CHECK=1` (tests) searches every message a game sends for anything
@@ -635,7 +635,7 @@ there is defeated here; a defeat recorded there is recorded here and its enemy
 defeated, one recorded only here is sent to the owner again; an object or a
 named item here that the owner's room hasn't is deleted, and one that went
 here but is still there is sent to the owner again; an object used there is
-shown used. Things the port itself places for each player (the remake's map
+shown used. Things Paper Cut itself places for each player (the remake's map
 edits) and items dropped at run time (named by each game's own count) aren't
 compared, nor is a named item this game made itself after coming in (a tree
 it shook: its coins have names) that the owner's room never had. Something the owner's room has that this game never had can't be

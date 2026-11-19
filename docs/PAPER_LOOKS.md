@@ -73,7 +73,7 @@ picture. Besides CRT, Paper grain and Sharpen, two are paper ones:
 - **Folding light:** the picture on a folded sheet, with a slow light moving
   across its panels.
 
-Photo mode has the same two among its own filters ([PC_PORT.md](PC_PORT.md#running)).
+Photo mode has the same two among its own filters ([TECHNICAL.md](TECHNICAL.md#running)).
 
 ## Pop-up launcher
 

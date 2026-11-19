@@ -1,7 +1,7 @@
 #ifndef PORT_PM64_ENEMY_H
 #define PORT_PM64_ENEMY_H
 
-/* Paper Mario 64 enemies (docs/PM64_EXTRAS.md; port/src/common/pm64_enemy_pc.c):
+/* Paper Mario 64 enemies (docs/ROM_EXTRAS.md; port/src/common/pm64_enemy_pc.c):
  * each one of the game's enemies (its host: the TTYD enemy whose moves and
  * behaviour it fights with) drawn as the PM64 enemy's sprite from the linked
  * ROM, with PM64's HP and our own fitting attack and defence, and its name

@@ -1,7 +1,7 @@
 #ifndef PORT_ANIM_PC_H
 #define PORT_ANIM_PC_H
 /* Anim model loading on PC ('a/<name>' files, filemgr type 5, animdrv.c).
- * See docs/PC_PORT.md, "Loader design".
+ * See docs/TECHNICAL.md, "Loader design".
  *
  * portAnimDecode decodes the big-endian model with the generated descriptors
  * (port/bedecode/anim.spec) into a per-blob arena:

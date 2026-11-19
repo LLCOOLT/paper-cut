@@ -1095,7 +1095,7 @@ void portCardsFrame(void) {
     static int sTestAsked;
     const char* test = getenv("TTYD_PARTY_GAME_TEST");
     if (!sTestAsked && gp != NULL && seqGetSeq() == SEQ_GAME && test != NULL && strncmp(test, "duel", 4) == 0) {
-        /* tests: duelN (0 rookie .. 2 champion, 3 the other player) once a game runs (docs/PC_PORT.md) */
+        /* tests: duelN (0 rookie .. 2 champion, 3 the other player) once a game runs (docs/TECHNICAL.md) */
         const char* why = "";
         sTestAsked = 1;
         if (!portCardsDuel(atoi(test + 4), &why)) {

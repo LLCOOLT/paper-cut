@@ -1,5 +1,5 @@
 // Link your Paper Mario 64 ROM (Enhancements > Paper Mario 64; port/include/port/pm64.h,
-// docs/PM64_LINK.md): the player's own ROM picked with the system's file
+// docs/ROM_LINK.md): the player's own ROM picked with the system's file
 // dialog, as the disc is, checked by its SHA-1 and read into a cache in the
 // user folder (<user>/pm64/); unlinking deletes the cache. Then "Paper Mario 64
 // partners" puts the N64 partners in the game (port/src/common/pm64_partner_pc.c).

@@ -62,7 +62,7 @@ So shuffling key items means playing the mod's open world. The randomizer then w
 - intermissions and cutscenes skipped and fast travel on;
 - every item this player's own, given where it lies, so no server is involved.
 
-The mod is GPL and isn't part of Paper Cut. It is built from its source with the porting tools and added as a code mod (see [MODDING.md](MODDING.md#archipelago)). The tab warns when no enabled code mod looks like it. Its messages come from an installed `ttyd.apworld`, as for Archipelago seeds. The randomizer also looks for one in the user folder.
+The mod is GPL and isn't part of Paper Cut. It is built from its source with the conversion tools and added as a code mod (see [MODDING.md](MODDING.md#archipelago)). The tab warns when no enabled code mod looks like it. Its messages come from an installed `ttyd.apworld`, as for Archipelago seeds. The randomizer also looks for one in the user folder.
 
 The key items, partners, curses, hammer and boots are always shuffled together in the open world, because the apworld never keeps them where the game has them: there they would lock each other away. Goombella stays at the start. At least one of badges, items or Star Pieces must be shuffled with them, since the key items' own places are too few early on for all of them.
 

@@ -88,7 +88,7 @@ body:
     id: accurate
     attributes:
       label: Does it also happen with Console-accurate mode on?
-      description: Console-accurate mode (Settings) turns off Paper Cut's own changes. It tells us whether the cause is a Paper Cut feature or the port itself. If the same thing happens on a GameCube, please say so below.
+      description: Console-accurate mode (Settings) turns off Paper Cut's own changes. It tells us whether the cause is a Paper Cut feature or the game code itself. If the same thing happens on a GameCube, please say so below.
       options:
         - I haven't tried
         - "Yes"

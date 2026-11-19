@@ -18,16 +18,7 @@ Paper Mario 64 page, where the partners are turned on.
 
 1. Settings > Enhancements > Paper Mario 64 > **Link Paper Mario 64**.
 2. **Choose your Paper Mario ROM...** and pick the file (`.z64`, `.v64`, `.n64`; any byte order).
-3. Paper Cut checks it by its SHA-1. It knows the four unmodified releases:
-
-   | Release | SHA-1 (as a .z64) |
-   | --- | --- |
-   | US | `3837f44cda784b466c9a2d99df70d77c322b97a0` |
-   | Japan | `b9cca3ff260b9ff427d981626b82f96de73586d3` |
-   | Europe | `2111d39265a317414d359e35a7d971c4dfa5f9e1` |
-   | iQue | `5c724685085eba796537573dd6f84aaddedc8582` |
-
-   A modified ROM or a hack isn't linked.
+3. Paper Cut checks that the file is a known retail release. A modified ROM or a hack isn't linked.
 4. Turn on **Paper Mario 64 partners**.
 
 The file picker is the same as the disc picker's, so this works on Windows, macOS, Linux, Android and iOS.
@@ -40,7 +31,7 @@ Linking copies these parts of the ROM into one file in your user folder, `pm64/r
 - the message archive (names and descriptions; the European ROM's four languages),
 - the audio archive (the soundtrack and the sound effects),
 - the move table (each move's FP cost and texts),
-- the item table and the item icons (for the badges and Tayce T.'s recipes, docs/PM64_EXTRAS.md).
+- the item table and the item icons (for the badges and Tayce T.'s recipes, docs/ROM_EXTRAS.md).
 
 The ROM itself isn't kept: after linking you can move or delete it. Nothing is uploaded or downloaded, and
 nothing from the ROM is in Paper Cut, its source or its releases.

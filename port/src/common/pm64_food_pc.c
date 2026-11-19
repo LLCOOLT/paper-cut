@@ -1,4 +1,4 @@
-/* Tayce T.'s recipes (docs/PM64_EXTRAS.md, port/include/port/pm64_media.h): Paper Mario 64's dishes the
+/* Tayce T.'s recipes (docs/ROM_EXTRAS.md, port/include/port/pm64_media.h): Paper Mario 64's dishes the
  * Thousand-Year Door hasn't got, and the ingredients for them it hasn't got either, as items
  * PORT_PM64_FOOD_MIN + i (port/include/port/battlex.h). Zess T. cooks them from Paper Mario's own recipes
  * (gor_01.c cook_chk/cook_chk2 through portRecipeCook1/portRecipeCook and portPm64RecipeFirst); Rowf sells the

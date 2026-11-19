@@ -42,7 +42,7 @@ each game shows it in its own language.
   names them, in its language and release (Lohgard on a German disc,
   ゴンババ on the Japanese one); the rest are Paper Cut's text, translated
   with the game's names. With a Paper Mario 64 ROM linked
-  ([PM64_LINK.md](PM64_LINK.md)) the words also offer its partners
+  ([ROM_LINK.md](ROM_LINK.md)) the words also offer its partners
   (Goombario to Lakilester); a note naming one shows his name to anyone.
 - **Rating**: the same page lists the room's notes, nearest first; right
   rates one up, left down, once each (not your own). A note rated down to -3

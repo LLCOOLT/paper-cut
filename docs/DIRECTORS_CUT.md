@@ -27,7 +27,7 @@ The setting is one of the host's settings online already sends, and everything a
 ## How it is put back
 
 - The badges' item-table fields are changed in place while the setting is on and restored when it turns off.
-- Each area's REL hands its cut battles to the port from its `_prolog` (a `TARGET_PC` block at the end of its battle database: `rels/gon`, `rels/jin`, `rels/muj`, `rels/tou2`): group lists with the cut groups added, used in place of the area's own while the setting is on (`npcSetupBattleInfo`), and field enemies, added to the map's enemy setup in the setup file's own format so the game's own code (`setupDataBase`) makes them, their battles given after.
+- Each area's REL hands its cut battles to Paper Cut from its `_prolog` (a `TARGET_PC` block at the end of its battle database: `rels/gon`, `rels/jin`, `rels/muj`, `rels/tou2`): group lists with the cut groups added, used in place of the area's own while the setting is on (`npcSetupBattleInfo`), and field enemies, added to the map's enemy setup in the setup file's own format so the game's own code (`setupDataBase`) makes them, their battles given after.
 - The sewer rooms get their map entries from a hook on `mapDataPtr`; the sewers' REL already registers their scripts. tik_06's pipe entry is changed as its script sets up its exits.
 
 ## Not restored

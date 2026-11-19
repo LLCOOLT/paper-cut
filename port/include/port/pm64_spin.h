@@ -1,7 +1,7 @@
 #ifndef PORT_PM64_SPIN_H
 #define PORT_PM64_SPIN_H
 
-/* Paper Mario 64's Spin Dash in the field (GitHub #51; docs/PM64_EXTRAS.md "Spin Dash";
+/* Paper Mario 64's Spin Dash in the field (GitHub #51; docs/ROM_EXTRAS.md "Spin Dash";
  * port/src/common/pm64_spin_pc.c). With a Paper Mario ROM linked and the setting "pm64_spin" on (off by
  * default, off in Console-accurate mode; online the host's rule, and only when every player has the ROM, as
  * the badges), the Spin Dash control makes Mario dash forward spinning, as Z does in Paper Mario: the

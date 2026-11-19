@@ -1,4 +1,4 @@
-/* Paper Mario 64 enemies in the story's fights (port/include/port/pm64_foes.h, docs/PM64_EXTRAS.md).
+/* Paper Mario 64 enemies in the story's fights (port/include/port/pm64_foes.h, docs/ROM_EXTRAS.md).
  *
  * The scaling rule. Each PM64 enemy has a home chapter (where PM64 first puts it). Its HP and attack are
  * PM64's, times the ratio of a typical TTYD enemy's in the chapter it's met in to a typical PM64 enemy's in

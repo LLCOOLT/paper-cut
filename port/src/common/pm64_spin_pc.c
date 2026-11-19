@@ -1,4 +1,4 @@
-/* Paper Mario 64's Spin Dash in the field (port/include/port/pm64_spin.h, GitHub #51, docs/PM64_EXTRAS.md).
+/* Paper Mario 64's Spin Dash in the field (port/include/port/pm64_spin.h, GitHub #51, docs/ROM_EXTRAS.md).
  *
  * Paper Mario's spin, re-made from what its decomp shows of it (pmret/papermario; read, never copied):
  * - who may start it (src/7E9D0.c check_input_spin): from standing, walking or running only, on the ground,

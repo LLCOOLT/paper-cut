@@ -1433,7 +1433,7 @@ const char* portSymbolName(const void* addr, char* buf, size_t size) {
 }
 #endif
 
-/* $TTYD_CRASH_TEST=<frames>[:segv|abort|invalid|stack] (tests, docs/PC_PORT.md): the game crashes on purpose
+/* $TTYD_CRASH_TEST=<frames>[:segv|abort|invalid|stack] (tests, docs/TECHNICAL.md): the game crashes on purpose
  * after that many retraces (vi_aurora.c), so a scenario can check the report and the next start's
  * recovery screen. segv (the default) writes to address 8; invalid is a C runtime function given a
  * bad argument (Windows' invalid-parameter handler, then its abort; elsewhere an abort); stack

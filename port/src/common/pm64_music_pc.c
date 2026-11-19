@@ -1549,7 +1549,7 @@ void portPm64SongClose(Pm64Song* s) {
     free(s);
 }
 
-/* ---- TTYD tracks to PM64 songs (docs/PM64_EXTRAS.md lists them) ---- */
+/* ---- TTYD tracks to PM64 songs (the song list is kept out of the docs) ---- */
 
 typedef struct {
     const char* track; /* without "BGM_" and the "M_" of the muffled copies */

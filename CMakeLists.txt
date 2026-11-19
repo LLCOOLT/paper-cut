@@ -44,7 +44,7 @@ option(TTYD_FORTIFY "Keep the C library's _FORTIFY_SOURCE checks in game code (a
 set(TTYD_AUTO_VAR_INIT zero CACHE STRING "Locals the code never set start as: zero, pattern or off")
 set_property(CACHE TTYD_AUTO_VAR_INIT PROPERTY STRINGS zero pattern off)
 
-# --- iOS (cmake/toolchains/ios.cmake; docs/PC_PORT.md, "iOS") ---
+# --- iOS (cmake/toolchains/ios.cmake; docs/TECHNICAL.md, "iOS") ---
 # Aurora only. An iOS app may only run code signed into its bundle (no
 # dlopen of RELs), so the RELs are always linked in. Bundle, Info.plist,
 # icons and the Objective-C glue: port/ios/ios.cmake.
@@ -75,7 +75,7 @@ if(TTYD_PC_32BIT AND NOT MSVC)
     add_link_options(-m32)
 endif()
 
-# --- Web (Emscripten: emcmake cmake ...; docs/PC_PORT.md, "Web") ---
+# --- Web (Emscripten: emcmake cmake ...; docs/TECHNICAL.md, "Web") ---
 # wasm32: pointers and script words are 32 bits, as on the GameCube. Two kinds:
 # - headless: in Node (the game, its threads and the disc through Node's file
 #   system), for tests;

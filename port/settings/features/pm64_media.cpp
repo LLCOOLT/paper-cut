@@ -1,4 +1,4 @@
-// Paper Mario 64 extras on the settings page (docs/PM64_EXTRAS.md): the enemies in the Pit and Master
+// Paper Mario 64 extras on the settings page (docs/ROM_EXTRAS.md): the enemies in the Pit and Master
 // Quest, the Tattle Log's Paper Mario 64 page (the enemies met in battle, with the ROM's Tattles), and the
 // Paper Mario 64 boss list (each boss on its own, a star on the beaten ones; the same at the Star Haven corner's
 // board, pm64_board_aurora.c).

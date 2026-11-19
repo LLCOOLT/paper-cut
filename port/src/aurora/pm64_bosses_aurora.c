@@ -1,4 +1,4 @@
-/* Paper Mario 64's bosses as refights (port/include/port/pm64_foes.h, docs/PM64_EXTRAS.md "Bosses").
+/* Paper Mario 64's bosses as refights (port/include/port/pm64_foes.h, docs/ROM_EXTRAS.md "Bosses").
  *
  * Each boss is a battle unit of Paper Cut's own (a unit type the game never uses), drawn as its sprite from
  * the linked ROM (pm64_enemy_pc.c's draw), its name and Tattle from the ROM's text, and its attacks rebuilt

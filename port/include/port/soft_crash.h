@@ -1,7 +1,7 @@
 #ifndef PORT_SOFT_CRASH_H
 #define PORT_SOFT_CRASH_H
 
-/* Softer landings after a crash (Aurora backend; docs/PC_PORT.md, TTYD_CRASH_SAFE_EVERY and the rows by it):
+/* Softer landings after a crash (Aurora backend; docs/TECHNICAL.md, TTYD_CRASH_SAFE_EVERY and the rows by it):
  *
  * - Crash-safe snapshots (General > Crash-safe snapshots, on by default; port/src/aurora/resume_aurora.c): quick
  *   resume's clean save in memory (a real save of the file, never a save state: those hold this run's memory and

@@ -240,7 +240,7 @@ def game_env(a, out_dir, script):
     if a.backend == "aurora":
         env.update(TTYD_SHOT_DIR=shots, TTYD_CACHE_DIR=a.cache, TTYD_NO_LAUNCHER="1", TTYD_WINDOW_POS="-5000,-5000",
                    SDL_WINDOW_ACTIVATE_WHEN_SHOWN="0", TTYD_OFFSCREEN="1")
-    if PM64:  # the player's own ROM, read where it is (docs/PM64_LINK.md), never copied
+    if PM64:  # the player's own ROM, read where it is (docs/ROM_LINK.md), never copied
         env.update(TTYD_PM64_ROM=a.pm64_rom, TTYD_PM64_LOG="1")
         if a.backend == "aurora":
             env.update(TTYD_SHOT_UI="1")  # (each capture also with the ImGui layer: a join's notice is drawn there)

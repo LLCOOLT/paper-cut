@@ -1,7 +1,7 @@
 CI and releases
 ===============
 
-GitHub runs the port's checks and builds on two **self-hosted runners**: a
+GitHub runs Paper Cut's checks and builds on two **self-hosted runners**: a
 Windows PC and a Mac, both with the disc images the tests need. Self-hosted
 jobs use no GitHub Actions minutes. The GitHub-hosted workflow
 (`pc-port.yml`) stays manual-only.
@@ -46,7 +46,7 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
    - `papercut-<version>-linux-x64.flatpak`: a Flatpak bundle of the same builds;
    - `SHA256SUMS.txt` and the notes' SHA-256 block made again from every file the release then holds (downloaded back and hashed), so a re-run of either job, whose rebuilt packages hash differently, never leaves stale sums.
 
-   With `--publish`, `release.py` also stops when the checkout differs from the tag, when it can't check every package for the disc's bytes (each runner needs its data linked, `tools/port/ci_link_data.py`), or when a Linux package (AppImage, `.zsync`, Flatpak) wasn't made. Each release build starts from a fresh CMake cache. A pre-release tag (`v0.5.0-playtest`, `v0.5.1-rc2`) keeps its full name in every build; the Android versionCode and iOS build number put a release above its pre-releases ([PC_PORT.md](PC_PORT.md), Android).
+   With `--publish`, `release.py` also stops when the checkout differs from the tag, when it can't check every package for the disc's bytes (each runner needs its data linked, `tools/port/ci_link_data.py`), or when a Linux package (AppImage, `.zsync`, Flatpak) wasn't made. Each release build starts from a fresh CMake cache. A pre-release tag (`v0.5.0-playtest`, `v0.5.1-rc2`) keeps its full name in every build; the Android versionCode and iOS build number put a release above its pre-releases ([TECHNICAL.md](TECHNICAL.md), Android).
 4. Check the draft on GitHub (Releases), then publish it.
 
 **If the Windows job fails after local CI passed** (packaging, a download), re-running it repeats the CI. Instead, on the Windows PC at the tagged commit, `python tools/port/release.py <version> --publish v<version>` makes the Windows and Android packages and the draft; then re-run only the run's Mac job (`gh run rerun <run id> --job <the apple job's id>`), which adds its packages to that draft.

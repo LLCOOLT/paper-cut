@@ -811,7 +811,7 @@ void portQuizFrame(void) {
     static int sTestAsked;
     if (!sTestAsked && gp != NULL && seqGetSeq() == SEQ_GAME && getenv("TTYD_PARTY_GAME_TEST") != NULL &&
         strcmp(getenv("TTYD_PARTY_GAME_TEST"), "quiz") == 0) {
-        /* tests: a quiz party once a game runs (docs/PC_PORT.md) */
+        /* tests: a quiz party once a game runs (docs/TECHNICAL.md) */
         const char* why = "";
         sTestAsked = 1;
         if (!portQuizStart(&why)) {

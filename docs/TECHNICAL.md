@@ -236,7 +236,7 @@ L and R step through its tabs on the tab row, as left and right do. Its
 Settings tab holds the settings page's plain settings (an on/off, a choice, a
 number), by category as the settings page's tabs, with the features' own
 forms after them. **Remake** comes right after Gameplay: every change the
-Switch remake made that Paper Cut has, with **Play it like the Switch
+remake made that Paper Cut has, with **Play it like the
 remake** first (all of them on or off at once), then each one on its own, by
 kind (field, battle, enemies and bosses, maps and places, items and coins,
 quality of life, scenes and text). **Enhancements** opens on buttons of its
@@ -303,7 +303,7 @@ data points into; its bookkeeping is inside it), the game clock and its
 or a battle, with the audio callback held and disc reads and ARAM transfers
 finished; a load reopens the disc files open then (Aurora patch 0008) and
 drops Aurora's texture caches. Kept compressed in memory (Apple's LZ4; elsewhere
-the port's own LZ77 codec in the same file), about 18 MiB: saving or loading
+Paper Cut's own LZ77 codec in the same file), about 18 MiB: saving or loading
 takes about 50 ms on an M-series Mac, 120-220 ms on Windows. They hold host
 addresses, so they last for the run. Checked: the frames after a load equal
 those after the save (`TTYD_FAST`) in the field, in a battle, and after a map
@@ -344,7 +344,7 @@ Environment switches (all optional):
 | `TTYD_TRACE_CMD=<text>[,<text>...]`, `TTYD_TRACE_BUDGET` | with `TTYD_TRACE=3`: only the scripts whose name contains one (frame-stamped); how many commands (default 4000) |
 | `TTYD_TRACE_EVERY=<n>` | with `TTYD_TRACE=2` or more: the running scripts listed every n frames (default 3000) |
 | `TTYD_FAST` | frames back to back on a virtual 60 Hz clock (timed waits keep their frame counts); Aurora draws wait for their pipelines |
-| `TTYD_CLOCK_DAYS=<n>` | the real clock `n` days on (negative: back), for the game clock and every date the port draws from (the daily seed, the daily puzzle, the shop specials, the Paper Tower's day, the raid's week): a replay played back as on another day keeps its recording's dates |
+| `TTYD_CLOCK_DAYS=<n>` | the real clock `n` days on (negative: back), for the game clock and every date Paper Cut draws from (the daily seed, the daily puzzle, the shop specials, the Paper Tower's day, the raid's week): a replay played back as on another day keeps its recording's dates |
 | `TTYD_MAP=<map>[,<bero>]` | at the first field map or the title, start a new game on that map (with a partner, `TTYD_PARTY`, default Goombella; `TTYD_PARTY=1,2,5` joins more, the first one out; `TTYD_PARTY_RANK=1` puts every partner at Super rank, 2 Ultra, as Merlon would; `TTYD_SP=800` gives that much Star Power, as much at most, and every Special; `TTYD_BADGES=0x1A6,98` puts those badges in the bag and wears them, FP filled to the most they allow, `[badges] TTYD_BADGES: ...`; `TTYD_ITEMS=0x1B0,148` puts those items in the bag, `[items] TTYD_ITEMS: ...`; `TTYD_MARIO_HP=5,1` sets Mario's HP and FP) |
 | `TTYD_EXIT_FRAMES`, `TTYD_WARP_LIMIT` | with `TTYD_MAP`: exit 0 after N frames on the map; exit 3 if not reached in N seconds. `TTYD_EXIT_FRAMES` with no `TTYD_MAP`, `TTYD_EVENT`, `TTYD_LOAD_SAVE` or input script: exit 0 N frames from the start (a run left at the title or its attract demo) |
 | `TTYD_INPUT=<script>` | scripted controller 1 (below) |
@@ -407,7 +407,7 @@ Environment switches (all optional):
 | `TTYD_FINGERPRINT=<file>`, `TTYD_FINGERPRINT_PARTS` | Aurora: each frame's game-state fingerprint in the file (same input, same file); with PARTS, each part's hash too ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
 | `TTYD_TR_DUMP=<file>` | Aurora: every English text the menus ask to translate, once each, added to the file ([LANGUAGE_PACKS.md](LANGUAGE_PACKS.md)) |
 | `TTYD_TEXT_FIT=<file>` | Aurora: Paper Cut's own text measured against its box wherever the game's font draws it (the Start menu's rows, buttons, tabs and help box, the title menu's band, the versus set-up, What's new, the recap, notices): each text that runs past its box (`over`), is narrowed below 80% to fit (`squeeze`), or is shown in English because the menu language has no translation the disc's font can show (`english`), written once as a tab-separated line with its language, disc, screen, place, how much of it fits and its English (`port/include/port/text_fit.h`) |
-| `TTYD_UI_OVERLAP=1` | Aurora, tests: the boxes the port draws into the 2D layer (the players' bars and cards, the Start menu's help box under them) compared each frame; two of different kinds that cross are logged once as `[ui-overlap] <one> over <other>`, for a scenario's `log_must_not` (`port/include/port/ui_boxes.h`) |
+| `TTYD_UI_OVERLAP=1` | Aurora, tests: the boxes Paper Cut draws into the 2D layer (the players' bars and cards, the Start menu's help box under them) compared each frame; two of different kinds that cross are logged once as `[ui-overlap] <one> over <other>`, for a scenario's `log_must_not` (`port/include/port/ui_boxes.h`) |
 | `TTYD_MENU_CRAWL=1` / `online` | Aurora, tests: at the title, Press Start and the title menu's Settings (`online`: Multiplayer) chosen by themselves (the title menu on whatever the setting, unless `TTYD_TITLE_MENU=0`; or open the Start menu's Settings tab in play), then every button, category page, row, Modes page, the versus set-up and the Bindings page shown in turn, a picture of each view in `TTYD_SHOT_DIR`, each choice measured for `TTYD_TEXT_FIT`, then exit 0; `online`: the Multiplayer tab's rows. Nothing is chosen or changed (`port/include/port/menu_crawl.h`) |
 | `TTYD_TITLE_MENU=1/0` | Aurora: the title menu on or off whatever the setting (off by default with `TTYD_INPUT`) |
 | `TTYD_PAUSE_ROW=<label>` | Aurora: the Start menu's Settings tab opens with that row chosen |
@@ -420,7 +420,7 @@ Environment switches (all optional):
 | `TTYD_ART=off/lazy` | Aurora: the art recipes not run (the drawn art stands in), or each image made when first asked for |
 | `TTYD_COSTUMES_ALL`, `TTYD_STICKERS_ALL` | every costume, or every sticker, unlocked whatever the file has ([COSTUMES.md](COSTUMES.md)) |
 | `TTYD_FUN_TRACE`, `TTYD_LUIGI_TRACE` | log the head groups Big heads finds in each model; log Play as's stand-in model and pose changes in each place (field, battle, menu, journal, versus) |
-| `TTYD_PM64_ROM=<file>` / `unlink`, `TTYD_PM64_UNLINK_AT=<frames>`, `TTYD_PM64_LOG=1` | tests: that Paper Mario ROM linked into the user folder as the settings page's picker links it (or the link undone) at the first look at the cache, `[pm64] TTYD_PM64_ROM: ...`; the ROM itself isn't kept ([PM64_LINK.md](PM64_LINK.md)). `TTYD_PM64_UNLINK_AT` unlinks that many frames into play, as the settings page's Unlink while playing. With the log, the PM64 partners' field abilities as they act (Sushie swimming, Watt's fog and sparks, Lakilester over spikes, Parakarry's flutter), each room's water, spike, lava and boat-panel hit objects, the moves worn with their FP and damage by rank, Mega Shock's stop chance, and the Paper Mario enemies armed for a battle |
+| `TTYD_PM64_ROM=<file>` / `unlink`, `TTYD_PM64_UNLINK_AT=<frames>`, `TTYD_PM64_LOG=1` | tests: that Paper Mario ROM linked into the user folder as the settings page's picker links it (or the link undone) at the first look at the cache, `[pm64] TTYD_PM64_ROM: ...`; the ROM itself isn't kept ([ROM_LINK.md](ROM_LINK.md)). `TTYD_PM64_UNLINK_AT` unlinks that many frames into play, as the settings page's Unlink while playing. With the log, the PM64 partners' field abilities as they act (Sushie swimming, Watt's fog and sparks, Lakilester over spikes, Parakarry's flutter), each room's water, spike, lava and boat-panel hit objects, the moves worn with their FP and damage by rank, Mega Shock's stop chance, and the Paper Mario enemies armed for a battle |
 | `TTYD_WHEEL_TEST=<id>[,<frames>]` | tests: the Partner wheel held open that many frames (default 90) once the field is free, pointing at partner id (1-7, a Paper Mario 64 partner 9-15), then let go; its entries logged |
 | `TTYD_OPEN_SEED=<seed>`, `TTYD_OPEN_SELFTEST` | a new file (and `TTYD_MAP`'s) is an open-world randomizer file with that seed ([RANDOMIZER.md](RANDOMIZER.md)); with a `TTYD_MAP` start, the items and chapters' stories checked at once, PASS/FAIL lines (on a story after the prologue: `TTYD_STORY=21`). Without it a `TTYD_MAP` start is stamped as a new file is, from the user folder's `randomizer.json` when its open world is on (its seed, goal, logic and entrance shuffle) |
 | `TTYD_MAPEDIT_TEST=1` | Aurora: once the field is up, the map editor opened as the Start menu's row opens it and driven by SDL events as a player's would come (a click on the room, a controller's buttons, keys), each step logged as `[mapedit test] ...` (`tests/port/testpass/modes_mapedit_editor.json`) |
@@ -685,7 +685,7 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   without an extraction, a generated placeholder (`make_icon.py`).
 - **Lifecycle:** SDL sends `SDL_EVENT_WINDOW_MINIMIZED` when the app resigns
   active (home, app switcher, Control Center, a call) and `RESTORED` when it is
-  active again; Aurora turns those into its Background pause, the port pauses
+  active again; Aurora turns those into its Background pause, Paper Cut pauses
   (`portPause`: game clock and audio device) and stops drawing until it is
   back, so no Metal work is submitted in the background. The audio device is
   paused, not closed; SDL handles audio session interruptions. The audio
@@ -707,7 +707,7 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
     and left of B (above the buttons when held upright). The C-stick is
     fixed: where the finger is on it is its tilt, full at its gate's edge
     (the free camera, the Tattle Log's model, battles' C-stick commands).
-    With Paper Mario 64's Spin Dash on (`docs/PM64_EXTRAS.md`; the setting
+    With Paper Mario 64's Spin Dash on (`docs/ROM_EXTRAS.md`; the setting
     and a ROM linked), a round button with a white swirl just left of Y's
     arc, above B and the C-stick (held upright: up and left of Y, beside the
     C-stick), a little smaller than B with a fingertip's 9 mm reach at the
@@ -866,7 +866,7 @@ Options:
   and arm64 and x86_64 agree with each other on all 279: the architecture
   (with `-ffp-contract=off`) is not the cause, the OS's libm is. Making
   every platform agree (and match the GameCube) means building MSL's fdlibm
-  for the port and routing the game's math calls to it; not done yet, and
+  for Paper Cut and routing the game's math calls to it; not done yet, and
   the Windows golden files would then be re-recorded.
 - `--no-bero`: warp to each map's origin instead (the game's debug map select).
 - `--every-bero`: one run per entrance of every map (`map@bero`, ~600).
@@ -993,7 +993,7 @@ the game's window first, the script answers it); and the post-game page's (Auror
 `practice champion`, `practice nighttail`, `practice mover`, `practice gallery CHAPTER`.
 
 Real saves: `tools/port/gcmemcard.py` takes files out of raw GameCube memory
-card images (`.raw`, as Dolphin keeps them) as `.gci`, the port's card
+card images (`.raw`, as Dolphin keeps them) as `.gci`, Paper Cut's card
 format (`tree RAW_DIR GCI_DIR --game G8MJ` for a whole folder);
 `tools/port/save_sweep.py EXE GCI_DIR --disc ISO` loads each save through
 the file menu on a fresh card and plays ~20 s (`save_sweep.txt`), reporting
@@ -1046,7 +1046,7 @@ in the tree is fixed at once.
   pointers in an audit build's warnings (safe, or wrong on a PC ABI).
 - `tools/port/ptrwidth_warnings.py`: compiles every game file with only the
   int/pointer width warnings on and lists them by file and kind.
-- `tools/port/dolphin_compare.py`: runs the disc in Dolphin with the port's map
+- `tools/port/dolphin_compare.py`: runs the disc in Dolphin with Paper Cut's map
   warp and compares each map's frame with the Aurora build's capture.
 - `tools/port/sjis_src.py`: Shift-JIS literals for clang.
 
@@ -1199,7 +1199,7 @@ gradle wrapper --gradle-version 8.12   # once; or run an installed gradle direct
   Aurora's two SDL patches to it, compiles `org.libsdl.app` from it and hands
   the same tree to CMake (`FETCHCONTENT_SOURCE_DIR_SDL`).
 - **Untagged heap**: arm64 Android 11+ tags the top byte of heap pointers,
-  which makes them negative as `intptr_t`. The port assumes plain user-space
+  which makes them negative as `intptr_t`. Paper Cut assumes plain user-space
   addresses, as on the desktop (script words share one number line with the
   negative variable ranges, sound-name words, pointer range checks), so the
   manifest opts out (`allowNativeHeapPointerTagging="false"`).
@@ -1251,14 +1251,14 @@ gradle wrapper --gradle-version 8.12   # once; or run an installed gradle direct
 
 The game code (src/, rels/, include/, libs/, config/, configure.py and the
 decomp's tools) is [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd) as it is,
-plus the port's changes, nearly all inside `#ifdef TARGET_PC`.
+plus Paper Cut's changes, nearly all inside `#ifdef TARGET_PC`.
 
 - **Updating to a newer decomp** is two commits: the decomp's files exactly as
-  they are, then the port's changes put back on top. The decomp's code wins: a
+  they are, then Paper Cut's changes put back on top. The decomp's code wins: a
   port change is re-applied on top of it, or dropped when the decomp made it
   unnecessary.
-- **The checks that keep the port honest:** the GameCube builds still match
-  (local CI's `gamecube` stage: the port's changes do not touch GameCube code),
+- **The checks that keep Paper Cut honest:** the GameCube builds still match
+  (local CI's `gamecube` stage: Paper Cut's changes do not touch GameCube code),
   `proto_audit` (prototypes against definitions, per version), the pointer-width
   audit build and `fncast_audit`, `tools/check_versions.py` (no per-version
   macros in game code), and the map sweep with golden audio.
@@ -1270,7 +1270,7 @@ plus the port's changes, nearly all inside `#ifdef TARGET_PC`.
   `$TTYD_LANGUAGE` (`en de fr es it`), else the computer's (it picks
   `msg/<language>` from the console language, `OSGetLanguage`). Its boot
   question, 50 or 60 Hz, is in the console's ROM font, which the PC hasn't, so
-  the port answers it: 60 Hz (EURGB60, the same pacing as JP and US) unless
+  Paper Cut answers it: 60 Hz (EURGB60, the same pacing as JP and US) unless
   the settings page's "Run at 50 Hz" or `$TTYD_50HZ=1` asks for 50. At 50 Hz
   the frame pacing, the audio per frame and the fast-run clock follow
   (`portFieldRate`); in-between frames are whole multiples of 50. Saves are
@@ -1325,10 +1325,10 @@ be fixed in the decomp.
   `numTexGens` read (0, 0), `CARDUnmount` succeeds.
 - **Aurora SDK overlay** (`port/include/aurora_overlay`): wrapper headers that
   add what the 2004 SDK headers gave the game, route the game's `OSGetTime`,
-  `GXCopyDisp` and texgen calls through the port, and make `GXWGFifo` a compile
+  `GXCopyDisp` and texgen calls through Paper Cut, and make `GXWGFifo` a compile
   error.
 - **Card saves keep the GameCube image**, so `.gci` files move between Dolphin
-  and the port (section below).
+  and Paper Cut (section below).
 
 ## Technical notes
 
@@ -1519,7 +1519,7 @@ layout equals the disc layout), `portSwap16/32/64Run`.
   `portAudioMixExtra` (DVD stream) and, on Aurora, the game's AI DMA callback. IRQ masking is
   one recursive mutex. `hw_pcmixer.c` executes `salBuildCommandList`'s DSP command list in
   software (ADPCM/PCM16/PCM8, SRC, LPF, envelope, ITD, ramps, depop, aux buses, compressor);
-  list/PB addresses are 32-bit handles (`salPcPtrHandle`). `hw_aramdma.c` uses the port's
+  list/PB addresses are 32-bit handles (`salPcPtrHandle`). `hw_aramdma.c` uses Paper Cut's
   ARAM buffer via `portAramPtr` (headless `ar_pc.c`, Aurora `ar_aurora.c` + `mem2Size`).
 - PCM16 sample data (.samp) is big-endian in ARAM; stream buffers (top of ARAM) are native.
 - `hw_pcstripped.c`: functions TTYD's linker stripped but other MusyX objects reference.

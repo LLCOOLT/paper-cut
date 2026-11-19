@@ -1,6 +1,6 @@
 # The remake's map changes
 
-Settings → **Remake** → Maps and places: map changes in the spirit of the 2024 remake, each its own switch, all off by default and locked by Console-accurate mode. Only the disc's own models are used (the field's pipes, jump stands, Save and Heart Blocks, its NPCs), and everything is placed by the story's own flags, so a save made with a switch on loads fine with it off. Code: `port/src/common/remake_maps_pc.c`, `port/settings/features/remake_maps.cpp`. The new pipes, blocks, jump stands and the Steeple's fences are a built-in set of [map edits](MAP_EDITOR.md), placed as a mod's are.
+Settings → **Remake** → Maps and places: map changes in the spirit of the remake, each its own switch, all off by default and locked by Console-accurate mode. Only the disc's own models are used (the field's pipes, jump stands, Save and Heart Blocks, its NPCs), and everything is placed by the story's own flags, so a save made with a switch on loads fine with it off. Code: `port/src/common/remake_maps_pc.c`, `port/settings/features/remake_maps.cpp`. The new pipes, blocks, jump stands and the Steeple's fences are a built-in set of [map edits](MAP_EDITOR.md), placed as a mod's are.
 
 | Switch (settings key) | What it does |
 |---|---|

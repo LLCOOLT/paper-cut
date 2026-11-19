@@ -1,4 +1,4 @@
-/* Link your Paper Mario 64 ROM (port/include/port/pm64.h, docs/PM64_LINK.md):
+/* Link your Paper Mario 64 ROM (port/include/port/pm64.h, docs/ROM_LINK.md):
  * the ROM checked, the parts Paper Cut uses read out of it into a cache in the
  * user folder, and that cache read: Yay0, the NPC sprite archive, the message
  * archive, the move table. Formats as the PM64 decomp (pmret/papermario)
@@ -187,7 +187,7 @@ static uint32_t get32(const uint8_t* p) {
 
 static void forget(void);
 
-/* Tests (docs/PC_PORT.md): TTYD_PM64_ROM=<file> links that ROM into the user
+/* Tests (docs/TECHNICAL.md): TTYD_PM64_ROM=<file> links that ROM into the user
  * folder at the first look at the cache, as the settings page's picker would;
  * TTYD_PM64_ROM=unlink unlinks. */
 static void envLink(void) {

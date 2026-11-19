@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Ideas are welcome, big or small. Some things Paper Cut can't do, so please check these first:
-        - **No assets from other games.** Music, models, art and text from the Switch remake or other Paper Mario games can't be shipped. New art for Paper Cut is made from your own disc.
+        - **No assets from other games.** Music, models, art and text from the remake or other Paper Mario games can't be shipped. New art for Paper Cut is made from your own disc.
         - **Nothing game-related is downloaded for you.** Texture packs and mods load from your own files.
         - **Rule changes are opt-in.** The original game stays the default, and Console-accurate always turns everything off.
 

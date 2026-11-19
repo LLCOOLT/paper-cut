@@ -144,7 +144,7 @@ player with no Python or Blender:
   animation format and the hammer's plane, built into the executable. No
   geometry, texture or animation from the disc: the hammer's drawings are
   named by their index in the player's `a_mario-`.
-- The port builds Luigi's model in memory at startup, on all three versions
+- Paper Cut builds Luigi's model in memory at startup, on all three versions
   (nothing is written to the user folder).
 
 The .blend is never the only copy: `luigi_anims.py blend --save FILE` builds

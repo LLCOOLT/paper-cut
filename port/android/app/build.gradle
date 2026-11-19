@@ -2,7 +2,7 @@
 // builds libmain.so, which SDL's Java activity loads. One flavor per game
 // version (jp: G8MJ01, us: G8ME01, eu: G8MP01), each its own app id, so all can
 // be installed. Build: gradle assembleJpDebug / assembleUsDebug / assembleEuDebug
-// (docs/PC_PORT.md).
+// (docs/TECHNICAL.md).
 plugins {
     id "com.android.application"
 }
@@ -47,7 +47,7 @@ if (portVersionMatch.matches()) {
 // both halves come from the same tree.
 def versionsFile = new File(auroraDir, "cmake/AuroraDependencyVersions.cmake")
 if (!versionsFile.exists()) {
-    throw new GradleException("extern/aurora is missing: check out the submodule (docs/PC_PORT.md)")
+    throw new GradleException("extern/aurora is missing: check out the submodule (docs/TECHNICAL.md)")
 }
 def sdlRefMatch = versionsFile.text =~ /_aurora_dependency_version\(AURORA_SDL3_REF "([^"]+)"/
 if (!sdlRefMatch.find()) {
@@ -179,7 +179,7 @@ def prepareSdl = tasks.register("prepareSdl") {
 android {
     namespace = "dev.ttyd.port"
     compileSdk = 35
-    // the installed one (docs/PC_PORT.md); AGP 8.7 would fetch 34.0.0
+    // the installed one (docs/TECHNICAL.md); AGP 8.7 would fetch 34.0.0
     buildToolsVersion = "35.0.0"
     // The NDK Aurora's prebuilt Dawn (dawn-android-aarch64) was built with.
     ndkVersion = "29.0.14206865"

@@ -284,7 +284,7 @@ void portTrophyRoomFrame(void) {
     static int sTestAsked;
     int i;
     if (!sTestAsked && seqGetSeq() == SEQ_GAME && getenv("TTYD_TROPHY_TEST") != NULL) {
-        /* tests: a visit once a game runs (docs/PC_PORT.md) */
+        /* tests: a visit once a game runs (docs/TECHNICAL.md) */
         const char* why = "";
         sTestAsked = 1;
         if (!portTrophyRoomVisit(&why)) {

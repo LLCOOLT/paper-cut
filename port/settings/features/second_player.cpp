@@ -393,7 +393,7 @@ const char* formAct(int id, int dir) {
 
 const PortPauseForm kForm = {"Multiplayer", "Players", formRows, formAct, PORT_PAUSE_FORM_OWN};
 
-// Tests (TTYD_SEATS_TEST, docs/PC_PORT.md): virtual controllers plugged in and pressed through SDL, as real
+// Tests (TTYD_SEATS_TEST, docs/TECHNICAL.md): virtual controllers plugged in and pressed through SDL, as real
 // ones are (their events come through inputEvent and the touch controls'), and who plays printed. Steps,
 // comma-separated, each at a game frame: "N:attach@F" plugs in virtual controller N (1-4), "N:BUTTON@F+H"
 // holds its BUTTON (SDL's name: a, b, x, y, start, back, dpup...) from frame F for H frames (default 6),

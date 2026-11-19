@@ -701,7 +701,7 @@ static void startNow(void) {
     sGatesLive = 0;
     sStartedAt = SDL_GetTicks();
     {
-        /* tests ($TTYD_TOWER_TEST, docs/PC_PORT.md): <room>[,r][,g] puts that
+        /* tests ($TTYD_TOWER_TEST, docs/TECHNICAL.md): <room>[,r][,g] puts that
          * room on floor 1 (r: in by the east way), with no gates unless g;
          * fN starts on floor N instead */
         const char* t = getenv("TTYD_TOWER_TEST");

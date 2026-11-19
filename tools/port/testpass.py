@@ -35,7 +35,7 @@ Scenario fields (all optional but one start; see docs/TESTING.md):
   env         environment for the game (TTYD_MAP, TTYD_EVENT, TTYD_EXIT_FRAMES, ...); null removes
               a house default, {iso} is the disc image, {out} the run's folder, {repo} this checkout,
               {pm64rom} the tester's own Paper Mario ROM ($PAPERCUT_PM64_ROM; a scenario that names it
-              is skipped, not failed, when it is unset: docs/PM64_LINK.md; set to no file, it fails), {data_root} the extracted
+              is skipped, not failed, when it is unset: docs/ROM_LINK.md; set to no file, it fails), {data_root} the extracted
               discs' folder (data/: the player's saves in data/saves; a worktree's falls back to the main
               checkout's; skipped, not failed, when no data/ has the files it names)
   disc        false: no disc on the command line (the launcher)

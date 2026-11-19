@@ -19,7 +19,7 @@ decomp gets away with three things that wasm does not allow:
    -Wcast-function-type-* warnings; only casts whose wasm signatures differ
    are listed, and each says whether the cast result is called right there.
 
-usage (after building, see docs/PC_PORT.md "Web"):
+usage (after building, see docs/TECHNICAL.md "Web"):
     ninja -C build-web-us ttyd > link-us.txt         # with -Wl,--error-limit=0
     ninja -C build-web-audit-G8ME01 -k 0 ttyd > audit-us.txt   # TTYD_PTRWIDTH_WARNINGS=ON
     web_abi_audit.py US=build-web-us,link-us.txt,audit-us.txt JP=... > report.md

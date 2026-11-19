@@ -13,36 +13,8 @@ Settings > Audio > **Soundtrack** has two more choices:
   Mario's songs, the rest keep the game's.
 
 The songs are played by Paper Cut's own player for the N64 game's music (its sequences and instrument banks),
-on the game's music channel, so the game's fades, pauses and music volume apply. Tracks with no match below
+on the game's music channel, so the game's fades, pauses and music volume apply. Tracks with no match
 keep the game's music, and a file of yours in the music folder still wins over both. Only you hear it.
-
-| Thousand-Year Door | Paper Mario |
-| --- | --- |
-| Title, file select, opening, ending, staff roll | Main Theme, File Select, Story, Peach's Castle Party, The End |
-| Rogueport | Toad Town |
-| Rogueport Sewers | Toad Town Tunnels |
-| The Thousand-Year Door's chamber | Ruins Basement |
-| Pianta Parlor | Club 64 |
-| Pit of 100 Trials | Bowser's Castle Caves |
-| Petal Meadows / Petalburg | Pleasant Path / Koopa Village |
-| Hooktail Castle / Shhwonk Fortress | Koopa Bros. Fortress / Dry Dry Ruins |
-| Boggly Woods / the Great Tree / Puni village | Forever Forest / Deep Jungle / Yoshi's Village |
-| Glitzville / Glitz Pit | Shy Guy's Toy Box / Toy Box Train, Playroom |
-| Twilight Town / Twilight Trail / Creepy Steeple | Gusty Gulch / Forever Forest / Boo's Mansion |
-| Keelhaul Key / Pirate's Grotto | Jade Jungle / Dry Dry Ruins |
-| Excess Express (day, mystery, night) | Riding the Rails, Whodunit, Penguin Mystery |
-| Riverside Station / station / Poshley Heights / Poshley Sanctum | Dry Dry Outpost / Starborn Valley / Flower Fields / Sun Tower |
-| Fahr Outpost / the Moon / X-Naut Fortress | Shiver City / Shooting Star Summit / Crystal Palace, Starship |
-| Palace of Shadow | Bowser's Castle, its caves, its falls |
-| Bowser's castle | Bowser's Theme |
-| Battles: normal, first strike, mid-boss | Battle, Special Battle, Miniboss Battle |
-| Hooktail, Gloomtail | Lava Piranha Battle |
-| Lord Crump, Shadow Sirens, Rawk Hawk, Macho Grubba | General Guy, Tutankoopa, Koopa Bros., Goomba King battles |
-| Doopliss, fake Mario, Cortez, Crump's ship, Smorg | Tubba Blubba, Fake Bowser, Crystal King, Jr. Troopa, Huff N. Puff battles |
-| Grodus, Bowser, the Shadow Queen | Master Battle, Bowser Battle, Final Bowser Battle |
-| Battle won / lost | Battle Won / Game Over |
-| Danger, rest, cooking, sailing, train, minigame, Peach | Bowser Attacks, Yoshi's Panic, Taking a Rest, Stirring the Cake, Riding the Whale, Riding the Rails, Boo Minigame, Prisoner Peach, Peach's Wishes |
-| New partner, Crystal Star, chapter start, level up | New Partner, Chapter End, Chapter Start, Level Up |
 
 The muffled copies the game plays behind doors use the same songs.
 
@@ -130,7 +102,7 @@ once its Paper Mario partner's TTYD counterpart has joined (Jr. Troopa after Goo
 Koops, their rematch after Bobbery, General Guy once chapter 4 is over; the Crystal King, Kammy Koopa and
 Bowser near the end) and stays until it's beaten. With **Win Paper Mario partners from their bosses** (on at
 first), beating a boss there or from the **Paper Mario 64 boss list** is how its partner joins you
-([PM64_LINK.md](PM64_LINK.md#the-partners)); off, the partners join with their TTYD counterparts.
+([ROM_LINK.md](ROM_LINK.md#the-partners)); off, the partners join with their TTYD counterparts.
 
 Walking into a boss in Rogueport (or talking to it) is an ordinary story battle, right there: Mario as he is, with
 his own partners and items. It's optional, so Run Away works as in any ordinary battle: you drop some coins and

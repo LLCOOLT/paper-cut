@@ -1,6 +1,6 @@
 #ifndef PORT_TPL_PC_H
 #define PORT_TPL_PC_H
-/* TPL (texture palette) loading on PC. See docs/PC_PORT.md, "Loader design".
+/* TPL (texture palette) loading on PC. See docs/TECHNICAL.md, "Loader design".
  *
  * portTplDecode decodes the big-endian header graph of a TPL blob with the
  * generated descriptors (port/bedecode/tpl.spec) and writes the native

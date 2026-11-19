@@ -1,7 +1,7 @@
 Mods
 ====
 
-The port loads mods from the **mods folder** in the user folder (next to `settings.txt` and the memory cards):
+Paper Cut loads mods from the **mods folder** in the user folder (next to `settings.txt` and the memory cards):
 
 | Platform | Mods folder |
 |---|---|
@@ -34,7 +34,7 @@ Online play needs the same mods on for every player, as far as they change the g
 - Lua-only mods run when every player has the same Lua mods ([Lua mods](LUA_MODDING.md#online)); otherwise they're paused and the session goes on. The mod manager says which, in the lobby and while playing.
 - Every other mod that is on must be on for every player, or the game won't start together. Mods turned off don't count.
 
-This covers files, textures, messages, game data, code (including porting GameCube mods), scripts and [Archipelago](#archipelago). Mods in Lua, sandboxed and safe to share, are [Lua mods](LUA_MODDING.md).
+This covers files, textures, messages, game data, code (including converting GameCube mods), scripts and [Archipelago](#archipelago). Mods in Lua, sandboxed and safe to share, are [Lua mods](LUA_MODDING.md).
 
 Translations of Paper Cut's own menus are [language packs](LANGUAGE_PACKS.md): a `lang/` folder in a folder of the mods folder.
 
@@ -178,7 +178,7 @@ EVT_END()
 
 - **Commands** are the macros of [`include/evt/evt_cmd.h`](../include/evt/evt_cmd.h) (`SET_VALUE`, `IF_INT_EQUAL`, `CALL`, `LOOP`, `SPAWN_EVENT`...) and the opcodes by their own names (`SET`, `USER_FUNC`...), so ttyd-tools' names mostly work too. With no arguments the parentheses are optional (`RETURN`, `END_IF`).
 - **Values:** numbers (`10`, `0x10`, `-1`), arithmetic, `LW(n)` `GW` `LF` `GF` `LSW` `GSW` `LSWF` `GSWF` `UW` `UF`, `FLOAT(1.5)`, strings (`STRING("...")` or plain `"..."`), the game headers' constants (`ITEM_MUSHROOM`, about 3,500 of them), the mod's own scripts by name, and any game function or variable by name: the game's (`evt_msg_print`, `gor_01_init_evt`) and a file's statics too. Where a static's name is in more than one file, write `file::name` (`gor_01::evt_door`).
-- **Port helpers:** `CALL(evt_mod_log, "text")` writes a line to the log.
+- **Helpers:** `CALL(evt_mod_log, "text")` writes a line to the log.
 - **Maps:** `mod.json`'s `"maps"` gives a map its init script, the script the game runs when the map is entered. A new map is named after an area (`gor_99` belongs to Rogueport, `gor`) and reads another map's files with `"files"`; a map of the game's gets the mod's script in place of its own (which the mod's can still run, `CALL_CHILD(gor_01_init_evt)`).
 
 ```json
@@ -250,7 +250,7 @@ Each option may also have a `"note"` (shown under it: what it does) and `"restar
 
 ### Building one
 
-Code mods are built with the port's own build, which gives them the game's headers, flags and layout:
+Code mods are built with Paper Cut's own build, which gives them the game's headers, flags and layout:
 
 ```bash
 cmake -S . -B build-pc-us-aurora -DTTYD_LIBRARY_MODS=path/to/mymod
@@ -276,7 +276,7 @@ Not yet tested: libraries on Linux, macOS and Android (the code is there: `dlope
 
 [`ttyd_mod/hooks.h`](../port/include/ttyd_mod/hooks.h) has a slot, `TTYD_HOOK_<name>`, for each game function a mod can hook: about 1,600, generated from the decomp. [`port/mods/hooks.spec`](../port/mods/hooks.spec) lists them:
 
-- **Hand-picked** names (the first 61): the functions the GameCube mods hook most and the ones the port's own services stand on. Each must be hookable, or the generator fails.
+- **Hand-picked** names (the first 61): the functions the GameCube mods hook most and the ones Paper Cut's own services stand on. Each must be hookable, or the generator fails.
 - **`@files` sets**: every function a mod can name defined in those sources: battles (`src/battle`, units, action commands, Special moves), the field (Mario, his motions, partners, NPCs, items, objects), events (the scripts' user functions, menus, sequences) and the data tables. "Can name" is: not `static` or `inline`, declared in a game header a C++ mod can include ([`ttyd_mod/game_all.h`](../port/include/ttyd_mod/game_all.h)), not variadic, and the same signature in all three versions. `python tools/port/gen_hooks.py --report` lists what a set leaves out, and why.
 - **`-name`** leaves out a hot function. The cost of a slot is a load and a branch per call while nothing hooks it (and the function no longer inlines into its callers in its file); for the functions called many times every frame (the accessors `marioGetPtr`, `BattleAudienceGetPtr`, `BtlUnit_GetStatus`...) that buys nothing, so they're out. The animation, display-list and event-interpreter files (`animdrv`, `dispdrv`, `evtmgr_cmd`...) aren't in any set.
 
@@ -286,15 +286,15 @@ Not yet tested: libraries on Linux, macOS and Android (the code is there: `dlope
 
 **Measuring:** configure a build with `-DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g -DNDEBUG -DPORT_HOOK_PROFILE=1"` (the same for `CMAKE_CXX_FLAGS_RELWITHDEBINFO`) and run it with `TTYD_HOOK_PROFILE=<file>`: every 600 frames the file gets each slot's calls per frame, the most first. Put what is called more than a few times a frame in the `-name` list.
 
-## Porting a GameCube mod
+## Converting a GameCube mod
 
-GameCube mods (the [Practice Codes](https://github.com/Zephiles/TTYD-Practice-Codes), [Infinite Pit](https://github.com/jdaster64/ttyd-infinite-pit), most mods built on [ttyd-tools](https://github.com/PistonMiner/ttyd-tools)) are C++ written against the game's machine code: their own copies of the game's structs at GameCube offsets, functions found by address from a symbol list, hooks that patch instructions. The port's tools turn such a mod's source into a code mod for the PC build, with the mod's code itself mostly unchanged. The source stays wherever its license allows; nothing of it goes in this repository.
+GameCube mods (the [Practice Codes](https://github.com/Zephiles/TTYD-Practice-Codes), [Infinite Pit](https://github.com/jdaster64/ttyd-infinite-pit), most mods built on [ttyd-tools](https://github.com/PistonMiner/ttyd-tools)) are C++ written against the game's machine code: their own copies of the game's structs at GameCube offsets, functions found by address from a symbol list, hooks that patch instructions. Paper Cut's tools turn such a mod's source into a code mod for the PC build, with the mod's code itself mostly unchanged. The source stays wherever its license allows; nothing of it goes in this repository.
 
 The steps, from a clean checkout of the mod (the Practice Codes need about a dozen hand edits; see the end):
 
 1. **Fields.** [`tools/port/mod_fields.py`](../tools/port/mod_fields.py) lays out the mod's structs and the decomp's for the GameCube with clang and matches fields by offset and size, then renames every access in the mod's sources (from clang's AST, so `unk_8` in one struct is told from another): `player->playerPosition` becomes `player->position`. Where the decomp's field has another type (its `s16` for the mod's `ItemId`, `Vec` for `Vec3`), the access is wrapped so the mod still sees its own type: `ttydAs<ItemId[121]>(pouch->items)`. A word the mod split differently becomes `ttydPart<int32_t, 0>(item->timer)` (the GameCube was big-endian). Give `--alias ModStruct=DecompStruct` for structs named differently; `--report` lists the rest.
-2. **Headers.** [`tools/port/mod_headers.py`](../tools/port/mod_headers.py) turns the mod's copies of the game's headers into shims over the decomp's: a struct the decomp has is the decomp's; a function or variable is found by its GameCube address (the mod's `.lst` against `config/<version>/symbols.txt`; a REL's by module, section and offset, with `--rel-dir` for the module ids) and named as the game exports it (`--exports` the build's `ttyd_exports.def`); a variable becomes a reference bound at load; the mod's enums map onto the decomp's by value; ttyd-tools' `EVT_DECLARE*` and its script macros (`--evt-header`) build the PC's 64-bit script words. The mod's sources get the same for their own `extern` lines: `extern int32_t evt_x[];` over a game script is the PC's script words, over a game function (its instructions, to patch) words of nowhere (`TTYD_GC_CODE`); a user function's argument array (`evt->args = args`) is script words too. With `--widen-pointer-casts`, pointer arithmetic done in `uint32_t` is done in `uintptr_t`, and a word's bytes passed as a color are put in the GameCube's order (`ttydBytesBE`). With `--gc-lowmem`, a fixed low-memory address (`0x80003220`, where patchers left settings and mailboxes) is the port's stand-in for that memory (`TTYD_GC_ADDR`); with `--gc-data`, a fixed address of the game's data is the same field on the PC (`TTYD_GC_DATA`, translated by [`tools/port/gc_offsets.py`](../tools/port/gc_offsets.py)). A namespace of the mod named like a game type (`namespace BattleUnitType` of constants) is renamed `_ns`. Size `static_assert`s go.
-3. **Assembly.** [`tools/port/mod_asm_stubs.py`](../tools/port/mod_asm_stubs.py) gives each `.global` of the mod's PowerPC assembly a stub that logs if it runs: they're what the mod's instruction patches branched to, and the port skips those (below). A label over data (`.4byte`, `.rept`, strings) is that data instead, with twice the room for tables the C++ lays out with the PC's pointers.
+2. **Headers.** [`tools/port/mod_headers.py`](../tools/port/mod_headers.py) turns the mod's copies of the game's headers into shims over the decomp's: a struct the decomp has is the decomp's; a function or variable is found by its GameCube address (the mod's `.lst` against `config/<version>/symbols.txt`; a REL's by module, section and offset, with `--rel-dir` for the module ids) and named as the game exports it (`--exports` the build's `ttyd_exports.def`); a variable becomes a reference bound at load; the mod's enums map onto the decomp's by value; ttyd-tools' `EVT_DECLARE*` and its script macros (`--evt-header`) build the PC's 64-bit script words. The mod's sources get the same for their own `extern` lines: `extern int32_t evt_x[];` over a game script is the PC's script words, over a game function (its instructions, to patch) words of nowhere (`TTYD_GC_CODE`); a user function's argument array (`evt->args = args`) is script words too. With `--widen-pointer-casts`, pointer arithmetic done in `uint32_t` is done in `uintptr_t`, and a word's bytes passed as a color are put in the GameCube's order (`ttydBytesBE`). With `--gc-lowmem`, a fixed low-memory address (`0x80003220`, where patchers left settings and mailboxes) is Paper Cut's stand-in for that memory (`TTYD_GC_ADDR`); with `--gc-data`, a fixed address of the game's data is the same field on the PC (`TTYD_GC_DATA`, translated by [`tools/port/gc_offsets.py`](../tools/port/gc_offsets.py)). A namespace of the mod named like a game type (`namespace BattleUnitType` of constants) is renamed `_ns`. Size `static_assert`s go.
+3. **Assembly.** [`tools/port/mod_asm_stubs.py`](../tools/port/mod_asm_stubs.py) gives each `.global` of the mod's PowerPC assembly a stub that logs if it runs: they're what the mod's instruction patches branched to, and Paper Cut skips those (below). A label over data (`.4byte`, `.rept`, strings) is that data instead, with twice the room for tables the C++ lays out with the PC's pointers.
 4. **Build.** The mod's own `CMakeLists.txt` (added with `-DTTYD_LIBRARY_MODS=path`) calls `ttyd_add_mod` and force-includes [`ttyd_mod/game_loose.h`](../port/include/ttyd_mod/game_loose.h) (every game header, plus C's argument conversions: an `int` where the decomp has an enum, a pointer where it passes a small struct by value, and arguments in the PowerPC ABI's order, which passed floats apart from integers, so a mod's `iconDispGx(float scale, Vec* pos, ...)` reaches the game's `iconDispGx(Vec* pos, ..., f32 scale)`) and `ttyd_mod/vars.h`. Its `patch.h` is replaced by one on [`ttyd_mod/compat.h`](../port/include/ttyd_mod/compat.h): `hookFunction(fn, dest)` is `TTYD_HOOK_FUNCTION`, a hook slot's replacement that returns the game's own function as the trampoline did; `writeBranch`, `applyAssemblyPatch` and the like log and do nothing (a script word, which is data, is still written; a write to code or to a GameCube address the mod kept as a number is skipped).
 
 What the tools can't port, and why:
@@ -309,7 +309,7 @@ What the tools can't port, and why:
 | Its own RELs | Code the mod shipped only as binary RELs (no source) isn't there; what it declared from them binds to zeroes. |
 | When it starts | A REL loader ran the mod once the game was set up; a library starts before the game's first frame. Code that calls the game at start (fonts, the disc) belongs in an `onFrame` callback that runs once. |
 
-The Practice Codes as ported locally: the menu, its pages and the displays work; battles run with its hooks. The TTYD Archipelago mod (TTYDAP) as ported locally builds and runs a session (see [Archipelago](#archipelago)); its instruction patches and its hooks on functions without a slot are skipped (the log lists each), and its enemy and boss randomizers, which live in its binary `custom.rel`, are absent. Per mod, a small script of exact text edits after the tools (`port/manual.py` in the mod's checkout) holds the hand-ported pieces, so the conversion can be rerun from a clean checkout.
+The Practice Codes as converted locally: the menu, its pages and the displays work; battles run with its hooks. The TTYD Archipelago mod (TTYDAP) as converted locally builds and runs a session (see [Archipelago](#archipelago)); its instruction patches and its hooks on functions without a slot are skipped (the log lists each), and its enemy and boss randomizers, which live in its binary `custom.rel`, are absent. Per mod, a small script of exact text edits after the tools (`port/manual.py` in the mod's checkout) holds the hand-ported pieces, so the conversion can be rerun from a clean checkout.
 
 ## Archipelago
 
@@ -317,7 +317,7 @@ The Practice Codes as ported locally: the menu, its pages and the displays work;
 
 - **The seed** (the `.apttyd` file the apworld generates for a slot) is applied at the game's start, as the patcher applies it to a disc: each location's item goes into the script, table or shop that gives it (721 places; local CI checks the 629 in RELs against the disc), shop prices and sell prices, the seed's options in the low memory the mod reads, and its files (`enemies.bin`, `bosses.bin`, `tracker.bin`, `msg/US/desc.txt`) over the disc's. The mod's own messages (`msg/US/mod.txt`) come from the installed `ttyd.apworld`: `$TTYD_APWORLD_FILE`, beside the seed, or Archipelago's `custom_worlds` folder.
 - **The server.** A built-in client (WebSocket, `ws://` and `wss://`: WinHTTP on Windows, Mbed TLS elsewhere; an address without either, such as `archipelago.gg:38281`, tries `wss://` first) connects to a room: items the slot receives go to the game, a location's check goes out when its flag is set, the goal and DeathLink both ways, and the current room for trackers.
-- **The game side** is the TTYD AP mod, ported as a code mod ([above](#porting-a-gamecube-mod)): it gives the received items, shows who sent them and runs the seed's options. It's GPL, so it isn't part of this repository; build it from its source with the porting tools and add it to the mods folder. Without it the client still connects, but nothing is sent or received; the Archipelago tab's status says so.
+- **The game side** is the TTYD AP mod, converted as a code mod ([above](#converting-a-gamecube-mod)): it gives the received items, shows who sent them and runs the seed's options. It's GPL, so it isn't part of this repository; build it from its source with the conversion tools and add it to the mods folder. Without it the client still connects, but nothing is sent or received; the Archipelago tab's status says so.
 - **Places that aren't items in the game's own script.** The apworld points a few places at words the mod's reworked scenes read: the partners' joining scenes, troubles that pay coins, the black chests, Whacka and the Excess Express madam. In the game's own script those words are something else (in Goombella's scene, a camera curve), so a seed's item is written only where the word is an item; the others stay as the disc has them, and the log names each.
 
 For a single-player game without a server, the built-in randomizer makes a seed itself and applies it through the same machinery ([RANDOMIZER.md](RANDOMIZER.md)).

@@ -1,6 +1,6 @@
 name: CI
 
-# The port's local CI (tools/port/local_ci.py) on the self-hosted runner with
+# Paper Cut's local CI (tools/port/local_ci.py) on the self-hosted runner with
 # the "ttyd-port" label: this machine, with the disc images (docs/RELEASING.md).
 # Self-hosted jobs use no GitHub Actions minutes. No pull_request trigger: in a
 # public repository, a pull request from a fork would run its own code on these
@@ -106,7 +106,7 @@ jobs:
           path: build-ci-linux/*.log
           retention-days: 14
 
-  # Monkey runs (tools/port/monkey.py, docs/PC_PORT.md): every US map at its
+  # Monkey runs (tools/port/monkey.py, docs/TECHNICAL.md): every US map at its
   # chapter and the post-game, a minute of random input per seed, headless.
   # The seeds rotate by the day (three a night), so each night tries new ones;
   # a failure's key (MAP%STORY#SEED) replays it exactly with --replay.
@@ -152,7 +152,7 @@ jobs:
             build-ci/monkey/logs/
           retention-days: 14
 
-  # The story sweep (tools/port/story_sweep.py, docs/PC_PORT.md): every story
+  # The story sweep (tools/port/story_sweep.py, docs/TECHNICAL.md): every story
   # beat from the prologue to the credits played by itself on the headless
   # build, nightly and on demand ("story_sweep"); never on a push: an hour or
   # more. Fails only on a crash, panic or stall, or a beat that passed in

@@ -1,5 +1,5 @@
 /* The Paper Mario 64 partners' game side on Aurora (port/include/port/pm64.h,
- * docs/PM64_LINK.md): the frame hook (their field abilities and joining) and
+ * docs/ROM_LINK.md): the frame hook (their field abilities and joining) and
  * the battle moves' names and descriptions from the linked ROM. The
  * partners' state, draw and FP costs are port/src/common/pm64_partner_pc.c. */
 #include "port/hook_list.h"

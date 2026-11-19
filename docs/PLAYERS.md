@@ -245,7 +245,7 @@ anything else in that time and that hold stays Mario's.
 
 While player 1's Start menu is up, another player's Start shows "1P has the
 menu" for a moment in their bar; the bars go to the top edge for it, since the
-Start menu's help box is along the bottom (nothing else of the port's is drawn
+Start menu's help box is along the bottom (nothing else of Paper Cut's is drawn
 over that menu; co-op notices wait until it closes). Online, a guest's screen
 doesn't have the host's Start menu: while it is up the guest's bar shows
 "Paused by" and the host's name until it closes.
@@ -285,7 +285,7 @@ chosen from another seat leaves that seat), or a controller's player on
 Controls → Controllers. **Let player N go** and **Not playing** free the seat at
 once. A player who leaves takes their
 companion away. Tests script controllers 2 to 4 with `TTYD_P2_PRESS`,
-`TTYD_P3_PRESS` and `TTYD_P4_PRESS` ([PC_PORT.md](PC_PORT.md)), which play with
+`TTYD_P3_PRESS` and `TTYD_P4_PRESS` ([TECHNICAL.md](TECHNICAL.md)), which play with
 the setting on as a joined controller does, and plug in virtual controllers with
 `TTYD_SEATS_TEST`; the log's `[coop]` lines say who joins, whose companion comes
 and whether it's lent.

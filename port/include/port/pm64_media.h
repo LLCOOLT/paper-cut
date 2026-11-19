@@ -1,7 +1,7 @@
 #ifndef PORT_PM64_MEDIA_H
 #define PORT_PM64_MEDIA_H
 
-/* More of the linked Paper Mario 64 ROM (docs/PM64_EXTRAS.md): the Journal's
+/* More of the linked Paper Mario 64 ROM (docs/ROM_EXTRAS.md): the Journal's
  * Paper Mario 64 Tattle Log, its badges and the second merchant, the Star
  * Spirits' cameo and Mario's Paper Mario look in the Wardrobe. Everything read from the player's own ROM's cache while the
  * game runs; with no ROM linked none of it is there. */

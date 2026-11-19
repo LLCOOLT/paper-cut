@@ -1,7 +1,7 @@
 # Testing without a window: offscreen runs and the test pass
 
 Paper Cut's own checks (the map sweep, the settings fuzzer, the story runs, the
-card scripts: see [PC_PORT.md](PC_PORT.md), Testing) mostly run the headless
+card scripts: see [TECHNICAL.md](TECHNICAL.md), Testing) mostly run the headless
 build, which draws nothing. Looks need the Aurora build's pictures, and an
 unattended run should never put a window on the screen or take the focus from
 whoever is using the computer. This page is about the two pieces made for that:
@@ -122,7 +122,7 @@ Small JSON (or TOML) files in `tests/port/testpass/`, named by their file:
 | `desc`, `groups` | what it shows; the names it is run under (`baseline`, `maps`, `battles`, `menus`, `scenes`, `fingerprint`) |
 | `versions` | the versions it applies to (default `us`, `jp`, `eu`) |
 | `backend` | `offscreen` (Aurora, default) or `headless` |
-| `env` | the game's switches ([PC_PORT.md](PC_PORT.md)'s table); `null` removes a default, `{iso}` is the disc image, `{out}` the run's folder, `{data_root}` the extracted discs' folder (`--data-root`; the player's saves in `data/saves`) |
+| `env` | the game's switches ([TECHNICAL.md](TECHNICAL.md)'s table); `null` removes a default, `{iso}` is the disc image, `{out}` the run's folder, `{data_root}` the extracted discs' folder (`--data-root`; the player's saves in `data/saves`) |
 | `settings` | `settings.txt` lines over the test defaults (`{"widescreen": 1}`) |
 | `input` | an input script: a list of lines, or a file in the repository |
 | `shots` | frames to capture (`TTYD_SHOT`); an input script's `shot NAME` captures too (`<map>__NAME.png` on a `TTYD_MAP` run) |

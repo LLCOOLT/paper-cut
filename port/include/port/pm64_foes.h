@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-/* Paper Mario 64 enemies in the story's fights (docs/PM64_EXTRAS.md, "In the story";
+/* Paper Mario 64 enemies in the story's fights (docs/ROM_EXTRAS.md, "In the story";
  * port/src/common/pm64_foes_pc.c). Setting "pm64_story_enemies": 0 off, 1 mixed (some fights), 2 all (every
  * fitting fight). A field enemy whose fight is picked wanders as the PM64 cousin of its fight's first enemy
  * (drawn from the linked ROM, TTYD's own field AI), and in its battle every enemy with a PM64 cousin is that
@@ -34,7 +34,7 @@ int portPm64FoeFieldPose(int poseId, int* enemy, const char** animName);
  * 1 if any were. */
 struct BattleWork;
 int portPm64FoesArm(struct BattleWork* wp);
-/* The scaled HP and attack of PM64 enemy i in chapter c (the rule: docs/PM64_EXTRAS.md). */
+/* The scaled HP and attack of PM64 enemy i in chapter c (the rule: docs/ROM_EXTRAS.md). */
 int portPm64FoeHp(int i, int chapter);
 int portPm64FoeAttack(int i, int chapter);
 /* The rule for any PM64 number: value (HP, or an attack when attack is 1) of an enemy whose PM64 home chapter is

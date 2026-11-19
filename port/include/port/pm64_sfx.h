@@ -1,7 +1,7 @@
 #ifndef PORT_PM64_SFX_H
 #define PORT_PM64_SFX_H
 
-/* Paper Mario 64's sound effects (docs/PM64_LINK.md; port/src/common/pm64_sfx_pc.c): with the player's own
+/* Paper Mario 64's sound effects (docs/ROM_LINK.md; port/src/common/pm64_sfx_pc.c): with the player's own
  * PM64 ROM linked and the setting "pm64_sfx" on (the default), the PM64 partners, the PM64 enemies, the Star
  * Spirits and the Star Haven corner sound as they do in Paper Mario; with "pm64_sfx_general" on (off by
  * default), Mario's jump and hammer, the pick-ups and the menus too. A player of our own for the N64 game's

@@ -18,7 +18,7 @@ OSTick OSGetTick(void);
 static int sFast = -1;
 static OSTime sBase, sVirtual;
 
-/* $TTYD_CLOCK_DAYS=N (tests, docs/PC_PORT.md): the real clock N days on (or
+/* $TTYD_CLOCK_DAYS=N (tests, docs/TECHNICAL.md): the real clock N days on (or
  * back, negative), for every read of it here: a run's dates (the daily seed,
  * the shop specials, the raid's week) as on another day, e.g. a replay played
  * back "tomorrow", which must still take its dates from the recording. */

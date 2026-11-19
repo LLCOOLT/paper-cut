@@ -1,4 +1,4 @@
-/* The eight Paper Mario 64 partners (port/include/port/pm64.h, docs/PM64_LINK.md):
+/* The eight Paper Mario 64 partners (port/include/port/pm64.h, docs/ROM_LINK.md):
  * Goombario, Kooper, Bombette, Parakarry, Watt, Sushie, Lakilester and Bow, from
  * the player's own linked ROM. Each takes a TTYD partner's place, its host:
  * the host's party slot, field ability and battle unit run as ever (Tattle,

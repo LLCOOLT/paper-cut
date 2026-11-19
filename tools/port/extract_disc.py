@@ -2,7 +2,7 @@
 """Extract a GameCube disc image (.iso/.gcm) the way Dolphin does: files/
 (every file of the disc's file system) and sys/ (boot.bin, bi2.bin,
 apploader.img, main.dol, fst.bin). The headless build and the tests that play
-the game read this ($TTYD_DATA_DIR, data/<version>; docs/PC_PORT.md).
+the game read this ($TTYD_DATA_DIR, data/<version>; docs/TECHNICAL.md).
 
   extract_disc.py DISC.iso OUT_DIR
 

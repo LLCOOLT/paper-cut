@@ -739,7 +739,7 @@ void drawBanner(ImDrawList* dl, Disc& d, ImVec2 at, float w, float scale) {
   }
 }
 
-// The Paper Mario 64 entry, under the discs (docs/PM64_LINK.md; pm64_link.cpp does the linking): one quiet
+// The Paper Mario 64 entry, under the discs (docs/ROM_LINK.md; pm64_link.cpp does the linking): one quiet
 // row, its name and state at the left and its one button at the right (under them where it's narrow):
 // Settings (its Paper Mario 64 page) once linked; else Link... (the file picker), or Link <file> for a ROM
 // found in the user folder or Downloads (a controller alone does it). Nothing linked and the card not

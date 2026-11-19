@@ -1,4 +1,4 @@
-# Paper Mario 64 enemies in the story (docs/PM64_EXTRAS.md)
+# Paper Mario 64 enemies in the story (docs/ROM_EXTRAS.md)
 
 Paper Mario 64 enemies in the story
 Enemigos de Paper Mario 64 en la historia

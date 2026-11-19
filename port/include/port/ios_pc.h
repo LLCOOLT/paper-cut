@@ -20,7 +20,7 @@ const char* portIosDocumentsDir(void);
 const char* portIosSavesDir(void);
 const char* portIosCacheDir(void);
 
-/* Documents/env.txt: the debugging switches of docs/PC_PORT.md (TTYD_TRACE,
+/* Documents/env.txt: the debugging switches of docs/TECHNICAL.md (TTYD_TRACE,
  * TTYD_MAP, TTYD_INPUT, ...), one NAME=value per line (# comments), set
  * unless already in the environment; "{docs}" in a value is the Documents
  * folder. As Android's env.txt (iOS apps get no environment of their own):

@@ -89,7 +89,7 @@ On Windows the desktop package also carries Microsoft's Visual C++ runtime DLLs,
 
 ## Build scripts in `tools/`
 
-`tools/project.py`, `tools/download_tool.py`, `tools/decompctx.py`, `tools/transform_dep.py` and `tools/changes_fmt.py` come from [dtk-template](https://github.com/encounter/dtk-template), the decomp-toolkit project template. `tools/ninja_syntax.py` is from the [ninja](https://github.com/ninja-build/ninja) project (Apache License 2.0, notice in the file). The other scripts were written for this project; the port's, in `tools/port/`, are described in [PC_PORT.md](PC_PORT.md).
+`tools/project.py`, `tools/download_tool.py`, `tools/decompctx.py`, `tools/transform_dep.py` and `tools/changes_fmt.py` come from [dtk-template](https://github.com/encounter/dtk-template), the decomp-toolkit project template. `tools/ninja_syntax.py` is from the [ninja](https://github.com/ninja-build/ninja) project (Apache License 2.0, notice in the file). The other scripts were written for this project; Paper Cut's, in `tools/port/`, are described in [TECHNICAL.md](TECHNICAL.md).
 
 ## Build-time tools
 

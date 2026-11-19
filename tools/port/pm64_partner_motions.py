@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The Paper Mario 64 partners' own TTYD models (docs/PM64_LINK.md, "Their own models"): the animations a partner
+"""The Paper Mario 64 partners' own TTYD models (docs/ROM_LINK.md, "Their own models"): the animations a partner
 needs in the field and in battle, as recipes (tools/port/anim_recipe.py) on the disc's models of them.
 
 The Thousand-Year Door's disc has a paper model of each of the eight (c_kurio Goombario, c_kameki Kooper,

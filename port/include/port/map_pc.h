@@ -1,6 +1,6 @@
 #ifndef PORT_MAP_PC_H
 #define PORT_MAP_PC_H
-/* Map 'd' files (./m/<map>/d) on PC. See docs/PC_PORT.md, "Loader design",
+/* Map 'd' files (./m/<map>/d) on PC. See docs/TECHNICAL.md, "Loader design",
  * and port/bedecode/map.spec.
  *
  * File layout (big-endian): a 0x20-byte MapFileHeader {fileSize, dataSize,
